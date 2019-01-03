@@ -11,6 +11,21 @@
         "format": "prettier --write --ignore-path .gitignore {src,.}/*.js",
         "semantic-release": "semantic-release"
     },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/simple-integrated-marketing/swiff.git"
+    },
+    "keywords": [
+        "developer-tools",
+        "development-environment",
+        "web-tools",
+        "command-line-tool",
+        "command-line-app"
+    ],
+    "bugs": {
+        "url": "https://github.com/simple-integrated-marketing/swiff/issues"
+    },
+    "homepage": "https://github.com/simple-integrated-marketing/swiff#readme",
     "prettier": {
         "trailingComma": "es5",
         "useTabs": false,
