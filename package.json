@@ -1,0 +1,98 @@
+{
+    "name": "swiff",
+    "version": "1.0.0",
+    "description": "Tools to assist web developers across multi-environments",
+    "main": "index.js",
+    "scripts": {
+        "start": "node dist/index.js",
+        "dev": "nodemon -q --no-stdin --ignore dist --exec babel-node --ignore swiff.config.js src",
+        "build": "babel src --out-dir dist",
+        "test": "xo && ava",
+        "format": "prettier --write --ignore-path .gitignore {src,.}/*.js",
+        "semantic-release": "semantic-release"
+    },
+    "prettier": {
+        "trailingComma": "es5",
+        "useTabs": false,
+        "tabWidth": 4,
+        "semi": false,
+        "singleQuote": true
+    },
+    "author": "",
+    "license": "ISC",
+    "bin": {
+        "swiff": "dist/index.js"
+    },
+    "dependencies": {
+        "chalk": "^2.4.1",
+        "dotenv": "^6.2.0",
+        "fs-extra": "^7.0.1",
+        "import-jsx": "^1.3.0",
+        "ink": "^0.5.1",
+        "ink-box": "^0.1.0",
+        "ink-divider": "^1.1.1",
+        "ink-select-input": "^2.0.0",
+        "ink-spinner": "^2.0.0",
+        "lodash": "^4.17.11",
+        "meow": "^5.0.0",
+        "mysql": "^2.16.0",
+        "mysql-import": "^1.0.9",
+        "node-cmd": "^3.0.0",
+        "node-ssh": "^5.1.2",
+        "nodemon": "^1.18.9",
+        "promise-mysql": "^3.3.1",
+        "ssh2": "^0.6.2",
+        "universal-analytics": "^0.4.20",
+        "update-notifier": "^2.5.0",
+        "username": "^4.0.0"
+    },
+    "devDependencies": {
+        "@babel/cli": "^7.2.3",
+        "@babel/core": "^7.2.2",
+        "@babel/node": "^7.2.2",
+        "@babel/plugin-proposal-class-properties": "^7.2.3",
+        "@babel/preset-env": "^7.2.3",
+        "ava": "^1.0.1",
+        "babel-plugin-transform-react-jsx": "^6.24.1",
+        "eslint-config-xo-react": "^0.17.0",
+        "eslint-plugin-react": "^7.12.2",
+        "prettier": "^1.15.3",
+        "semantic-release": "^15.13.2",
+        "xo": "^0.23.0"
+    },
+    "ava": {
+        "babel": {
+            "presets": [
+                "@ava/stage-4"
+            ],
+            "plugins": [
+                [
+                    "transform-react-jsx",
+                    {
+                        "pragma": "h",
+                        "useBuiltIns": true
+                    }
+                ]
+            ]
+        }
+    },
+    "xo": {
+        "extends": [
+            "xo-react"
+        ],
+        "rules": {
+            "react/no-unused-prop-types": 1,
+            "indent": "off",
+            "no-unused-vars": "off",
+            "semi": "off",
+            "arrow-parens": "off",
+            "curly": "off",
+            "comma-dangle": "off"
+        },
+        "settings": {
+            "react": {
+                "pragma": "h"
+            }
+        }
+    }
+}

@@ -1,0 +1,5 @@
+node_modules
+dist/
+tester/
+composer.json
+composer.lock
