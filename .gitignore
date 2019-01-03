@@ -3,3 +3,4 @@ dist/
 tester/
 composer.json
 composer.lock
+.env
