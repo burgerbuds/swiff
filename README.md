@@ -2,13 +2,13 @@
 
 Swiff performs these multi-environment tasks effortlessly:
 
-- 🚀 *File pushing*<br>
+- 🚀 **File pushing**<br>
 Upload and sync specific folders with a remote server
-- 📥 *File downloads*<br>
+- 📥 **File downloads**<br>
 Download fresh remote files from specific folders
-- 💫 *Local database updates*<br>
+- 💫 **Local database updates**<br>
 Refresh your website database with a remote database
-- 🎩 *Local composer.json/lock updates*<br>
+- 🎩 **Local composer.json/lock updates**<br>
 Refresh your composer files with the latest updates from the remote<br>
 (helps with Craft CMS development)
 
