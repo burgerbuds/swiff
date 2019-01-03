@@ -1,7 +1,7 @@
 {
     "name": "swiff",
     "version": "1.0.3",
-    "description": "Tools to assist web developers across multi-environments",
+    "description": "👨‍💻👩‍💻 Multi-environment tools for time-saving web developers",
     "main": "index.js",
     "scripts": {
         "start": "node dist/index.js",

@@ -2,13 +2,13 @@
 
 Swiff performs these multi-environment tasks effortlessly:
 
-- 🚀 File pushing<br>
+- 🚀 *File pushing*<br>
 Upload and sync specific folders with a remote server
-- 📥 File downloads<br>
+- 📥 *File downloads*<br>
 Download fresh remote files from specific folders
-- 💫 Local database updates<br>
+- 💫 *Local database updates*<br>
 Refresh your website database with a remote database
-- 🎩 Local composer.json/lock updates<br>
+- 🎩 *Local composer.json/lock updates*<br>
 Refresh your composer files with the latest updates from the remote<br>
 (helps with Craft CMS development)
 
@@ -22,12 +22,13 @@ Refresh your composer files with the latest updates from the remote<br>
 
 - Power dev shortcuts: Skip the app interactions by using flags. Run `swiff --help` for the list of flags.
 - Custom SSH identity: Swiff will attempt to use your identity located at `/Users/[currentUser]/.ssh/id_rsa`. To use another identity open your project .env file and add `swiffSshKey: '[fullFilePath]'`.
-- Automatic backups: Your local database and composer files are backed up before they are replaced. They are stored in the 'swiff/backups' folder.
+- Trustable backups: Your local database and composer files are backed up before they are replaced.<br>
+Run `swiff -b` to view the backups.
 
 ## Requirements
 
 Swiff requires mySQL to import the remote database.<br>
-You can download it at [dev.mysql.com](https://dev.mysql.com/downloads/mysql/).
+You can download mySQL at [dev.mysql.com](https://dev.mysql.com/downloads/mysql/).
 
 Running Windows or Linux? So far, Swiff has only been tested macOS so there's probably some issues on other operating systems.
 
