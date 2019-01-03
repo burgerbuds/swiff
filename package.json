@@ -1,6 +1,6 @@
 {
     "name": "swiff",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "Tools to assist web developers across multi-environments",
     "main": "index.js",
     "scripts": {
