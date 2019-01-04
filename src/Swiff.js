@@ -10,14 +10,13 @@ import {
     doesFileExist,
     commaAmpersander,
 } from './utils'
-import { pathBackups, pathConfig, configFileName, pathApp } from './paths'
+import { pathBackups, pathConfig, configFileName, pathApp, pathMedia } from './paths'
 import { getRemoteEnv, setupLocalEnv } from './env'
 import { doDropAllDbTables, doImportDb, doLocalDbDump } from './database'
 import { OptionsTemplate, MessageTemplate } from './templates'
 import {
     getSshInit,
     getSshFile,
-    getSshEnv,
     getSshDatabase,
     getSshTestCommand,
     getSshCopyInstructions,
@@ -164,7 +163,7 @@ class Swiff extends Component {
         const { taskId, heading } = task
         const { messages, isFlaggedStart } = this.state
         // Only play the sound when the cli is launched without flags (the sounds are a little too much)
-        !isFlaggedStart && exec('afplay ./media/start.mp3')
+        !isFlaggedStart && exec(`afplay ${pathMedia}/start.mp3`)
         // Reset messages then use the setState callback to start the new task
         this.setState(
             {
@@ -194,7 +193,7 @@ class Swiff extends Component {
 
     setError = error => {
         // Play the error sound
-        exec('afplay ./media/error.wav')
+        exec(`afplay ${pathMedia}/error.wav`)
         // Remove any unneeded error text
         const errorFiltered = String(error).replace('Error: ', '')
         // Add the message to the end of the current list
@@ -209,7 +208,7 @@ class Swiff extends Component {
 
     setSuccess = success => {
         // Play the success sound
-        exec('afplay ./media/success.wav')
+        exec(`afplay ${pathMedia}/success.wav`)
         // Add the message to the end of the current list
         this.setState({
             messages: this.state.messages.concat([
@@ -220,7 +219,7 @@ class Swiff extends Component {
 
     setMessage = message => {
         // Play the message sound
-        exec('afplay ./media/message.wav')
+        exec(`afplay ${pathMedia}/message.wav`)
         // Remove any unneeded error text
         const messageFiltered = String(message).replace('Error: ', '')
         // Add the message to the end of the current list
@@ -252,7 +251,7 @@ class Swiff extends Component {
         // Add the config to the global state
         this.setState({ config })
         // Get the users env file
-        const localEnv = await setupLocalEnv()
+        const localEnv = await setupLocalEnv(this.setMessage)
         // If there's anything wrong with the env then return an error
         if (localEnv instanceof Error) return this.setMessage(localEnv)
         // Add the env to the global state
@@ -296,21 +295,21 @@ class Swiff extends Component {
             !Array.isArray(pushFolders) ||
             isEmpty(pushFolders.filter(i => i))
         )
-            return this.setError(
-                `First specify some push folders in your ${colourAttention(
+            return this.setMessage(
+                `First specify some push folders in your ${colourNotice(
                     configFileName
                 )}\n\nFor example:\n\n${colourMuted(
                     `{\n  `
-                )}pushFolders: [ '${colourAttention(
+                )}pushFolders: [ '${colourNotice(
                     'templates'
-                )}', '${colourAttention('config')}', '${colourAttention(
+                )}', '${colourNotice('config')}', '${colourNotice(
                     'public/assets/build'
                 )}' ]\n${colourMuted('}')}`
             )
         // Remove empty values from the array so users can’t accidentally upload the entire project
         const filteredPushFolders = pushFolders.filter(i => i)
         // Check if the defined local paths exist
-        const hasMissingPaths = await getMissingPaths(filteredPushFolders)
+        const hasMissingPaths = await getMissingPaths(filteredPushFolders, 'pushFolders')
         // If any local paths are missing then return the messages
         if (hasMissingPaths instanceof Error)
             return this.setError(hasMissingPaths)
@@ -351,12 +350,12 @@ class Swiff extends Component {
         const { user, host, appPath } = server
         // Check if the user has defined some pull folders
         if (!Array.isArray(pullFolders) || isEmpty(pullFolders.filter(i => i)))
-            return this.setError(
-                `First specify some pull folders in your ${colourAttention(
+            return this.setMessage(
+                `First specify some pull folders in your ${colourNotice(
                     configFileName
                 )}\n\nFor example:\n\n${colourMuted(
                     `{\n  `
-                )}pullFolders: [ '${colourAttention(
+                )}pullFolders: [ '${colourNotice(
                     'public/assets/volumes'
                 )}' ]\n${colourMuted('}')}`
             )
@@ -380,9 +379,6 @@ class Swiff extends Component {
         })
         // Execute the rsync pull commands
         const pullStatus = await executeCommands(rsyncCommands.join(';'))
-        // Return the result to the user
-
-
         // Set some variables for later
         const localEnv = this.state.localEnv
         const serverConfig = this.state.config.server
@@ -391,7 +387,6 @@ class Swiff extends Component {
         // If there's any env issues then return the messages
         if (remoteEnv instanceof Error) return this.setError(remoteEnv)
         const { ENVIRONMENT } = remoteEnv
-
         return pullStatus instanceof Error
             ? this.setError(
                   `There was an issue downloading the files from ${colourAttention(ENVIRONMENT)} \n\n${colourMuted(
@@ -467,7 +462,7 @@ class Swiff extends Component {
         // If there's any dropping issues then return the messages
         if (dropTables instanceof Error)
             return String(dropTables).includes('ER_BAD_DB_ERROR: Unknown database ')
-                ? this.setMessage(`First create a local project database named ${colourAttention(
+                ? this.setMessage(`First create a database named ${colourNotice(
                     localEnv.DB_DATABASE
                 )} with these login details:\n\nUsername: ${localEnv.DB_USER}\nPassword: ${localEnv.DB_PASSWORD}`)
                 : this.setError(`There were issues connecting to your local ${colourAttention(

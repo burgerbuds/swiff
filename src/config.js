@@ -49,7 +49,7 @@ const getConfigIssues = (config, hasNewConfig) => {
               .map(s => `- ${colourNotice(s)}`)
               .join('\n')}${
               hasNewConfig
-                  ? `\n\nOnce you've finished, rerun this task by pressing your enter key`
+                  ? `\n\nOnce you've finished, rerun this task by pressing enter...`
                   : ''
           }`
         : null

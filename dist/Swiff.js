@@ -95,7 +95,7 @@ class Swiff extends _ink.Component {
         isFlaggedStart
       } = this.state; // Only play the sound when the cli is launched without flags (the sounds are a little too much)
 
-      !isFlaggedStart && (0, _child_process.exec)('afplay ./media/start.mp3'); // Reset messages then use the setState callback to start the new task
+      !isFlaggedStart && (0, _child_process.exec)(`afplay ${_paths.pathMedia}/start.mp3`); // Reset messages then use the setState callback to start the new task
 
       this.setState({
         currentTask: task,
@@ -130,7 +130,7 @@ class Swiff extends _ink.Component {
 
     _defineProperty(this, "setError", error => {
       // Play the error sound
-      (0, _child_process.exec)('afplay ./media/error.wav'); // Remove any unneeded error text
+      (0, _child_process.exec)(`afplay ${_paths.pathMedia}/error.wav`); // Remove any unneeded error text
 
       const errorFiltered = String(error).replace('Error: ', ''); // Add the message to the end of the current list
 
@@ -146,7 +146,7 @@ class Swiff extends _ink.Component {
 
     _defineProperty(this, "setSuccess", success => {
       // Play the success sound
-      (0, _child_process.exec)('afplay ./media/success.wav'); // Add the message to the end of the current list
+      (0, _child_process.exec)(`afplay ${_paths.pathMedia}/success.wav`); // Add the message to the end of the current list
 
       this.setState({
         messages: this.state.messages.concat([{
@@ -158,7 +158,7 @@ class Swiff extends _ink.Component {
 
     _defineProperty(this, "setMessage", message => {
       // Play the message sound
-      (0, _child_process.exec)('afplay ./media/message.wav'); // Remove any unneeded error text
+      (0, _child_process.exec)(`afplay ${_paths.pathMedia}/message.wav`); // Remove any unneeded error text
 
       const messageFiltered = String(message).replace('Error: ', ''); // Add the message to the end of the current list
 
@@ -197,7 +197,7 @@ class Swiff extends _ink.Component {
       }); // Get the users env file
 
 
-      const localEnv = yield (0, _env.setupLocalEnv)(); // If there's anything wrong with the env then return an error
+      const localEnv = yield (0, _env.setupLocalEnv)(_this.setMessage); // If there's anything wrong with the env then return an error
 
       if (localEnv instanceof Error) return _this.setMessage(localEnv); // Add the env to the global state
 
@@ -242,11 +242,11 @@ class Swiff extends _ink.Component {
 
       if (!(0, _utils.isEmpty)(ENVIRONMENT) && (ENVIRONMENT === 'production' || ENVIRONMENT === 'live')) _this.setMessage(`Bad practice: You’re pushing files straight to production,\nconsider a more reliable way to deploy changes in the future`); // Create a list of paths to push
 
-      if (pushFolders === undefined || !Array.isArray(pushFolders) || (0, _utils.isEmpty)(pushFolders.filter(i => i))) return _this.setError(`First specify some push folders in your ${(0, _palette.colourAttention)(_paths.configFileName)}\n\nFor example:\n\n${(0, _palette.colourMuted)(`{\n  `)}pushFolders: [ '${(0, _palette.colourAttention)('templates')}', '${(0, _palette.colourAttention)('config')}', '${(0, _palette.colourAttention)('public/assets/build')}' ]\n${(0, _palette.colourMuted)('}')}`); // Remove empty values from the array so users can’t accidentally upload the entire project
+      if (pushFolders === undefined || !Array.isArray(pushFolders) || (0, _utils.isEmpty)(pushFolders.filter(i => i))) return _this.setMessage(`First specify some push folders in your ${(0, _palette.colourNotice)(_paths.configFileName)}\n\nFor example:\n\n${(0, _palette.colourMuted)(`{\n  `)}pushFolders: [ '${(0, _palette.colourNotice)('templates')}', '${(0, _palette.colourNotice)('config')}', '${(0, _palette.colourNotice)('public/assets/build')}' ]\n${(0, _palette.colourMuted)('}')}`); // Remove empty values from the array so users can’t accidentally upload the entire project
 
       const filteredPushFolders = pushFolders.filter(i => i); // Check if the defined local paths exist
 
-      const hasMissingPaths = yield (0, _utils.getMissingPaths)(filteredPushFolders); // If any local paths are missing then return the messages
+      const hasMissingPaths = yield (0, _utils.getMissingPaths)(filteredPushFolders, 'pushFolders'); // If any local paths are missing then return the messages
 
       if (hasMissingPaths instanceof Error) return _this.setError(hasMissingPaths); // Share what's happening with the user
 
@@ -289,7 +289,7 @@ class Swiff extends _ink.Component {
         appPath
       } = server; // Check if the user has defined some pull folders
 
-      if (!Array.isArray(pullFolders) || (0, _utils.isEmpty)(pullFolders.filter(i => i))) return _this.setError(`First specify some pull folders in your ${(0, _palette.colourAttention)(_paths.configFileName)}\n\nFor example:\n\n${(0, _palette.colourMuted)(`{\n  `)}pullFolders: [ '${(0, _palette.colourAttention)('public/assets/volumes')}' ]\n${(0, _palette.colourMuted)('}')}`); // Remove empty values from the array so the user can’t accidentally download the entire remote
+      if (!Array.isArray(pullFolders) || (0, _utils.isEmpty)(pullFolders.filter(i => i))) return _this.setMessage(`First specify some pull folders in your ${(0, _palette.colourNotice)(_paths.configFileName)}\n\nFor example:\n\n${(0, _palette.colourMuted)(`{\n  `)}pullFolders: [ '${(0, _palette.colourNotice)('public/assets/volumes')}' ]\n${(0, _palette.colourMuted)('}')}`); // Remove empty values from the array so the user can’t accidentally download the entire remote
 
       const filteredPullFolders = pullFolders.filter(i => i); // Share what's happening with the user
 
@@ -308,8 +308,7 @@ class Swiff extends _ink.Component {
         return `rsync ${flags} ${user}@${host}:${rSyncFrom} ${rSyncTo}`;
       }); // Execute the rsync pull commands
 
-      const pullStatus = yield (0, _utils.executeCommands)(rsyncCommands.join(';')); // Return the result to the user
-      // Set some variables for later
+      const pullStatus = yield (0, _utils.executeCommands)(rsyncCommands.join(';')); // Set some variables for later
 
       const localEnv = _this.state.localEnv;
       const serverConfig = _this.state.config.server; // Get the remote env file via SSH
@@ -378,7 +377,7 @@ class Swiff extends _ink.Component {
         database: localEnv.DB_DATABASE
       }); // If there's any dropping issues then return the messages
 
-      if (dropTables instanceof Error) return String(dropTables).includes('ER_BAD_DB_ERROR: Unknown database ') ? _this.setMessage(`First create a local project database named ${(0, _palette.colourAttention)(localEnv.DB_DATABASE)} with these login details:\n\nUsername: ${localEnv.DB_USER}\nPassword: ${localEnv.DB_PASSWORD}`) : _this.setError(`There were issues connecting to your local ${(0, _palette.colourAttention)(localEnv.DB_DATABASE)} database\n\n${(0, _palette.colourMuted)(String(dropTables).replace('Error: ', ''))}`); // Import the remote .sql into the local database
+      if (dropTables instanceof Error) return String(dropTables).includes('ER_BAD_DB_ERROR: Unknown database ') ? _this.setMessage(`First create a database named ${(0, _palette.colourNotice)(localEnv.DB_DATABASE)} with these login details:\n\nUsername: ${localEnv.DB_USER}\nPassword: ${localEnv.DB_PASSWORD}`) : _this.setError(`There were issues connecting to your local ${(0, _palette.colourAttention)(localEnv.DB_DATABASE)} database\n\n${(0, _palette.colourMuted)(String(dropTables).replace('Error: ', ''))}`); // Import the remote .sql into the local database
 
       const importDatabase = yield (0, _database.doImportDb)({
         user: localEnv.DB_USER,

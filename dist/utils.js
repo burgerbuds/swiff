@@ -90,7 +90,7 @@ exports.doesFileExist = doesFileExist;
 const getMissingPaths =
 /*#__PURE__*/
 function () {
-  var _ref3 = _asyncToGenerator(function* (suppliedPaths) {
+  var _ref3 = _asyncToGenerator(function* (suppliedPaths, configSetting) {
     // Map over the list of paths and return missing ones
     const getResults =
     /*#__PURE__*/
@@ -104,14 +104,14 @@ function () {
             return doesExist ? null : path;
           });
 
-          return function (_x5) {
+          return function (_x6) {
             return _ref5.apply(this, arguments);
           };
         }());
         return Promise.all(pathChecks);
       });
 
-      return function getResults(_x4) {
+      return function getResults(_x5) {
         return _ref4.apply(this, arguments);
       };
     }(); // Wait for the path results
@@ -123,10 +123,10 @@ function () {
 
     const hasMultipleResults = filteredResults.length > 1; // Return the missing path messages
 
-    return !(0, _lodash.isEmpty)(filteredResults) ? new Error(`The specified folder${hasMultipleResults ? 's' : ''} ${commaAmpersander(filteredResults, _palette.colourAttention)} ${hasMultipleResults ? 'aren’t in' : 'isn’t in'} your project\n\nEither create ${hasMultipleResults ? 'those folders' : 'the folder'} or adjust the values in your ${(0, _palette.colourAttention)('swiff.config.js')}`) : [];
+    return !(0, _lodash.isEmpty)(filteredResults) ? new Error(`The folder${hasMultipleResults ? 's' : ''} ${commaAmpersander(filteredResults, _palette.colourAttention)} ${hasMultipleResults ? 'aren’t found in' : 'isn’t found in'} your project\n\nEither create ${hasMultipleResults ? 'those folders' : 'the folder'} or adjust the ${(0, _palette.colourAttention)(configSetting)} values in your ${(0, _palette.colourAttention)('swiff.config.js')}`) : [];
   });
 
-  return function getMissingPaths(_x3) {
+  return function getMissingPaths(_x3, _x4) {
     return _ref3.apply(this, arguments);
   };
 }();

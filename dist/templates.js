@@ -30,7 +30,7 @@ const MessageTemplate = ({
   bold: true
 }, `\n${text}\n`), (0, _ink.h)(_ink.Text, {
   dim: messages.length - 1 !== i
-}, type === 'error' && `💩  ${text}`, type === 'success' && `👌  ${text}`, type === 'message' && `📣  ${text}`, type === 'working' && (messages.length - 1 === i ? (0, _ink.h)(_inkSpinner.default, {
+}, type === 'error' && `💩  ${text}`, type === 'success' && `👌  ${text}`, type === 'message' && `💁‍  ${text}`, type === 'working' && (messages.length - 1 === i ? (0, _ink.h)(_inkSpinner.default, {
   type: "runner"
 }) : `🏃 `), type === 'working' && ` ${text}`, (0, _ink.h)("br", null)))));
 
