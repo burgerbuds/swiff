@@ -18,7 +18,7 @@ const MessageTemplate = ({ messages }) => (
                     <Text dim={messages.length - 1 !== i}>
                         {type === 'error' && `💩  ${text}`}
                         {type === 'success' && `👌  ${text}`}
-                        {type === 'message' && `📣  ${text}`}
+                        {type === 'message' && `💁‍  ${text}`}
                         {type === 'working' &&
                             (messages.length - 1 === i ? (
                                 <Spinner type="runner" />

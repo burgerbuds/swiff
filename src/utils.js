@@ -26,7 +26,7 @@ const executeCommands = async commands => {
 const doesFileExist = async file => fs.pathExists(file)
 
 // Returns a list of missing paths
-const getMissingPaths = async suppliedPaths => {
+const getMissingPaths = async (suppliedPaths, configSetting) => {
     // Map over the list of paths and return missing ones
     const getResults = async paths => {
         const pathChecks = await paths.map(async path => {
@@ -44,14 +44,14 @@ const getMissingPaths = async suppliedPaths => {
     // Return the missing path messages
     return !isEmpty(filteredResults)
         ? new Error(
-              `The specified folder${hasMultipleResults ? 's' : ''} ${commaAmpersander(
+              `The folder${hasMultipleResults ? 's' : ''} ${commaAmpersander(
                   filteredResults,
                   colourAttention
               )} ${
-                  hasMultipleResults ? 'aren’t in' : 'isn’t in'
+                  hasMultipleResults ? 'aren’t found in' : 'isn’t found in'
               } your project\n\nEither create ${
                   hasMultipleResults ? 'those folders' : 'the folder'
-              } or adjust the values in your ${colourAttention(
+              } or adjust the ${colourAttention(configSetting)} values in your ${colourAttention(
                   'swiff.config.js'
               )}`
           )
