@@ -2,13 +2,16 @@
 
 Swiff performs these multi-environment tasks effortlessly:
 
-- 🚀 **File pushing**<br>
+🚀 **File pushing**<br>
 Upload and sync specific folders with a remote server
-- 📥 **File downloads**<br>
+
+📥 **File downloading**<br>
 Download fresh remote files from specific folders
-- 💫 **Local database updates**<br>
+
+💫 **Local database updates**<br>
 Refresh your website database with a remote database
-- 🎩 **Local composer.json/lock updates**<br>
+
+🎩 **Local composer.json/lock updates**<br>
 Refresh your composer files with the latest updates from the remote<br>
 (helps with Craft CMS development)
 
@@ -16,14 +19,22 @@ Refresh your composer files with the latest updates from the remote<br>
 
 1. Install swiff globally with npm:<br>
 `npm install --global swiff`
-2. Then run `swiff` within your projects
+
+2. Then type `swiff` within a project folder
+
+## The interface
+
+[![asciicast](https://asciinema.org/a/uORfDv3yaOxmGvkcT5oTTjtiv.svg)](https://asciinema.org/a/uORfDv3yaOxmGvkcT5oTTjtiv)
 
 ## Additional features
 
-- Power dev shortcuts: Skip the app interactions by using flags. Run `swiff --help` for the list of flags.
-- Custom SSH identity: Swiff will attempt to use your identity located at `/Users/[currentUser]/.ssh/id_rsa`. To use another identity open your project .env file and add `swiffSshKey: '[fullFilePath]'`.
+- Power dev shortcuts: Run a task without interactions using flags. Run `swiff --help` for the list of flags.
+
+- Custom SSH identity: Swiff will attempt to use your identity located at `/Users/[currentUser]/.ssh/id_rsa`.<br>
+Add a custom identity in your .env file with `swiffSshKey: '[fullFilePath]'`.
+
 - Trustable backups: Your local database and composer files are backed up before they are replaced.<br>
-Run `swiff -b` to view the backups.
+Run `swiff -b` to open the backups folder.
 
 ## Requirements
 
