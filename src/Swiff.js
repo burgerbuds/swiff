@@ -10,7 +10,7 @@ import {
     doesFileExist,
     commaAmpersander,
 } from './utils'
-import { pathBackups, pathConfig, configFileName, pathApp, pathMedia } from './paths'
+import { pathBackups, pathLocalEnv, pathConfig, configFileName, pathApp, pathMedia } from './paths'
 import { getRemoteEnv, setupLocalEnv } from './env'
 import { doDropAllDbTables, doImportDb, doLocalDbDump } from './database'
 import { OptionsTemplate, MessageTemplate } from './templates'
@@ -246,14 +246,24 @@ class Swiff extends Component {
         if (!doesConfigExist) await createConfig()
         // Get the config
         const config = await setupConfig(!doesConfigExist)
-        // If there's any missing config options then return an error
-        if (config instanceof Error) return this.setMessage(config)
+        // If there's any missing config options then open the config file and show the error
+        if (config instanceof Error) {
+            // Open the config file after a few seconds
+            // fail silently because it doesn't matter so much
+            setTimeout(async () => await executeCommands(`open '${pathConfig}'`), 2000)
+            return this.setMessage(config)
+        }
         // Add the config to the global state
         this.setState({ config })
         // Get the users env file
         const localEnv = await setupLocalEnv(this.setMessage)
         // If there's anything wrong with the env then return an error
-        if (localEnv instanceof Error) return this.setMessage(localEnv)
+        if (localEnv instanceof Error) {
+            // Open the env file after a few seconds
+            // fail silently because it doesn't matter so much
+            setTimeout(async () => await executeCommands(`open '${pathLocalEnv}'`), 2000)
+            return this.setMessage(localEnv)
+        }
         // Add the env to the global state
         this.setState({ localEnv })
         // Check if the key file exists

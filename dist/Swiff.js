@@ -188,9 +188,19 @@ class Swiff extends _ink.Component {
 
       if (!doesConfigExist) yield (0, _config.createConfig)(); // Get the config
 
-      const config = yield (0, _config.setupConfig)(!doesConfigExist); // If there's any missing config options then return an error
+      const config = yield (0, _config.setupConfig)(!doesConfigExist); // If there's any missing config options then open the config file and show the error
 
-      if (config instanceof Error) return _this.setMessage(config); // Add the config to the global state
+      if (config instanceof Error) {
+        // Open the config file after a few seconds
+        // fail silently because it doesn't matter so much
+        setTimeout(
+        /*#__PURE__*/
+        _asyncToGenerator(function* () {
+          return yield (0, _utils.executeCommands)(`open '${_paths.pathConfig}'`);
+        }), 2000);
+        return _this.setMessage(config);
+      } // Add the config to the global state
+
 
       _this.setState({
         config
@@ -199,7 +209,17 @@ class Swiff extends _ink.Component {
 
       const localEnv = yield (0, _env.setupLocalEnv)(_this.setMessage); // If there's anything wrong with the env then return an error
 
-      if (localEnv instanceof Error) return _this.setMessage(localEnv); // Add the env to the global state
+      if (localEnv instanceof Error) {
+        // Open the env file after a few seconds
+        // fail silently because it doesn't matter so much
+        setTimeout(
+        /*#__PURE__*/
+        _asyncToGenerator(function* () {
+          return yield (0, _utils.executeCommands)(`open '${_paths.pathLocalEnv}'`);
+        }), 2000);
+        return _this.setMessage(localEnv);
+      } // Add the env to the global state
+
 
       _this.setState({
         localEnv
