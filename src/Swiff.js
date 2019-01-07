@@ -9,8 +9,16 @@ import {
     cmdPromise,
     doesFileExist,
     commaAmpersander,
+    replaceRsyncOutput,
 } from './utils'
-import { pathBackups, pathLocalEnv, pathConfig, configFileName, pathApp, pathMedia } from './paths'
+import {
+    pathBackups,
+    pathLocalEnv,
+    pathConfig,
+    configFileName,
+    pathApp,
+    pathMedia,
+} from './paths'
 import { getRemoteEnv, setupLocalEnv } from './env'
 import { doDropAllDbTables, doImportDb, doLocalDbDump } from './database'
 import { OptionsTemplate, MessageTemplate } from './templates'
@@ -104,8 +112,19 @@ class Swiff extends Component {
         // Deal with incorrect flags
         // TODO: Improve the test here
         const isFlaggedStart = this.state.isFlaggedStart
-        if (isFlaggedStart && this.props.push === false && this.props.database === false && this.props.pull === false && this.props.composer === false && this.props.backups === false) {
-            this.setMessage(`A supplied flag isn’t recognised\n\nSee a list of flags at:\n${colourAttention('swiff --help')}`)
+        if (
+            isFlaggedStart &&
+            this.props.push === false &&
+            this.props.database === false &&
+            this.props.pull === false &&
+            this.props.composer === false &&
+            this.props.backups === false
+        ) {
+            this.setMessage(
+                `A supplied flag isn’t recognised\n\nSee a list of flags at:\n${colourAttention(
+                    'swiff --help'
+                )}`
+            )
             return setTimeout(() => process.exit(), 250)
         }
     }
@@ -250,7 +269,10 @@ class Swiff extends Component {
         if (config instanceof Error) {
             // Open the config file after a few seconds
             // fail silently because it doesn't matter so much
-            setTimeout(async () => await executeCommands(`open '${pathConfig}'`), 2000)
+            setTimeout(
+                async () => await executeCommands(`open '${pathConfig}'`),
+                2000
+            )
             return this.setMessage(config)
         }
         // Add the config to the global state
@@ -261,7 +283,10 @@ class Swiff extends Component {
         if (localEnv instanceof Error) {
             // Open the env file after a few seconds
             // fail silently because it doesn't matter so much
-            setTimeout(async () => await executeCommands(`open '${pathLocalEnv}'`), 2000)
+            setTimeout(
+                async () => await executeCommands(`open '${pathLocalEnv}'`),
+                2000
+            )
             return this.setMessage(localEnv)
         }
         // Add the env to the global state
@@ -269,10 +294,17 @@ class Swiff extends Component {
         // Check if the key file exists
         // Get the users key we'll be using to connect with
         const user = await resolveUsername()
-        const sshKey = !isEmpty(localEnv.SWIFF_CUSTOM_KEY) ? localEnv.SWIFF_CUSTOM_KEY : `/Users/${user}/.ssh/id_rsa`
+        const sshKey = !isEmpty(localEnv.SWIFF_CUSTOM_KEY)
+            ? localEnv.SWIFF_CUSTOM_KEY
+            : `/Users/${user}/.ssh/id_rsa`
         const doesSshKeyExist = await doesFileExist(sshKey)
         // If the key isn't found then show a message
-        if (!doesSshKeyExist) return this.setMessage(`Your SSH key file wasn’t found\n\nEither create a new one at:\n${colourNotice(sshKey)}\n\nor add the path in your project .env, eg:\nSWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"`)
+        if (!doesSshKeyExist)
+            return this.setMessage(
+                `Your SSH key file wasn’t found\n\nEither create a new one at:\n${colourNotice(
+                    sshKey
+                )}\n\nor add the path in your project .env, eg:\nSWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"`
+            )
         // Check the users SSH key has been added to the server
         const checkSshSetup = await executeCommands(
             getSshTestCommand(config.server.user, config.server.host)
@@ -281,7 +313,14 @@ class Swiff extends Component {
         if (checkSshSetup instanceof Error) {
             return this.setMessage(
                 `A SSH connection couldn’t be made with these details:\n\n${colourNotice(
-                `Server host: ${config.server.host}\nServer user: ${config.server.user}\nSSH key: ${sshKey}`)}\n\n${getSshCopyInstructions(config)}\n\n${isEmpty(localEnv.SWIFF_CUSTOM_KEY) ? `Incorrect SSH key?\nAdd the path in your project .env\neg: SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"` : ''}`
+                    `Server host: ${config.server.host}\nServer user: ${
+                        config.server.user
+                    }\nSSH key: ${sshKey}`
+                )}\n\n${getSshCopyInstructions(config)}\n\n${
+                    isEmpty(localEnv.SWIFF_CUSTOM_KEY)
+                        ? `Incorrect SSH key?\nAdd the path in your project .env\neg: SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"`
+                        : ''
+                }`
             )
         }
         return true
@@ -298,7 +337,13 @@ class Swiff extends Component {
         if (remoteEnv instanceof Error) return this.setError(remoteEnv)
         const { ENVIRONMENT } = remoteEnv
         // Shame the user if they are pushing to production
-        if (!isEmpty(ENVIRONMENT) && (ENVIRONMENT === 'production' || ENVIRONMENT === 'live')) this.setMessage(`Bad practice: You’re pushing files straight to production,\nconsider a more reliable way to deploy changes in the future`)
+        if (
+            !isEmpty(ENVIRONMENT) &&
+            (ENVIRONMENT === 'production' || ENVIRONMENT === 'live')
+        )
+            this.setMessage(
+                `Bad practice: You’re pushing files straight to production,\nconsider a more reliable way to deploy changes in the future`
+            )
         // Create a list of paths to push
         if (
             pushFolders === undefined ||
@@ -319,7 +364,10 @@ class Swiff extends Component {
         // Remove empty values from the array so users can’t accidentally upload the entire project
         const filteredPushFolders = pushFolders.filter(i => i)
         // Check if the defined local paths exist
-        const hasMissingPaths = await getMissingPaths(filteredPushFolders, 'pushFolders')
+        const hasMissingPaths = await getMissingPaths(
+            filteredPushFolders,
+            'pushFolders'
+        )
         // If any local paths are missing then return the messages
         if (hasMissingPaths instanceof Error)
             return this.setError(hasMissingPaths)
@@ -340,18 +388,14 @@ class Swiff extends Component {
         // Send the commands to the push task
         const pushStatus = await executeCommands(pushCommands)
         // Return the result to the user
-        // Filter out the second confirmation message
         return pushStatus instanceof Error
             ? this.setError(
                   `There was an issue uploading the files\n\n${pushStatus}`
               )
             : this.setSuccess(
-                  `Your file push to ${colourHighlight(ENVIRONMENT)} was successful\n\n${colourMuted(
-                      pushStatus
-                          // Remove repeated text
-                          .replace('building file list ... done\n\n', '')
-                          .replace('building file list ... done\n', '')
-                  )}`
+                  `Your file push to ${colourHighlight(
+                      ENVIRONMENT
+                  )} was successful\n${replaceRsyncOutput(pushStatus)}`
               )
     }
 
@@ -399,7 +443,9 @@ class Swiff extends Component {
         const { ENVIRONMENT } = remoteEnv
         return pullStatus instanceof Error
             ? this.setError(
-                  `There was an issue downloading the files from ${colourAttention(ENVIRONMENT)} \n\n${colourMuted(
+                  `There was an issue downloading the files from ${colourAttention(
+                      ENVIRONMENT
+                  )} \n\n${colourMuted(
                       String(pullStatus).replace(
                           /No such file or directory/g,
                           colourDefault('No such file or directory')
@@ -407,7 +453,9 @@ class Swiff extends Component {
                   )}`
               )
             : this.setSuccess(
-                  `The file pull from ${colourHighlight(ENVIRONMENT)} was successful\n\n${colourMuted(
+                  `The file pull from ${colourHighlight(
+                      ENVIRONMENT
+                  )} was successful\n\n${colourMuted(
                       pullStatus
                           .replace('receiving file list ... done\n\n', '')
                           .replace('receiving file list ... done\n', '')
@@ -471,14 +519,23 @@ class Swiff extends Component {
         })
         // If there's any dropping issues then return the messages
         if (dropTables instanceof Error)
-            return String(dropTables).includes('ER_BAD_DB_ERROR: Unknown database ')
-                ? this.setMessage(`First create a database named ${colourNotice(
-                    localEnv.DB_DATABASE
-                )} with these login details:\n\nUsername: ${localEnv.DB_USER}\nPassword: ${localEnv.DB_PASSWORD}`)
-                : this.setError(`There were issues connecting to your local ${colourAttention(
-                    localEnv.DB_DATABASE
-                )} database\n\n${colourMuted(String(dropTables).replace('Error: ', ''))}`
+            return String(dropTables).includes(
+                'ER_BAD_DB_ERROR: Unknown database '
             )
+                ? this.setMessage(
+                      `First create a database named ${colourNotice(
+                          localEnv.DB_DATABASE
+                      )} with these login details:\n\nUsername: ${
+                          localEnv.DB_USER
+                      }\nPassword: ${localEnv.DB_PASSWORD}`
+                  )
+                : this.setError(
+                      `There were issues connecting to your local ${colourAttention(
+                          localEnv.DB_DATABASE
+                      )} database\n\n${colourMuted(
+                          String(dropTables).replace('Error: ', '')
+                      )}`
+                  )
         // Import the remote .sql into the local database
         const importDatabase = await doImportDb({
             user: localEnv.DB_USER,
@@ -537,7 +594,11 @@ class Swiff extends Component {
         // If there's download issues then end the connection and return the messages
         if (sshDownload1 instanceof Error) {
             ssh.dispose()
-            return this.setMessage(`Error downloading composer.json\n\n${colourNotice(sshDownload1)}`)
+            return this.setMessage(
+                `Error downloading composer.json\n\n${colourNotice(
+                    sshDownload1
+                )}`
+            )
         }
         // Download composer.lock from the remote server
         const sshDownload2 = await getSshFile({
@@ -548,7 +609,11 @@ class Swiff extends Component {
         // If there's download issues then end the connection and return the messages
         if (sshDownload2 instanceof Error) {
             ssh.dispose()
-            return this.setMessage(`Error downloading composer.lock\n\n${colourNotice(sshDownload2)}`)
+            return this.setMessage(
+                `Error downloading composer.lock\n\n${colourNotice(
+                    sshDownload2
+                )}`
+            )
         }
         // Close the connection
         ssh.dispose()

@@ -101,7 +101,9 @@ const getSshEnv = async ({ host, username, appPath, swiffSshKeyPath }) => {
 }
 
 const getSshCopyInstructions = ({ server }) =>
-    `Haven’t added your key to the server?\nUse ssh-copy-id to quickly add your key\neg: ssh-copy-id ${server.user}@${server.host}`
+    `Haven’t added your key to the server?\nUse ssh-copy-id to quickly add your key\neg: ssh-copy-id ${
+        server.user
+    }@${server.host}`
 
 // Build a string of commands to send to child_process.exec
 const getSshPushCommands = ({
@@ -113,14 +115,17 @@ const getSshPushCommands = ({
 }) => {
     // Set the custom identity if provided
     const customKey = !isEmpty(swiffSshKey) ? `-e "ssh -i ${swiffSshKey}"` : ''
-    const flags = `-avz --delete ${customKey} --exclude '.env'`
+    const flags = `-avzi --delete ${customKey} --exclude '.env'`
     // Build the final commands from a list of paths.
     const commandsArray = pushFolders.map(
         path =>
-            `(rsync ${flags} ${pathApp}/${path}/ ${user}@${host}:${workingDirectory}/${path}/)`
+            `echo 'pathfrom: ${path}' && (rsync ${flags} ${pathApp}/${path}/ ${user}@${host}:${workingDirectory}/${path}/)`
     )
     // Return the commands as a string
-    return commandsArray.join('\n')
+    const commandString = commandsArray.join(' && ')
+    // Use grep to filter the rsync output to leave only the added/deleted/modified
+    const commandsFiltered = `(${commandString}) | grep --regexp=^pathfrom --regexp=^\\< --regexp=^\\*d`
+    return commandsFiltered
 }
 
 // Build command to test ssh connection

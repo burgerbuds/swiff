@@ -180,11 +180,14 @@ const getSshPushCommands = ({
 }) => {
   // Set the custom identity if provided
   const customKey = !(0, _utils.isEmpty)(swiffSshKey) ? `-e "ssh -i ${swiffSshKey}"` : '';
-  const flags = `-avz --delete ${customKey} --exclude '.env'`; // Build the final commands from a list of paths.
+  const flags = `-avzi --delete ${customKey} --exclude '.env'`; // Build the final commands from a list of paths.
 
-  const commandsArray = pushFolders.map(path => `(rsync ${flags} ${_paths.pathApp}/${path}/ ${user}@${host}:${workingDirectory}/${path}/)`); // Return the commands as a string
+  const commandsArray = pushFolders.map(path => `echo 'pathfrom: ${path}' && (rsync ${flags} ${_paths.pathApp}/${path}/ ${user}@${host}:${workingDirectory}/${path}/)`); // Return the commands as a string
 
-  return commandsArray.join('\n');
+  const commandString = commandsArray.join(' && '); // Use grep to filter the rsync output to leave only the added/deleted/modified
+
+  const commandsFiltered = `(${commandString}) | grep --regexp=^pathfrom --regexp=^\\< --regexp=^\\*d`;
+  return commandsFiltered;
 }; // Build command to test ssh connection
 
 

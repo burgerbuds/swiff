@@ -6,7 +6,6 @@ import { colourNotice } from './palette'
 import { pathLocalEnv, pathLocalEnvTemplate } from './paths'
 import { getSshEnv } from './ssh'
 
-
 const createEnv = (fromPath = pathLocalEnvTemplate, toPath = pathLocalEnv) =>
     fs.copy(fromPath, toPath)
 
@@ -45,26 +44,31 @@ const getEnvIssues = (
 ) => {
     // Loop over the array and match against the keys in the users env
     const missingSettings = requiredSettings.filter(
-        setting => !(setting in env)
-        // Make sure there's an environment defined
-        || (setting === 'ENVIRONMENT' && isEmpty(env[setting]))
-        // Make sure there's a server defined
-        || (setting === 'DB_SERVER' && isEmpty(env[setting]))
-        // Make sure there's a user defined
-        || (setting === 'DB_USER' && isEmpty(env[setting]))
-        // Make sure there's a database defined
-        || (setting === 'DB_DATABASE' && isEmpty(env[setting]))
+        setting =>
+            !(setting in env) ||
+            // Make sure there's an environment defined
+            (setting === 'ENVIRONMENT' && isEmpty(env[setting])) ||
+            // Make sure there's a server defined
+            (setting === 'DB_SERVER' && isEmpty(env[setting])) ||
+            // Make sure there's a user defined
+            (setting === 'DB_USER' && isEmpty(env[setting])) ||
+            // Make sure there's a database defined
+            (setting === 'DB_DATABASE' && isEmpty(env[setting]))
     )
     // Return the error if any
     return !isEmpty(missingSettings)
         ? `${
               isEnvMissing
-                  ? `Please add an ${colourNotice(
-                        '.env'
-                    )} file in your ${isRemoteEnv ? 'remote' : 'local' } project root and add`
-                  : `${isRemoteEnv ? 'The remote' : 'Your local' } ${colourNotice('.env')} needs`
+                  ? `Please add an ${colourNotice('.env')} file in your ${
+                        isRemoteEnv ? 'remote' : 'local'
+                    } project root and add`
+                  : `${
+                        isRemoteEnv ? 'The remote' : 'Your local'
+                    } ${colourNotice('.env')} needs`
           } ${
-              missingSettings.length > 1 ? 'values for these settings' : 'a value for this setting'
+              missingSettings.length > 1
+                  ? 'values for these settings'
+                  : 'a value for this setting'
           }:\n\n${missingSettings
               .map(s => `${s}="${colourNotice(`value`)}"`)
               .join('\n')}${

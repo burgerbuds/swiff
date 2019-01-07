@@ -5,7 +5,7 @@ import fs from 'fs-extra'
 import { exec } from 'child_process'
 import cmd from 'node-cmd'
 import dns from 'dns'
-import { colourHighlight, colourAttention } from './palette'
+import { colourHighlight, colourAttention, colourNotice } from './palette'
 const execPromise = promisify(exec)
 const cmdPromise = promisify(cmd.get)
 
@@ -51,9 +51,9 @@ const getMissingPaths = async (suppliedPaths, configSetting) => {
                   hasMultipleResults ? 'aren’t found in' : 'isn’t found in'
               } your project\n\nEither create ${
                   hasMultipleResults ? 'those folders' : 'the folder'
-              } or adjust the ${colourAttention(configSetting)} values in your ${colourAttention(
-                  'swiff.config.js'
-              )}`
+              } or adjust the ${colourAttention(
+                  configSetting
+              )} values in your ${colourAttention('swiff.config.js')}`
           )
         : []
 }
@@ -67,6 +67,13 @@ const commaAmpersander = (array, styler = colourHighlight) =>
         )
         .join('')
 
+const replaceRsyncOutput = outputText =>
+    outputText
+        .replace(/pathfrom: /g, '\n') // Heading
+        .replace(/\<f\+\+\+\+\+\+\+/g, colourHighlight('+')) // Added
+        .replace(/\*deleting/g, colourAttention('-')) // Deleted
+        .replace(/\<f.st..../g, colourNotice('^')) // Updated
+
 export {
     resolveApp,
     isEmpty,
@@ -76,4 +83,5 @@ export {
     cmdPromise,
     doesFileExist,
     commaAmpersander,
+    replaceRsyncOutput,
 }

@@ -8,7 +8,10 @@ module.exports = {
     pathApp: resolveApp(''),
     pathConfig: resolveApp(configFileName),
     pathLocalEnv: resolveApp('.env'),
-    pathConfigTemplate: path.resolve(__dirname, `../resources/${configFileName}`),
+    pathConfigTemplate: path.resolve(
+        __dirname,
+        `../resources/${configFileName}`
+    ),
     pathLocalEnvTemplate: path.resolve(__dirname, '../resources/.env'),
     pathBackups: path.resolve(__dirname, '../backups'),
     pathMedia: path.resolve(__dirname, '../resources'),

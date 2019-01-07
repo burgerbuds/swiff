@@ -70,11 +70,11 @@ exports.getParsedEnv = getParsedEnv;
 
 const getEnvIssues = (env, isEnvMissing, isRemoteEnv, requiredSettings = ['ENVIRONMENT', 'DB_SERVER', 'DB_USER', 'DB_PASSWORD', 'DB_DATABASE']) => {
   // Loop over the array and match against the keys in the users env
-  const missingSettings = requiredSettings.filter(setting => !(setting in env) // Make sure there's an environment defined
-  || setting === 'ENVIRONMENT' && (0, _utils.isEmpty)(env[setting]) // Make sure there's a server defined
-  || setting === 'DB_SERVER' && (0, _utils.isEmpty)(env[setting]) // Make sure there's a user defined
-  || setting === 'DB_USER' && (0, _utils.isEmpty)(env[setting]) // Make sure there's a database defined
-  || setting === 'DB_DATABASE' && (0, _utils.isEmpty)(env[setting])); // Return the error if any
+  const missingSettings = requiredSettings.filter(setting => !(setting in env) || // Make sure there's an environment defined
+  setting === 'ENVIRONMENT' && (0, _utils.isEmpty)(env[setting]) || // Make sure there's a server defined
+  setting === 'DB_SERVER' && (0, _utils.isEmpty)(env[setting]) || // Make sure there's a user defined
+  setting === 'DB_USER' && (0, _utils.isEmpty)(env[setting]) || // Make sure there's a database defined
+  setting === 'DB_DATABASE' && (0, _utils.isEmpty)(env[setting])); // Return the error if any
 
   return !(0, _utils.isEmpty)(missingSettings) ? `${isEnvMissing ? `Please add an ${(0, _palette.colourNotice)('.env')} file in your ${isRemoteEnv ? 'remote' : 'local'} project root and add` : `${isRemoteEnv ? 'The remote' : 'Your local'} ${(0, _palette.colourNotice)('.env')} needs`} ${missingSettings.length > 1 ? 'values for these settings' : 'a value for this setting'}:\n\n${missingSettings.map(s => `${s}="${(0, _palette.colourNotice)(`value`)}"`).join('\n')}${isEnvMissing ? `\n\nOnce you've finished, rerun this task by pressing enter...` : ''}` : null;
 };

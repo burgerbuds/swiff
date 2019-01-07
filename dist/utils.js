@@ -15,7 +15,7 @@ Object.defineProperty(exports, "isEmpty", {
     return _lodash.isEmpty;
   }
 });
-exports.commaAmpersander = exports.doesFileExist = exports.cmdPromise = exports.getMissingPaths = exports.executeCommands = exports.resolveApp = void 0;
+exports.replaceRsyncOutput = exports.commaAmpersander = exports.doesFileExist = exports.cmdPromise = exports.getMissingPaths = exports.executeCommands = exports.resolveApp = void 0;
 
 var _path = _interopRequireDefault(require("path"));
 
@@ -136,3 +136,11 @@ exports.getMissingPaths = getMissingPaths;
 const commaAmpersander = (array, styler = _palette.colourHighlight) => array.map((f, i) => (i > 0 ? i === array.length - 1 ? ' and ' : ', ' : '') + styler(f)).join('');
 
 exports.commaAmpersander = commaAmpersander;
+
+const replaceRsyncOutput = outputText => outputText.replace(/pathfrom: /g, '\n') // Heading
+.replace(/\<f\+\+\+\+\+\+\+/g, (0, _palette.colourHighlight)('+')) // Added
+.replace(/\*deleting/g, (0, _palette.colourAttention)('-')) // Deleted
+.replace(/\<f.st..../g, (0, _palette.colourNotice)('^')); // Updated
+
+
+exports.replaceRsyncOutput = replaceRsyncOutput;
