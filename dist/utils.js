@@ -29,8 +29,6 @@ var _child_process = require("child_process");
 
 var _nodeCmd = _interopRequireDefault(require("node-cmd"));
 
-var _dns = _interopRequireDefault(require("dns"));
-
 var _palette = require("./palette");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -133,14 +131,24 @@ function () {
 
 exports.getMissingPaths = getMissingPaths;
 
-const commaAmpersander = (array, styler = _palette.colourHighlight) => array.map((f, i) => (i > 0 ? i === array.length - 1 ? ' and ' : ', ' : '') + styler(f)).join('');
+const commaAmpersander = (array, styler = _palette.colourHighlight) => array.map((f, i) => (i > 0 ? i === array.length - 1 ? ' and ' : ', ' : '') + styler(f)).join(''); // Check https://stackoverflow.com/a/36851784/9055509 for rsync output details
+
 
 exports.commaAmpersander = commaAmpersander;
 
-const replaceRsyncOutput = outputText => outputText.replace(/pathfrom: /g, '\n') // Heading
-.replace(/\<f\+\+\+\+\+\+\+/g, (0, _palette.colourHighlight)('+')) // Added
+const replaceRsyncOutput = (outputText, folders) => // If no changes then don't render anything
+outputText.split('\n').filter(Boolean).length === folders.length ? '' : outputText.split('\n') // Remove empty items
+.filter(Boolean) // Add note to folders with now changes
+.map((e, i, arr) => {
+  // (i !== arr.length)
+  const isLast = i === arr.length - 1;
+  const isNextAFolder = !isLast && arr[i + 1].startsWith('!');
+  return e.startsWith('!') && (isNextAFolder || isLast) ? '' : e;
+}).map(i => i.startsWith('!') ? `\n${i.substring(1)}` : i) // Remove 'modified date updated'
+.filter(i => !i.startsWith('<f..t')).map(i => `${i.replace(/\<f\+\+\+\+\+\+\+/g, (0, _palette.colourHighlight)('+')) // Added
 .replace(/\*deleting/g, (0, _palette.colourAttention)('-')) // Deleted
-.replace(/\<f.st..../g, (0, _palette.colourNotice)('^')); // Updated
-
+.replace(/\<f.st..../g, (0, _palette.colourHighlight)('^')) // Updated
+}`) // Remove empty items
+.filter(Boolean).join('\n');
 
 exports.replaceRsyncOutput = replaceRsyncOutput;

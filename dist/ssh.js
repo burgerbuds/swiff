@@ -166,8 +166,7 @@ exports.getSshEnv = getSshEnv;
 
 const getSshCopyInstructions = ({
   server
-}) => `Haven’t added your key to the server?\nUse ssh-copy-id to quickly add your key\neg: ssh-copy-id ${server.user}@${server.host}`; // Build a string of commands to send to child_process.exec
-
+}) => `Haven’t added your key to the server?\nUse ssh-copy-id to quickly add your key\neg: ssh-copy-id ${server.user}@${server.host}`;
 
 exports.getSshCopyInstructions = getSshCopyInstructions;
 
@@ -179,15 +178,15 @@ const getSshPushCommands = ({
   swiffSshKey
 }) => {
   // Set the custom identity if provided
-  const customKey = !(0, _utils.isEmpty)(swiffSshKey) ? `-e "ssh -i ${swiffSshKey}"` : '';
-  const flags = `-avzi --delete ${customKey} --exclude '.env'`; // Build the final commands from a list of paths.
+  const flags = [// '--dry-run',
+  '--archive', '--compress', '--itemize-changes', '--delete', '--exclude ".env"', !(0, _utils.isEmpty)(swiffSshKey) ? `-e "ssh -i ${swiffSshKey}"` : ''].join(' '); // Build the final commands from a list of paths
 
-  const commandsArray = pushFolders.map(path => `echo 'pathfrom: ${path}' && (rsync ${flags} ${_paths.pathApp}/${path}/ ${user}@${host}:${workingDirectory}/${path}/)`); // Return the commands as a string
+  const commandsArray = pushFolders.map(path => `echo '!${path}' && (rsync ${flags} ${_paths.pathApp}/${path}/ ${user}@${host}:${workingDirectory}/${path}/)`); // Return the commands as a string
 
-  const commandString = commandsArray.join(' && '); // Use grep to filter the rsync output to leave only the added/deleted/modified
+  const commandString = commandsArray.join(' && '); // Use grep to filter the rsync output
 
-  const commandsFiltered = `(${commandString}) | grep --regexp=^pathfrom --regexp=^\\< --regexp=^\\*d`;
-  return commandsFiltered;
+  const greppage = `grep -E '^(!|>|<|\\*)'`;
+  return `(${commandString}) | ${greppage}`;
 }; // Build command to test ssh connection
 
 

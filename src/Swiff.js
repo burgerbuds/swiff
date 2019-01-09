@@ -395,7 +395,7 @@ class Swiff extends Component {
             : this.setSuccess(
                   `Your file push to ${colourHighlight(
                       ENVIRONMENT
-                  )} was successful\n${replaceRsyncOutput(pushStatus)}`
+                  )} was successful\n${replaceRsyncOutput(pushStatus, this.state.config.pushFolders)}`
               )
     }
 

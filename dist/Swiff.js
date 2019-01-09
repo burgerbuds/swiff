@@ -291,7 +291,7 @@ class Swiff extends _ink.Component {
 
       const pushStatus = yield (0, _utils.executeCommands)(pushCommands); // Return the result to the user
 
-      return pushStatus instanceof Error ? _this.setError(`There was an issue uploading the files\n\n${pushStatus}`) : _this.setSuccess(`Your file push to ${(0, _palette.colourHighlight)(ENVIRONMENT)} was successful\n${(0, _utils.replaceRsyncOutput)(pushStatus)}`);
+      return pushStatus instanceof Error ? _this.setError(`There was an issue uploading the files\n\n${pushStatus}`) : _this.setSuccess(`Your file push to ${(0, _palette.colourHighlight)(ENVIRONMENT)} was successful\n${(0, _utils.replaceRsyncOutput)(pushStatus, _this.state.config.pushFolders)}`);
     }));
 
     _defineProperty(this, "handlePull",

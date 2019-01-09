@@ -4,7 +4,6 @@ import { isEmpty } from 'lodash'
 import fs from 'fs-extra'
 import { exec } from 'child_process'
 import cmd from 'node-cmd'
-import dns from 'dns'
 import { colourHighlight, colourAttention, colourNotice } from './palette'
 const execPromise = promisify(exec)
 const cmdPromise = promisify(cmd.get)
@@ -67,12 +66,36 @@ const commaAmpersander = (array, styler = colourHighlight) =>
         )
         .join('')
 
-const replaceRsyncOutput = outputText =>
-    outputText
-        .replace(/pathfrom: /g, '\n') // Heading
-        .replace(/\<f\+\+\+\+\+\+\+/g, colourHighlight('+')) // Added
-        .replace(/\*deleting/g, colourAttention('-')) // Deleted
-        .replace(/\<f.st..../g, colourNotice('^')) // Updated
+// Check https://stackoverflow.com/a/36851784/9055509 for rsync output details
+const replaceRsyncOutput = (outputText, folders) =>
+    // If no changes then don't render anything
+    outputText.split('\n').filter(Boolean).length === folders.length
+        ? ''
+        : outputText
+        .split('\n')
+        // Remove empty items
+        .filter(Boolean)
+        // Add note to folders with now changes
+        .map((e, i, arr) => {
+            // (i !== arr.length)
+            const isLast = (i === arr.length-1)
+            const isNextAFolder = (!isLast && arr[i+1].startsWith('!'))
+            return e.startsWith('!')
+            && (isNextAFolder || isLast)
+                ? '' : e
+        })
+        .map(i => i.startsWith('!') ? `\n${i.substring(1)}` : i)
+        // Remove 'modified date updated'
+        .filter(i => !i.startsWith('<f..t'))
+        .map(i => `${
+            i
+            .replace(/\<f\+\+\+\+\+\+\+/g, colourHighlight('+')) // Added
+            .replace(/\*deleting/g, colourAttention('-')) // Deleted
+            .replace(/\<f.st..../g, colourHighlight('^')) // Updated
+        }`)
+        // Remove empty items
+        .filter(Boolean)
+        .join('\n')
 
 export {
     resolveApp,
