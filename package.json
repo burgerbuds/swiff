@@ -1,6 +1,6 @@
 {
     "name": "swiff",
-    "version": "1.0.8",
+    "version": "1.1.0",
     "description": "Multi-environment command line tools for time-saving web developers",
     "main": "index.js",
     "scripts": {
