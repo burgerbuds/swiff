@@ -138,17 +138,18 @@ exports.commaAmpersander = commaAmpersander;
 
 const replaceRsyncOutput = (outputText, folders) => // If no changes then don't render anything
 outputText.split('\n').filter(Boolean).length === folders.length ? '' : outputText.split('\n') // Remove empty items
-.filter(Boolean) // Add note to folders with now changes
+.filter(Boolean) // Add note to folders without changes
+// TODO: Convert this to a filter
 .map((e, i, arr) => {
-  // (i !== arr.length)
   const isLast = i === arr.length - 1;
   const isNextAFolder = !isLast && arr[i + 1].startsWith('!');
   return e.startsWith('!') && (isNextAFolder || isLast) ? '' : e;
-}).map(i => i.startsWith('!') ? `\n${i.substring(1)}` : i) // Remove 'modified date updated'
-.filter(i => !i.startsWith('<f..t')).map(i => `${i.replace(/\<f\+\+\+\+\+\+\+/g, (0, _palette.colourHighlight)('+')) // Added
+}) // Style folder headings
+.map(i => i.startsWith('!') ? `\n${i.substring(1)}` : i) // Remove 'modified date updated'
+.filter(i => !i.startsWith('<f..t')).map(i => i.replace(/(\<|\>)f.st..../g, (0, _palette.colourHighlight)('^')) // Updated
+.replace(/(\<|\>)f\+\+\+\+\+\+\+/g, (0, _palette.colourHighlight)('+')) // Added
 .replace(/\*deleting/g, (0, _palette.colourAttention)('-')) // Deleted
-.replace(/\<f.st..../g, (0, _palette.colourHighlight)('^')) // Updated
-}`) // Remove empty items
+) // Remove empty items
 .filter(Boolean).join('\n');
 
 exports.replaceRsyncOutput = replaceRsyncOutput;

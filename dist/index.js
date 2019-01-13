@@ -19,7 +19,8 @@ var _package = _interopRequireDefault(require("./../package.json"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// Notify when there's an update available
+function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
+
 (0, _updateNotifier.default)({
   pkg: _package.default
 }).notify();
@@ -29,11 +30,11 @@ const cli = (0, _meow.default)( // Set the help message shown when the user runs
 
     Otherwise use these flags for quick task launches:
 
-    🚀  Push: ${(0, _palette.colourHighlight)('swiff -u')}
-    alias 'swiff -push'
-
     📥  Pull: ${(0, _palette.colourHighlight)('swiff -d')}
     alias 'swiff -pull'
+
+    🚀  Push: ${(0, _palette.colourHighlight)('swiff -u')}
+    alias 'swiff -push'
 
     💫  Database: ${(0, _palette.colourHighlight)('swiff -db')}
     alias 'swiff -database'
@@ -45,30 +46,28 @@ const cli = (0, _meow.default)( // Set the help message shown when the user runs
     alias 'swiff --backups'
 `, {
   flags: {
-    push: {
-      type: 'boolean',
-      default: false,
-      alias: 'u'
-    },
     pull: {
       type: 'boolean',
-      default: false,
       alias: 'd'
+    },
+    push: {
+      type: 'boolean',
+      alias: 'u'
     },
     database: {
       type: 'boolean',
-      default: false,
       alias: 'db'
     },
     composer: {
       type: 'boolean',
-      default: false,
       alias: 'c'
     },
     backups: {
       type: 'boolean',
-      default: false,
       alias: 'b'
+    },
+    ssh: {
+      type: 'boolean'
     }
   }
 }); // Catch unhandled rejections
@@ -79,5 +78,14 @@ process.on('unhandledRejection', reason => {
 
 process.on('uncaughtException', error => {
   _fsExtra.default.writeSync(1, `${_chalk.default.red(error)}\n\n`);
+}); // End process on ctrl+c or ESC
+
+process.stdin.on('data', key => {
+  if (['\u0003', '\u001B'].includes(key)) {
+    console.log((0, _palette.colourHighlight)('\n👌  Your SSH connection was ended'));
+    process.exit();
+  }
 });
-(0, _ink.render)((0, _ink.h)(_Swiff.default, cli.flags));
+(0, _ink.render)((0, _ink.h)(_Swiff.default, _extends({}, cli.flags, {
+  pkg: cli.pkg
+})));

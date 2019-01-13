@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getSshPushCommands = exports.getSshCopyInstructions = exports.getSshTestCommand = exports.getSshDatabase = exports.getSshEnv = exports.getSshFile = exports.getSshInit = void 0;
+exports.getSshPullCommands = exports.getSshPushCommands = exports.getSshCopyInstructions = exports.getSshTestCommand = exports.getSshDatabase = exports.getSshEnv = exports.getSshFile = exports.getSshInit = void 0;
 
 var _ink = require("ink");
 
@@ -177,20 +177,45 @@ const getSshPushCommands = ({
   workingDirectory,
   swiffSshKey
 }) => {
-  // Set the custom identity if provided
-  const flags = [// '--dry-run',
-  '--archive', '--compress', '--itemize-changes', '--delete', '--exclude ".env"', !(0, _utils.isEmpty)(swiffSshKey) ? `-e "ssh -i ${swiffSshKey}"` : ''].join(' '); // Build the final commands from a list of paths
+  const flags = ['--dry-run', // Preserve permissions
+  '--archive', // Compress file data during the transfer
+  '--compress', // Output a change-summary for all updates
+  '--itemize-changes', // Delete extraneous files from dest dirs
+  '--delete', '--exclude ".env"', // Set the custom identity if provided
+  !(0, _utils.isEmpty)(swiffSshKey) ? `-e "ssh -i ${swiffSshKey}"` : ''].join(' '); // Build the final command string from an array of folders
 
-  const commandsArray = pushFolders.map(path => `echo '!${path}' && (rsync ${flags} ${_paths.pathApp}/${path}/ ${user}@${host}:${workingDirectory}/${path}/)`); // Return the commands as a string
-
-  const commandString = commandsArray.join(' && '); // Use grep to filter the rsync output
+  const rsyncCommands = pushFolders.map(path => `echo '!${path}' && (rsync ${flags} ${_paths.pathApp}/${path}/ ${user}@${host}:${workingDirectory}/${path}/)`).join(' && '); // Use grep to filter the rsync output
 
   const greppage = `grep -E '^(!|>|<|\\*)'`;
-  return `(${commandString}) | ${greppage}`;
+  return `(${rsyncCommands}) | ${greppage}`;
+};
+
+exports.getSshPushCommands = getSshPushCommands;
+
+const getSshPullCommands = ({
+  pullFolders,
+  user,
+  host,
+  appPath,
+  swiffSshKey
+}) => {
+  const flags = ['--dry-run', // Preserve permissions
+  '--archive', // Compress file data during the transfer
+  '--compress', // Output a change-summary for all updates
+  '--itemize-changes', !(0, _utils.isEmpty)(swiffSshKey) ? `-e "ssh -i ${swiffSshKey}"` : ''].join(' '); // Build the final command string from an array of folders
+
+  const rsyncCommands = pullFolders.map(path => {
+    const rSyncFrom = `${appPath}/${path}/`;
+    const rSyncTo = `./${path}/`;
+    return [`echo '!${path}'`, `rsync ${flags} ${user}@${host}:${rSyncFrom} ${rSyncTo}`].join(' && ');
+  }).join(';'); // Use grep to filter the rsync output
+
+  const greppage = `grep -E '^(!|>|<|\\*)'`;
+  return `(${rsyncCommands}) | ${greppage}`;
 }; // Build command to test ssh connection
 
 
-exports.getSshPushCommands = getSshPushCommands;
+exports.getSshPullCommands = getSshPullCommands;
 
 const getSshTestCommand = (user, host) => `ssh -o BatchMode=yes -o ConnectTimeout=5 ${user}@${host} echo 'SSH access is setup' 2>&1`; // Download a database over SSH to a local folder
 
