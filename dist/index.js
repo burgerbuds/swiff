@@ -42,7 +42,9 @@ const cli = (0, _meow.default)( // Set the help message shown when the user runs
     🎩  Composer: ${(0, _palette.colourHighlight)('swiff -c')}
     alias 'swiff -composer'
 
-    Open the backups folder: ${(0, _palette.colourHighlight)('swiff -b')}
+    💻  Remote terminal: ${(0, _palette.colourHighlight)('swiff -ssh')}
+
+    🏬  Open the backups folder: ${(0, _palette.colourHighlight)('swiff -b')}
     alias 'swiff --backups'
 `, {
   flags: {
