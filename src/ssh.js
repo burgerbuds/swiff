@@ -132,6 +132,36 @@ const getSshPushCommands = ({
     // Use grep to filter the rsync output
     const greppage = `grep -E '^(!|>|<|\\*)'`
     return `(${commandString}) | ${greppage}`
+
+const getSshPullCommands = ({
+    pullFolders,
+    user,
+    host,
+    appPath,
+    swiffSshKey,
+}) => {
+    const flags = [
+        '--dry-run',
+        // Preserve permissions
+        '--archive',
+        // Compress file data during the transfer
+        '--compress',
+        // Output a change-summary for all updates
+        '--itemize-changes',
+        !isEmpty(swiffSshKey) ? `-e "ssh -i ${swiffSshKey}"` : ''
+    ].join(' ')
+    // Build the final command string from an array of folders
+    const rsyncCommands = pullFolders.map(path => {
+        const rSyncFrom = `${appPath}/${path}/`
+        const rSyncTo = `./${path}/`
+        return [
+            `echo '!${path}'`,
+            `rsync ${flags} ${user}@${host}:${rSyncFrom} ${rSyncTo}`
+        ].join(' && ')
+    }).join(';')
+    // Use grep to filter the rsync output
+    const greppage = `grep -E '^(!|>|<|\\*)'`
+    return `(${rsyncCommands}) | ${greppage}`
 }
 
 // Build command to test ssh connection
@@ -217,4 +247,5 @@ export {
     getSshTestCommand,
     getSshCopyInstructions,
     getSshPushCommands,
+    getSshPullCommands,
 }
