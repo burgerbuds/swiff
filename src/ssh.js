@@ -113,7 +113,7 @@ const getSshPushCommands = ({
     swiffSshKey,
 }) => {
     const flags = [
-        '--dry-run',
+        // '--dry-run',
         // Preserve permissions
         '--archive',
         // Compress file data during the transfer
@@ -144,7 +144,7 @@ const getSshPullCommands = ({
     swiffSshKey,
 }) => {
     const flags = [
-        '--dry-run',
+        // '--dry-run',
         // Preserve permissions
         '--archive',
         // Compress file data during the transfer

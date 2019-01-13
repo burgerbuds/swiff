@@ -177,7 +177,8 @@ const getSshPushCommands = ({
   workingDirectory,
   swiffSshKey
 }) => {
-  const flags = ['--dry-run', // Preserve permissions
+  const flags = [// '--dry-run',
+  // Preserve permissions
   '--archive', // Compress file data during the transfer
   '--compress', // Output a change-summary for all updates
   '--itemize-changes', // Delete extraneous files from dest dirs
@@ -199,7 +200,8 @@ const getSshPullCommands = ({
   appPath,
   swiffSshKey
 }) => {
-  const flags = ['--dry-run', // Preserve permissions
+  const flags = [// '--dry-run',
+  // Preserve permissions
   '--archive', // Compress file data during the transfer
   '--compress', // Output a change-summary for all updates
   '--itemize-changes', !(0, _utils.isEmpty)(swiffSshKey) ? `-e "ssh -i ${swiffSshKey}"` : ''].join(' '); // Build the final command string from an array of folders
