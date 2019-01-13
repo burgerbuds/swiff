@@ -75,24 +75,25 @@ const replaceRsyncOutput = (outputText, folders) =>
         .split('\n')
         // Remove empty items
         .filter(Boolean)
-        // Add note to folders with now changes
+        // Add note to folders without changes
+        // TODO: Convert this to a filter
         .map((e, i, arr) => {
-            // (i !== arr.length)
             const isLast = (i === arr.length-1)
             const isNextAFolder = (!isLast && arr[i+1].startsWith('!'))
             return e.startsWith('!')
             && (isNextAFolder || isLast)
                 ? '' : e
         })
+        // Style folder headings
         .map(i => i.startsWith('!') ? `\n${i.substring(1)}` : i)
         // Remove 'modified date updated'
         .filter(i => !i.startsWith('<f..t'))
-        .map(i => `${
+        .map(i =>
             i
-            .replace(/\<f\+\+\+\+\+\+\+/g, colourHighlight('+')) // Added
+            .replace(/(\<|\>)f.st..../g, colourHighlight('^')) // Updated
+            .replace(/(\<|\>)f\+\+\+\+\+\+\+/g, colourHighlight('+')) // Added
             .replace(/\*deleting/g, colourAttention('-')) // Deleted
-            .replace(/\<f.st..../g, colourHighlight('^')) // Updated
-        }`)
+        )
         // Remove empty items
         .filter(Boolean)
         .join('\n')
