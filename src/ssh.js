@@ -112,26 +112,29 @@ const getSshPushCommands = ({
     workingDirectory,
     swiffSshKey,
 }) => {
-    // Set the custom identity if provided
     const flags = [
-        // '--dry-run',
+        '--dry-run',
+        // Preserve permissions
         '--archive',
+        // Compress file data during the transfer
         '--compress',
+        // Output a change-summary for all updates
         '--itemize-changes',
+        // Delete extraneous files from dest dirs
         '--delete',
         '--exclude ".env"',
+        // Set the custom identity if provided
         !isEmpty(swiffSshKey) ? `-e "ssh -i ${swiffSshKey}"` : ''
     ].join(' ')
-    // Build the final commands from a list of paths
-    const commandsArray = pushFolders.map(
+    // Build the final command string from an array of folders
+    const rsyncCommands = pushFolders.map(
         path =>
             `echo '!${path}' && (rsync ${flags} ${pathApp}/${path}/ ${user}@${host}:${workingDirectory}/${path}/)`
-    )
-    // Return the commands as a string
-    const commandString = commandsArray.join(' && ')
+    ).join(' && ')
     // Use grep to filter the rsync output
     const greppage = `grep -E '^(!|>|<|\\*)'`
-    return `(${commandString}) | ${greppage}`
+    return `(${rsyncCommands}) | ${greppage}`
+}
 
 const getSshPullCommands = ({
     pullFolders,
