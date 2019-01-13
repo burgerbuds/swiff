@@ -19,11 +19,11 @@ const cli = meow(
 
     Otherwise use these flags for quick task launches:
 
-    🚀  Push: ${colourHighlight('swiff -u')}
-    alias 'swiff -push'
-
     📥  Pull: ${colourHighlight('swiff -d')}
     alias 'swiff -pull'
+
+    🚀  Push: ${colourHighlight('swiff -u')}
+    alias 'swiff -push'
 
     💫  Database: ${colourHighlight('swiff -db')}
     alias 'swiff -database'
@@ -31,35 +31,35 @@ const cli = meow(
     🎩  Composer: ${colourHighlight('swiff -c')}
     alias 'swiff -composer'
 
-    Open the backups folder: ${colourHighlight('swiff -b')}
+    💻  Remote terminal: ${colourHighlight('swiff -ssh')}
+
+    🏬  Open the backups folder: ${colourHighlight('swiff -b')}
     alias 'swiff --backups'
 `,
     {
         flags: {
-            push: {
-                type: 'boolean',
-                default: false,
-                alias: 'u',
-            },
             pull: {
                 type: 'boolean',
-                default: false,
                 alias: 'd',
+            },
+            push: {
+                type: 'boolean',
+                alias: 'u',
             },
             database: {
                 type: 'boolean',
-                default: false,
                 alias: 'db',
             },
             composer: {
                 type: 'boolean',
-                default: false,
                 alias: 'c',
             },
             backups: {
                 type: 'boolean',
-                default: false,
                 alias: 'b',
+            },
+            ssh: {
+                type: 'boolean',
             },
         },
     }
