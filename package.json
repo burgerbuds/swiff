@@ -1,7 +1,7 @@
 {
     "name": "swiff",
     "version": "1.0.8",
-    "description": "🚀📥💫🎩 Multi-environment command line tools for time-saving web developers",
+    "description": "Multi-environment command line tools for time-saving web developers",
     "main": "index.js",
     "scripts": {
         "start": "node dist/index.js",
@@ -39,7 +39,7 @@
         "swiff": "dist/index.js"
     },
     "dependencies": {
-        "chalk": "^2.4.1",
+        "chalk": "^2.4.2",
         "dotenv": "^6.2.0",
         "fs-extra": "^7.0.1",
         "import-jsx": "^1.3.0",
@@ -56,7 +56,7 @@
         "node-ssh": "^5.1.2",
         "nodemon": "^1.18.9",
         "promise-mysql": "^3.3.1",
-        "ssh2": "^0.6.2",
+        "ssh2": "^0.7.1",
         "universal-analytics": "^0.4.20",
         "update-notifier": "^2.5.0",
         "username": "^4.0.0"
@@ -70,9 +70,9 @@
         "ava": "^1.0.1",
         "babel-plugin-transform-react-jsx": "^6.24.1",
         "eslint-config-xo-react": "^0.17.0",
-        "eslint-plugin-react": "^7.12.2",
+        "eslint-plugin-react": "^7.12.3",
         "prettier": "^1.15.3",
-        "semantic-release": "^15.13.2",
+        "semantic-release": "^15.13.3",
         "xo": "^0.23.0"
     },
     "ava": {
