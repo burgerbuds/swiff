@@ -75,4 +75,12 @@ process.on('uncaughtException', error => {
     fs.writeSync(1, `${chalk.red(error)}\n\n`)
 })
 
-render(<Swiff {...cli.flags} />)
+// End process on ctrl+c or ESC
+process.stdin.on('data', key => {
+    if (['\u0003', '\u001B'].includes(key)) {
+        console.log(colourHighlight('\n👌  Your SSH connection was ended'))
+        process.exit()
+    }
+})
+
+render(<Swiff {...cli.flags} pkg={cli.pkg} />)
