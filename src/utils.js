@@ -1,6 +1,6 @@
 import path from 'path'
 import { promisify } from 'util'
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import fs from 'fs-extra'
 import { exec } from 'child_process'
 import cmd from 'node-cmd'
@@ -72,31 +72,33 @@ const replaceRsyncOutput = (outputText, folders) =>
     outputText.split('\n').filter(Boolean).length === folders.length
         ? ''
         : outputText
-        .split('\n')
-        // Remove empty items
-        .filter(Boolean)
-        // Add note to folders without changes
-        // TODO: Convert this to a filter
-        .map((e, i, arr) => {
-            const isLast = (i === arr.length-1)
-            const isNextAFolder = (!isLast && arr[i+1].startsWith('!'))
-            return e.startsWith('!')
-            && (isNextAFolder || isLast)
-                ? '' : e
-        })
-        // Style folder headings
-        .map(i => i.startsWith('!') ? `\n${i.substring(1)}` : i)
-        // Remove 'modified date updated'
-        .filter(i => !i.startsWith('<f..t'))
-        .map(i =>
-            i
-            .replace(/(\<|\>)f.st..../g, colourHighlight('^')) // Updated
-            .replace(/(\<|\>)f\+\+\+\+\+\+\+/g, colourHighlight('+')) // Added
-            .replace(/\*deleting/g, colourAttention('-')) // Deleted
-        )
-        // Remove empty items
-        .filter(Boolean)
-        .join('\n')
+              .split('\n')
+              // Remove empty items
+              .filter(Boolean)
+              // Add note to folders without changes
+              // TODO: Convert this to a filter
+              .map((e, i, arr) => {
+                  const isLast = i === arr.length - 1
+                  const isNextAFolder = !isLast && arr[i + 1].startsWith('!')
+                  return e.startsWith('!') && (isNextAFolder || isLast) ? '' : e
+              })
+              // Style folder headings
+              .map(i => (i.startsWith('!') ? `\n${i.substring(1)}` : i))
+              // Remove 'modified date updated'
+              .filter(i => !i.startsWith('<f..t'))
+              .map(
+                  i =>
+                      i
+                          .replace(/(\<|\>)f.st..../g, colourHighlight('^')) // Updated
+                          .replace(
+                              /(\<|\>)f\+\+\+\+\+\+\+/g,
+                              colourHighlight('+')
+                          ) // Added
+                          .replace(/\*deleting/g, colourAttention('-')) // Deleted
+              )
+              // Remove empty items
+              .filter(Boolean)
+              .join('\n')
 
 export {
     resolveApp,

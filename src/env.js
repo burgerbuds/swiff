@@ -9,17 +9,22 @@ import { getSshEnv } from './ssh'
 const createEnv = (fromPath = pathLocalEnvTemplate, toPath = pathLocalEnv) =>
     fs.copy(fromPath, toPath)
 
-const setupLocalEnv = async () => {
+const setupLocalEnv = async isInteractive => {
     // Get the local env file
     const localEnv = getParsedEnv(pathLocalEnv)
     const isEnvMissing = localEnv instanceof Error
     // If env isn't available then create one
     if (isEnvMissing) {
         await createEnv()
-        return setupLocalEnv()
+        return setupLocalEnv(isInteractive)
     }
     // Get a summary of any env issues
-    const localEnvIssues = getEnvIssues(localEnv, isEnvMissing, false)
+    const localEnvIssues = getEnvIssues(
+        localEnv,
+        isEnvMissing,
+        false,
+        isInteractive,
+    )
     // Return the missing settings error or the env contents
     return localEnvIssues ? new Error(localEnvIssues) : localEnv
 }
@@ -30,10 +35,13 @@ const getParsedEnv = path => {
 }
 
 // Check all of the required env settings exist
+// TODO: Convert to named parameters
 const getEnvIssues = (
     env,
     isEnvMissing,
     isRemoteEnv,
+    isInteractive = false,
+    appPath = '',
     requiredSettings = [
         'ENVIRONMENT',
         'DB_SERVER',
@@ -59,9 +67,7 @@ const getEnvIssues = (
     return !isEmpty(missingSettings)
         ? `${
               isEnvMissing
-                  ? `Please add an ${colourNotice('.env')} file in your ${
-                        isRemoteEnv ? 'remote' : 'local'
-                    } project root and add`
+                  ? `Please add an ${colourNotice('.env')} file in ${isRemoteEnv ? 'the remote' : 'your local'} folder:\n${colourNotice(appPath)}\n\nWithin the env please add`
                   : `${
                         isRemoteEnv ? 'The remote' : 'Your local'
                     } ${colourNotice('.env')} needs`
@@ -72,33 +78,25 @@ const getEnvIssues = (
           }:\n\n${missingSettings
               .map(s => `${s}="${colourNotice(`value`)}"`)
               .join('\n')}${
-              isEnvMissing
+              isEnvMissing && isInteractive
                   ? `\n\nOnce you've finished, rerun this task by pressing enter...`
                   : ''
           }`
         : null
 }
 
-const getRemoteEnv = async ({ localEnv, serverConfig }) => {
+const getRemoteEnv = async ({ sshKeyPath, serverConfig, isInteractive }) => {
     // Get the remote env file
     const sshConfig = {
         host: serverConfig.host,
         username: serverConfig.user,
         appPath: serverConfig.appPath,
+        sshKeyPath: sshKeyPath,
     }
-    // Get the custom key if it's set and merge it with the config
-    const swiffSshKeyPath = !isEmpty(localEnv.SWIFF_CUSTOM_KEY)
-        ? { swiffSshKeyPath: localEnv.SWIFF_CUSTOM_KEY }
-        : null
     // Connect via SSH to get the contents of the remote .env
-    const remoteEnv = await getSshEnv({
-        ...sshConfig,
-        ...swiffSshKeyPath,
-    })
-    // Return the errors instead of attempting validation
-    if (remoteEnv instanceof Error) return remoteEnv
+    const remoteEnv = await getSshEnv(sshConfig)
     // Validate the remote env
-    const remoteEnvIssues = getEnvIssues(remoteEnv, false, true)
+    const remoteEnvIssues = getEnvIssues(remoteEnv, (remoteEnv instanceof Error), true, isInteractive, serverConfig.appPath)
     // Return the missing settings error or the env contents
     return remoteEnvIssues ? new Error(remoteEnvIssues) : remoteEnv
 }

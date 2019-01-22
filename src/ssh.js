@@ -8,7 +8,7 @@ import { getDbDumpZipCommands } from './database'
 import { pathBackups, pathApp } from './paths'
 import { colourAttention } from './palette'
 
-const getSshInit = async ({ host, user, swiffSshKey }) => {
+const getSshInit = async ({ host, user, sshKeyPath }) => {
     // Connect to the remote server via SSH
     // Get the remote env file
     const config = {
@@ -16,10 +16,8 @@ const getSshInit = async ({ host, user, swiffSshKey }) => {
         username: user,
     }
     // Get the custom privateKey if it's set
-    const swiffSshKeyPath = !isEmpty(swiffSshKey)
-        ? { swiffSshKeyPath: swiffSshKey }
-        : null
-    const connection = await sshConnect({ ...config, ...swiffSshKeyPath })
+    sshKeyPath = !isEmpty(sshKeyPath) ? { sshKeyPath: sshKeyPath } : null
+    const connection = await sshConnect({ ...config, ...sshKeyPath })
     return connection
 }
 
@@ -38,7 +36,7 @@ const getSshFile = async ({ connection, from, to }) => {
 }
 
 // Connect to the remote server via SSH
-const sshConnect = async ({ host, username, swiffSshKeyPath }) => {
+const sshConnect = async ({ host, username, sshKeyPath }) => {
     let errorMessage
     // Get the local username so we can get the default key below (macOS path)
     const user = await resolveUsername()
@@ -48,8 +46,8 @@ const sshConnect = async ({ host, username, swiffSshKeyPath }) => {
         .connect({
             host: host,
             username: username,
-            privateKey: !isEmpty(swiffSshKeyPath)
-                ? swiffSshKeyPath
+            privateKey: !isEmpty(sshKeyPath)
+                ? sshKeyPath
                 : `/Users/${user}/.ssh/id_rsa`,
         })
         .catch(error => (errorMessage = error))
@@ -57,7 +55,7 @@ const sshConnect = async ({ host, username, swiffSshKeyPath }) => {
         return new Error(
             String(errorMessage).includes('config.privateKey does not exist at')
                 ? `Your custom SSH identity file isn’t found at ${colourAttention(
-                      swiffSshKeyPath
+                      sshKeyPath
                   )}\n\nCheck the ${colourAttention(
                       `SWIFF_CUSTOM_KEY`
                   )} value is correct in your local .env\n\nmacOS path example:\n${colourAttention(
@@ -68,12 +66,15 @@ const sshConnect = async ({ host, username, swiffSshKeyPath }) => {
     return ssh
 }
 
-const getSshEnv = async ({ host, username, appPath, swiffSshKeyPath }) => {
+const getSshEnv = async ({ host, username, appPath, sshKeyPath }) => {
     let errorMessage
     // Create a SSH connection
-    const ssh = await sshConnect({ host, username, swiffSshKeyPath })
+    const ssh = await sshConnect({ host, username, sshKeyPath })
     // If there’s any connection issues then return the messages
-    if (ssh instanceof Error) return ssh
+    if (ssh instanceof Error) {
+        ssh.dispose()
+        return ssh
+    }
     // Set where we’ll be downloading the temporary remote .env file
     const backupPath = `${pathBackups}/.env`
     // Download the remote .env file
@@ -83,7 +84,10 @@ const getSshEnv = async ({ host, username, appPath, swiffSshKeyPath }) => {
         .getFile(backupPath, path.join(appPath, '.env'))
         .catch(error => (errorMessage = error))
     // If there’s any .env download issues then return the messages
-    if (errorMessage) return new Error(errorMessage)
+    if (errorMessage) {
+        ssh.dispose()
+        return new Error(errorMessage)
+    }
     // Return the contents of the .env file
     const remoteEnv = getParsedEnv(backupPath)
     if (remoteEnv) {
@@ -92,7 +96,10 @@ const getSshEnv = async ({ host, username, appPath, swiffSshKeyPath }) => {
             error => (errorMessage = error)
         )
         // If there’s any .env removal issues then return the messages
-        if (errorMessage) return new Error(errorMessage)
+        if (errorMessage) {
+            ssh.dispose()
+            return new Error(errorMessage)
+        }
     }
     // Close the SSH connection
     ssh.dispose()
@@ -101,7 +108,7 @@ const getSshEnv = async ({ host, username, appPath, swiffSshKeyPath }) => {
 }
 
 const getSshCopyInstructions = ({ server }) =>
-    `Haven’t added your key to the server?\nUse ssh-copy-id to quickly add your key\neg: ssh-copy-id ${
+    `Haven’t added your key to the server?\nAdd your key to the remote server with ssh-copy-id:\nssh-copy-id ${
         server.user
     }@${server.host}`
 
@@ -110,7 +117,7 @@ const getSshPushCommands = ({
     user,
     host,
     workingDirectory,
-    swiffSshKey,
+    sshKeyPath,
 }) => {
     const flags = [
         // '--dry-run',
@@ -124,13 +131,15 @@ const getSshPushCommands = ({
         '--delete',
         '--exclude ".env"',
         // Set the custom identity if provided
-        !isEmpty(swiffSshKey) ? `-e "ssh -i ${swiffSshKey}"` : ''
+        !isEmpty(sshKeyPath) ? `-e "ssh -i ${sshKeyPath}"` : '',
     ].join(' ')
     // Build the final command string from an array of folders
-    const rsyncCommands = pushFolders.map(
-        path =>
-            `echo '!${path}' && (rsync ${flags} ${pathApp}/${path}/ ${user}@${host}:${workingDirectory}/${path}/)`
-    ).join(' && ')
+    const rsyncCommands = pushFolders
+        .map(
+            path =>
+                `echo '!${path}' && (rsync ${flags} ${pathApp}/${path}/ ${user}@${host}:${workingDirectory}/${path}/)`
+        )
+        .join(' && ')
     // Use grep to filter the rsync output
     const greppage = `grep -E '^(!|>|<|\\*)'`
     return `(${rsyncCommands}) | ${greppage}`
@@ -141,7 +150,7 @@ const getSshPullCommands = ({
     user,
     host,
     appPath,
-    swiffSshKey,
+    sshKeyPath,
 }) => {
     const flags = [
         // '--dry-run',
@@ -151,17 +160,19 @@ const getSshPullCommands = ({
         '--compress',
         // Output a change-summary for all updates
         '--itemize-changes',
-        !isEmpty(swiffSshKey) ? `-e "ssh -i ${swiffSshKey}"` : ''
+        !isEmpty(sshKeyPath) ? `-e "ssh -i ${sshKeyPath}"` : '',
     ].join(' ')
     // Build the final command string from an array of folders
-    const rsyncCommands = pullFolders.map(path => {
-        const rSyncFrom = `${appPath}/${path}/`
-        const rSyncTo = `./${path}/`
-        return [
-            `echo '!${path}'`,
-            `rsync ${flags} ${user}@${host}:${rSyncFrom} ${rSyncTo}`
-        ].join(' && ')
-    }).join(';')
+    const rsyncCommands = pullFolders
+        .map(path => {
+            const rSyncFrom = `${appPath}/${path}/`
+            const rSyncTo = `./${path}/`
+            return [
+                `echo '!${path}'`,
+                `rsync ${flags} ${user}@${host}:${rSyncFrom} ${rSyncTo}`,
+            ].join(' && ')
+        })
+        .join(';')
     // Use grep to filter the rsync output
     const greppage = `grep -E '^(!|>|<|\\*)'`
     return `(${rsyncCommands}) | ${greppage}`
@@ -178,13 +189,13 @@ const getSshDatabase = async ({
     user,
     sshAppPath,
     gzipFileName,
-    swiffSshKey,
+    sshKeyPath,
 }) => {
     let errorMessage
     const ssh = await getSshInit({
         host: host,
         user: user,
-        swiffSshKey: swiffSshKey,
+        sshKeyPath: sshKeyPath,
     })
     // If there’s connection issues then return the messages
     if (ssh instanceof Error) return ssh

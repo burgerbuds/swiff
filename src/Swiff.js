@@ -45,224 +45,186 @@ import {
 } from './palette'
 
 // Start user analytics for error and usage information
-const visitor = ua('UA-131596357-2', { uid: resolveUsername() })
+const visitor = ua('UA-131596357-2')
 
 // Get the latest task status to check if running
 const isTaskRunning = messages => {
-    const currentMessage = messages.slice(-1).pop()
-    return currentMessage && currentMessage.type === 'working'
+    const currentMessage = messages && messages.slice(-1).pop()
+    return currentMessage ? currentMessage.type === 'working' : false
+}
+
+// Check if the task can be run
+const getValidatedTaskFromFlags = (flags, tasks) => {
+    // Get a list of all provided flags
+    const providedFlags = Object.entries(flags).filter(([k,v]) => v)
+    // Get a list of all possible flags
+    const taskIdList = Object.entries(tasks).map(([k,v]) => v.id)
+    // Get a list of validated flags
+    const allowedFlags = providedFlags.filter(([k,v]) => taskIdList.includes(k))
+    // Get the first allowed flag
+    const validatedTask = !isEmpty(allowedFlags.slice().shift()) ? allowedFlags.shift()[0] : null
+    return !isEmpty(validatedTask)
+        ? validatedTask
+        : new Error(`The provided flag isn’t recognized`)
 }
 
 class Swiff extends Component {
     constructor(props) {
         super(props)
 
+        const isFlaggedStart = Object.entries(this.props.flags).filter(([k,v]) => v).length > 0
+
         this.state = {
             messages: [],
             localEnv: null, // The contents of the remote env file
             remoteEnv: null, // The contents of the remote env file
             config: null, // The contents of the config file
-            isFlaggedStart:
-                Object.entries(this.props).filter(([k, v]) => v === true)
-                    .length > 0, // Whether the app was started with flags
+            isFlaggedStart: isFlaggedStart, // Whether the app was started with flags
+            tasks: this.getTaskList(),
             currentTask: null,
-            tasks: [
-                {
-                    id: 'pull',
-                    emoji: '📥',
-                    title: 'Pull',
-                    heading: 'Pull files',
-                    description:
-                    'Download fresh files on the remote server from your pull folders',
-                    handler: this.handlePull
-                },
-                {
-                    id: 'push',
-                    emoji: '🚀',
-                    title: 'Push',
-                    heading: 'Push files',
-                    description: `Upload and sync to the remote server from your push folders`,
-                    handler: this.handlePush
-                },
-                {
-                    id: 'database',
-                    emoji: '💫',
-                    title: 'Database',
-                    heading: 'Database download',
-                    description: `Refresh your website database with a remote database`,
-                    handler: this.handleDatabase
-                },
-            ],
-            tools: [
-                {
-                    id: 'composer',
-                    emoji: '🎩',
-                    heading: 'Composer sync',
-                    needsSetup: true,
-                    handler: this.handleComposer
-                },
-                {
-                    id: 'backups',
-                    emoji: '🏬',
-                    heading: 'Open backups folder',
-                    needsSetup: false,
-                    handler: this.handleOpenBackups
-                },
-                {
-                    id: 'ssh',
-                    emoji: '💻',
-                    heading: 'Remote SSH connecton',
-                    needsSetup: true,
-                    keepRunning: true,
-                    handler: this.handleSsh
-                },
-            ],
+            showMoreTasks: false,
         }
     }
 
     componentDidMount = async () => {
+        // Start with a blank slate
         console.clear()
-
-        // Tasks
-        if (this.props.push) this.startTaskId('push')
-        if (this.props.database) this.startTaskId('database')
-        if (this.props.pull) this.startTaskId('pull')
-        // Tools
-        if (this.props.composer) this.startToolId('composer')
-        if (this.props.backups) this.startToolId('backups')
-        if (this.props.ssh) this.startToolId('ssh')
-
-        // Deal with incorrect flags
-        // TODO: Improve the test here
-        const isFlaggedStart = this.state.isFlaggedStart
-        if (
-            isFlaggedStart
-            && this.props.push === false
-            && this.props.database === false
-            && this.props.pull === false
-            && this.props.composer === false
-            && this.props.backups === false
-            && this.props.ssh === false
-        ) {
-            this.setMessage(
-                `The supplied flag(s) aren’t recognised\n\View a list of flags by running ${colourAttention(
-                    'swiff --help'
-                )}`
+        const { flags, tasks, taskHelp } = this.props
+        // Exit early and start interface if there's no flags set
+        if (Object.entries(flags).every(([k,v]) => !v)) {
+            // Listen for keypress
+            process.stdin.on('keypress', this.handleKeyPress);
+            return
+        }
+        // Check if the task can be run
+        const validatedTask = getValidatedTaskFromFlags(flags, tasks)
+        // Let the user know if their flag isn't correct
+        if (validatedTask instanceof Error) {
+            this.setError(
+                `${colourAttention(validatedTask)}\n${taskHelp}`
             )
             return setTimeout(() => process.exit(), 250)
         }
+        // Start the task
+        if (!isEmpty(validatedTask)) {
+            return this.startTaskId(validatedTask)
+        }
+    }
+
+    handleKeyPress = (ch, key = {}) => {
+        const isArrowKey = ['left', 'right'].includes(key.name)
+        if (isArrowKey) this.toggleTaskPage()
+        return
     }
 
     render(props, { messages, currentTask, tasks, isFlaggedStart }) {
         const OptionsSelectProps = {
             items: tasks,
-            onSelect: task => !isTaskRunning(messages) && this.startTask(task),
+            onSelect: task =>
+                task.id === 'toggle'
+                    ? this.toggleTaskPage()
+                    : !isTaskRunning(messages) && this.startTask(task),
             itemComponent: ({ emoji, title, description, isSelected }) => {
-                const isRunning =
+                const isActive =
                     currentTask &&
                     currentTask.title === title &&
                     isTaskRunning(messages)
                 return (
                     <Text>
                         <Text
-                            hex={isSelected ? hexHighlight : hexDefault}
-                            bold
-                        >{`${isRunning ? '⌛' : emoji}  ${title}`}</Text>
+                            hex={isSelected ? hexHighlight : (emoji ? hexDefault : hexMuted)}
+                            bold={emoji}
+                        >{`${isActive ? '⌛  ' : (emoji ? `${emoji}  ` : '')}${title}`}</Text>
                         <Text hex={hexMuted}>
-                            {': '}
-                            {description}
+                            {description && `: ${description}`}
                         </Text>
                     </Text>
                 )
             },
             indicatorComponent: () => {},
         }
-
+        const removeOptions = isFlaggedStart || (currentTask && currentTask.keepRunning)
         return (
             <Text>
-                {!isFlaggedStart && (
+                {!removeOptions ? (
                     <Text dim={isTaskRunning(messages)}>
                         <OptionsTemplate selectProps={OptionsSelectProps} />
                     </Text>
-                )}
+                ) : null}
                 {!isEmpty(messages) && (
-                    <Text>
-                        <MessageTemplate messages={messages} />
-                    </Text>
+                    <MessageTemplate messages={messages} />
                 )}
             </Text>
         )
     }
 
     startTaskId = taskId => {
-        const tasks = this.state.tasks
+        const tasks = this.props.tasks
         // Get the task information by its id
         const task = tasks.filter(({ id }) => id === taskId).shift()
         return this.startTask(task)
     }
 
     startTask = taskData => {
-        const { id, heading, handler } = taskData
+        const {
+            id,
+            emoji,
+            heading,
+            handler,
+            needsSetup,
+            keepRunning,
+        } = taskData
         const { messages, isFlaggedStart } = this.state
         // Only play the sound when the cli is launched without flags (the sounds can be too much)
         !isFlaggedStart && exec(`afplay ${pathMedia}/start.mp3`)
         // Reset messages then use the setState callback to start the new task
         this.setState(
             {
-                currentTask: id,
-                messages: [{ text: heading, type: 'heading' }],
+                currentTask: taskData,
+                messages: [
+                    {
+                        text: isFlaggedStart ? `${emoji}  ${heading}` : heading,
+                        type: 'heading',
+                    },
+                ],
             },
             // Once the state is set proceed with the task
             async () => {
                 // Fire off the usage tracking
                 visitor.pageview({ dp: id, dt: heading }).send()
-                // Let the user know what's happening
-                this.setWorking('Performing pre-task checks')
-                // Start the setup process
-                const isSetup = await this.handleSetup()
-                if (isSetup !== true) return
+                if (needsSetup) {
+                    // Let the user know what's happening
+                    this.setWorking('Performing pre-task checks')
+                    // Start the setup process
+                    const isSetup = await this.handleSetup()
+                    if (isSetup !== true) return
+                }
                 // Start the chosen task
-                await handler()
+                await this[handler]()
                 // End the process after 500 ticks if started with flags
-                if (!isTaskRunning(messages) && isFlaggedStart)
+                if (!isTaskRunning(messages) && isFlaggedStart && !keepRunning)
                     // Wait a little to allow setState to finish
                     setTimeout(() => process.exit(), 500)
             }
         )
     }
 
-    startToolId = toolId => {
-        const tools = this.state.tools
-        // Get the tool information by its id
-        const tool = tools.filter(({ id }) => id === toolId).shift()
-        return this.startTool(tool)
+    toggleTaskPage = () => {
+        const { showMoreTasks } = this.state
+        this.setState({
+            tasks: this.getTaskList(!showMoreTasks),
+            showMoreTasks: !showMoreTasks,
+        })
     }
 
-    startTool = toolData => {
-        const { id, emoji, heading, needsSetup, handler, keepRunning } = toolData
-        // Set messages then use the setState callback to start the tool
-        this.setState(
-            {
-                messages: [{ text: `${emoji}  ${heading}`, type: 'heading' }],
-            },
-            // Once the state is set proceed with the tool
-            async () => {
-                // Fire off the usage tracking
-                visitor.pageview({ dp: id, dt: heading }).send()
-                if (needsSetup) {
-                    // Let the user know what's happening
-                    this.setWorking('Performing pre-tool checks')
-                    // Start the setup process
-                    const isSetup = await this.handleSetup()
-                    if (isSetup !== true) return
-                }
-                // Start the chosen tool
-                await handler()
-                // End the process once finished
-                // Wait a little to allow setState to finish
-                if (!keepRunning) setTimeout(() => process.exit(), 500)
-            }
-        )
+    getTaskList = showAll => {
+        const tasks = this.props.tasks.slice()
+        const newTasks = tasks.filter(task => showAll ? !task.isListed : task.isListed)
+        newTasks.push({
+            id: 'toggle',
+            title: 'More tasks',
+        })
+        return newTasks
     }
 
     setError = error => {
@@ -319,7 +281,13 @@ class Swiff extends Component {
         // If no config, create it
         if (!doesConfigExist) await createConfig()
         // Get the config
-        const config = await setupConfig(!doesConfigExist)
+        const { isFlaggedStart } = this.state
+        const isInteractive = !isFlaggedStart
+        // TODO: Convert to named parameters
+        const config = await setupConfig(
+            !doesConfigExist,
+            isInteractive
+        )
         // If there's any missing config options then open the config file and show the error
         if (config instanceof Error) {
             // Open the config file after a few seconds
@@ -333,7 +301,7 @@ class Swiff extends Component {
         // Add the config to the global state
         this.setState({ config })
         // Get the users env file
-        const localEnv = await setupLocalEnv(this.setMessage)
+        const localEnv = await setupLocalEnv(isInteractive)
         // If there's anything wrong with the env then return an error
         if (localEnv instanceof Error) {
             // Open the env file after a few seconds
@@ -373,7 +341,7 @@ class Swiff extends Component {
                     }\nSSH key: ${sshKey}`
                 )}\n\n${getSshCopyInstructions(config)}\n\n${
                     isEmpty(localEnv.SWIFF_CUSTOM_KEY)
-                        ? `Incorrect SSH key?\nAdd the path in your project .env\neg: SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"`
+                        ? `Using a different SSH key?\nAdd the path to your project .env\neg: SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"`
                         : ''
                 }`
             )
@@ -384,6 +352,8 @@ class Swiff extends Component {
     handlePull = async () => {
         const { pullFolders, server } = this.state.config
         const { user, host, appPath } = server
+        const localEnv = this.state.localEnv
+        const { SWIFF_CUSTOM_KEY } = localEnv
         // Check if the user has defined some pull folders
         if (!Array.isArray(pullFolders) || isEmpty(pullFolders.filter(i => i)))
             return this.setMessage(
@@ -402,29 +372,41 @@ class Swiff extends Component {
             `Pulling files from ${commaAmpersander(filteredPullFolders)}`
         )
         // Create the rsync commands required to pull the files
-        const { SWIFF_CUSTOM_KEY } = this.state.localEnv
         const pullCommands = getSshPullCommands({
             pullFolders: filteredPullFolders,
             user: user,
             host: host,
             appPath: appPath,
             // Set the custom identity if provided
-            swiffSshKey: SWIFF_CUSTOM_KEY,
+            sshKeyPath: SWIFF_CUSTOM_KEY,
         })
-        // Send the commands to the push task
-        const pullStatus = await executeCommands(pullCommands)
-        // Set some variables for later
-        const localEnv = this.state.localEnv
         // Get the remote env file via SSH
-        const remoteEnv = await getRemoteEnv({ localEnv, serverConfig: server })
-        // If there's any env issues then return the messages
-        if (remoteEnv instanceof Error) return this.setError(remoteEnv)
-        const { ENVIRONMENT } = remoteEnv
+        const remoteEnv = await getRemoteEnv({
+            serverConfig: server,
+            isInteractive: this.state.isFlaggedStart,
+            sshKeyPath: SWIFF_CUSTOM_KEY,
+        })
+        // If the env can't be found then show a message
+        if (remoteEnv instanceof Error) {
+            this.setWorking(
+                colourNotice(
+                    `Consider adding an .env file on the remote server\n   at ${appPath}/.env`
+                )
+            )
+        }
+        // Set the name of the remote environment
+        let remoteEnvironment = ''
+        if (!(remoteEnv instanceof Error))
+            remoteEnvironment = remoteEnv.ENVIRONMENT
+        // Send the pull commands
+        const pullStatus = await executeCommands(pullCommands)
         if (pullStatus instanceof Error) {
             return this.setError(
-                `There was an issue downloading the files from ${colourAttention(
-                    ENVIRONMENT
-                )} \n\n${colourMuted(
+                `There was an issue downloading the files${
+                    !isEmpty(remoteEnvironment)
+                        ? ` from ${colourAttention(remoteEnvironment)}`
+                        : ''
+                }\n\n${colourMuted(
                     String(pullStatus).replace(
                         /No such file or directory/g,
                         colourDefault('No such file or directory')
@@ -435,28 +417,51 @@ class Swiff extends Component {
         const output = replaceRsyncOutput(pullStatus, filteredPullFolders)
         return this.setSuccess(
             isEmpty(output)
-                ? `Nothing required, ${colourHighlight(localEnv.DB_SERVER)} is already up-to-date!`
-                : `The file pull from ${colourHighlight(ENVIRONMENT)} was successful\n${output}`
+                ? `No pull required, ${colourHighlight(
+                      localEnv.DB_SERVER
+                  )} is already up-to-date!`
+                : `The file pull${
+                      !isEmpty(remoteEnvironment)
+                          ? ` from ${colourHighlight(remoteEnvironment)}`
+                          : ''
+                  } was successful\n${output}`
         )
     }
 
     handlePush = async () => {
         // Set some variables for later
         const localEnv = this.state.localEnv
+        const { SWIFF_CUSTOM_KEY } = localEnv
+        const { pushFolders } = this.state.config
         const serverConfig = this.state.config.server
-        const pushFolders = this.state.config.pushFolders
+        const { user, host, appPath } = serverConfig
         // Get the remote env file via SSH
-        const remoteEnv = await getRemoteEnv({ localEnv, serverConfig })
-        // If there's any env issues then return the messages
-        if (remoteEnv instanceof Error) return this.setError(remoteEnv)
-        const { ENVIRONMENT } = remoteEnv
+        const remoteEnv = await getRemoteEnv({
+            serverConfig,
+            isInteractive: this.state.isFlaggedStart,
+            sshKeyPath: SWIFF_CUSTOM_KEY,
+        })
+        // If the env can't be found then show a message
+        if (remoteEnv instanceof Error) {
+            this.setWorking(
+                colourNotice(
+                    `Consider adding an .env file on the remote server\n   at ${appPath}/.env`
+                )
+            )
+        }
+        // Set the name of the remote environment
+        let remoteEnvironment = ''
+        if (!(remoteEnv instanceof Error))
+            remoteEnvironment = remoteEnv.ENVIRONMENT
         // Shame the user if they are pushing to production
         if (
-            !isEmpty(ENVIRONMENT) &&
-            (ENVIRONMENT === 'production' || ENVIRONMENT === 'live')
+            !isEmpty(remoteEnvironment) &&
+            (remoteEnvironment === 'production' || remoteEnvironment === 'live')
         )
-            this.setMessage(
-                `Bad practice: You’re pushing files straight to production,\nconsider a more reliable way to deploy changes in the future`
+            this.setWorking(
+                colourNotice(
+                    `You’re pushing files straight to production,\nplease consider a more reliable way to deploy changes in the future`
+                )
             )
         // Create a list of paths to push
         if (
@@ -490,14 +495,12 @@ class Swiff extends Component {
             `Pushing files in ${commaAmpersander(filteredPushFolders)}`
         )
         // Get the rsync push commands
-        const { user, host, appPath } = this.state.config.server
-        const { SWIFF_CUSTOM_KEY } = this.state.localEnv
         const pushCommands = getSshPushCommands({
             pushFolders: filteredPushFolders,
             user: user,
             host: host,
             workingDirectory: appPath,
-            swiffSshKey: SWIFF_CUSTOM_KEY,
+            sshKeyPath: SWIFF_CUSTOM_KEY,
         })
         // Send the commands to the push task
         const pushStatus = await executeCommands(pushCommands)
@@ -507,11 +510,22 @@ class Swiff extends Component {
                 `There was an issue uploading the files\n\n${pushStatus}`
             )
         }
-        const output = replaceRsyncOutput(pushStatus, this.state.config.pushFolders)
+        const output = replaceRsyncOutput(
+            pushStatus,
+            this.state.config.pushFolders
+        )
         return this.setSuccess(
             isEmpty(output)
-                ? `Nothing required, ${colourHighlight(ENVIRONMENT)} is already up-to-date!`
-                : `The file push from ${colourHighlight(ENVIRONMENT)} was successful\n${output}`
+                ? `No push required, ${
+                    !isEmpty(remoteEnvironment)
+                        ? `${colourHighlight(remoteEnvironment)}`
+                        : 'the remote'
+                } is already up-to-date`
+                : `The file push${
+                    !isEmpty(remoteEnvironment)
+                        ? ` from ${colourHighlight(remoteEnvironment)}`
+                        : ''
+                } was successful\n${output}`
         )
     }
 
@@ -519,10 +533,23 @@ class Swiff extends Component {
         // Set some variables for later
         const localEnv = this.state.localEnv
         const serverConfig = this.state.config.server
+        const {
+            SWIFF_CUSTOM_KEY,
+            DB_SERVER,
+            DB_DATABASE,
+            DB_USER,
+            DB_PASSWORD,
+        } = localEnv
         // Get the remote env file via SSH
-        const remoteEnv = await getRemoteEnv({ localEnv, serverConfig })
-        // If there's any env issues then return the messages
-        if (remoteEnv instanceof Error) return this.setError(remoteEnv)
+        const remoteEnv = await getRemoteEnv({
+            serverConfig,
+            isInteractive: this.state.isFlaggedStart,
+            sshKeyPath: SWIFF_CUSTOM_KEY,
+        })
+        // If the env can't be found then show a message
+        if (remoteEnv instanceof Error) {
+            return this.setMessage(remoteEnv)
+        }
         // Share what's happening with the user
         this.setWorking(
             `Fetching ${colourHighlight(
@@ -540,34 +567,32 @@ class Swiff extends Component {
             user: serverConfig.user,
             sshAppPath: serverConfig.appPath,
             gzipFileName: remoteDbNameZipped,
-            swiffSshKey: localEnv.SWIFF_CUSTOM_KEY,
+            sshKeyPath: SWIFF_CUSTOM_KEY,
         })
         // If there's any env issues then return the messages
         if (dbSsh instanceof Error) return this.setError(dbSsh)
         // Backup the existing local database
-        const localBackupFilePath = `${pathBackups}/${
-            localEnv.DB_DATABASE
-        }-local.sql.gz`
+        const localBackupFilePath = `${pathBackups}/${DB_DATABASE}-local.sql.gz`
         const localDbDump = doLocalDbDump({
-            database: localEnv.DB_DATABASE,
-            user: localEnv.DB_USER,
-            password: localEnv.DB_PASSWORD,
+            database: DB_DATABASE,
+            user: DB_USER,
+            password: DB_PASSWORD,
             gzipFilePath: localBackupFilePath,
         })
         // If there's any local db backup issues then return the messages
         if (localDbDump instanceof Error) return this.setError(localDbDump)
         // Share what's happening with the user
         this.setWorking(
-            `Updating ${colourHighlight(
-                localEnv.DB_DATABASE
-            )} on ${colourHighlight(localEnv.DB_SERVER)}`
+            `Updating ${colourHighlight(DB_DATABASE)} on ${colourHighlight(
+                DB_SERVER
+            )}`
         )
         // Drop the tables from the local database
         const dropTables = await doDropAllDbTables({
-            host: localEnv.DB_SERVER,
-            user: localEnv.DB_USER,
-            password: localEnv.DB_PASSWORD,
-            database: localEnv.DB_DATABASE,
+            host: DB_SERVER,
+            user: DB_USER,
+            password: DB_PASSWORD,
+            database: DB_DATABASE,
         })
         // If there's any dropping issues then return the messages
         if (dropTables instanceof Error)
@@ -576,30 +601,28 @@ class Swiff extends Component {
             )
                 ? this.setMessage(
                       `First create a database named ${colourNotice(
-                          localEnv.DB_DATABASE
-                      )} with these login details:\n\nUsername: ${
-                          localEnv.DB_USER
-                      }\nPassword: ${localEnv.DB_PASSWORD}`
+                          DB_DATABASE
+                      )} with these login details:\n\nUsername: ${DB_USER}\nPassword: ${DB_PASSWORD}`
                   )
                 : this.setError(
                       `There were issues connecting to your local ${colourAttention(
-                          localEnv.DB_DATABASE
+                          DB_DATABASE
                       )} database\n\n${colourMuted(
                           String(dropTables).replace('Error: ', '')
                       )}`
                   )
         // Import the remote .sql into the local database
         const importDatabase = await doImportDb({
-            user: localEnv.DB_USER,
-            password: localEnv.DB_PASSWORD,
-            database: localEnv.DB_DATABASE,
+            user: DB_USER,
+            password: DB_PASSWORD,
+            database: DB_DATABASE,
             importFile: importFile,
         })
         // If there's any import issues then return the messages
         if (importDatabase instanceof Error)
             return this.setError(
                 `There were issues refreshing your local ${colourAttention(
-                    localEnv.DB_DATABASE
+                    DB_DATABASE
                 )} database\n\n${colourMuted(importDatabase)}`
             )
         // Remove remote .sql working file
@@ -607,7 +630,7 @@ class Swiff extends Component {
         // Show a success message
         this.setSuccess(
             `Your ${colourHighlight(
-                localEnv.DB_DATABASE
+                DB_DATABASE
             )} database was refreshed with the ${colourHighlight(
                 remoteEnv.ENVIRONMENT
             )} database from ${colourHighlight(serverConfig.host)}`
@@ -627,7 +650,7 @@ class Swiff extends Component {
         const ssh = await getSshInit({
             host: serverConfig.host,
             user: serverConfig.user,
-            swiffSshKey: SWIFF_CUSTOM_KEY,
+            sshKeyPath: SWIFF_CUSTOM_KEY,
         })
         // If there's connection issues then return the messages
         if (ssh instanceof Error) return this.setError(ssh)
@@ -681,15 +704,19 @@ class Swiff extends Component {
     handleOpenBackups = async () => {
         const doOpen = await executeCommands(`open '${pathBackups}'`)
         if (doOpen instanceof Error) return this.setError(doOpen)
-        return this.setSuccess(
-            `The backups folder was opened\n${colourHighlight(pathBackups)}`
-        )
+        this.setWorking(`Opening the backups folder`)
+        setTimeout(() =>
+            this.setSuccess(
+                `The backups folder was opened\n  ${pathBackups}`
+            )
+        , 500)
+        return
     }
 
     // Connect to the server via SSH
     handleSsh = async () => {
         // Clear the messages so they don't display in our interactive session
-        this.setState({messages: null})
+        this.setState({ messages: null })
         // Set some variables for later
         const serverConfig = this.state.config.server
         const { SWIFF_CUSTOM_KEY } = this.state.localEnv
@@ -711,27 +738,35 @@ class Swiff extends Component {
                     `cd ${serverConfig.appPath}`,
                     'clear',
                     'll',
-                    `echo "\nYou're now connected with: ${serverConfig.user}@${serverConfig.host}\nWorking directory: ${serverConfig.appPath}\n"`
+                    `echo "\nYou're now connected with: ${serverConfig.user}@${
+                        serverConfig.host
+                    }\nWorking directory: ${serverConfig.appPath}\n"`,
                 ].join(' && ')
                 // Run the commands
                 stream.write(`${initialCommands}\n`)
-                stream.on('close', () => {
-                    console.log(colourHighlight('\nYour SSH connection ended\n'))
-                    conn.end()
-                    process.exit()
-                }).on('data', data => {
-                    // Push the server output to our console
-                    if (!gs) gs = stream
-                    if (gs._writableState.sync == false) process.stdout.write('' + data)
-                }).stderr.on('data', data => {
-                    console.log('STDERR: ' + data)
-                    process.exit(1)
-                })
+                stream
+                    .on('close', () => {
+                        console.log(
+                            colourHighlight('\nYour SSH connection ended\n')
+                        )
+                        conn.end()
+                        process.exit()
+                    })
+                    .on('data', data => {
+                        // Push the server output to our console
+                        if (!gs) gs = stream
+                        if (gs._writableState.sync == false)
+                            process.stdout.write('' + data)
+                    })
+                    .stderr.on('data', data => {
+                        console.log('STDERR: ' + data)
+                        process.exit(1)
+                    })
             })
         }).connect({
-          host: serverConfig.host,
-          privateKey: require('fs').readFileSync(privateKey),
-          username: serverConfig.user,
+            host: serverConfig.host,
+            privateKey: require('fs').readFileSync(privateKey),
+            username: serverConfig.user,
         })
         // Push our input to the server input
         // http://stackoverflow.com/questions/5006821/nodejs-how-to-read-keystrokes-from-stdin

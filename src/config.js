@@ -9,11 +9,15 @@ import { configFileName } from './paths'
 const createConfig = (fromPath = pathConfigTemplate, toPath = pathConfig) =>
     fs.copy(fromPath, toPath)
 
-const setupConfig = async hasNewConfig => {
+const setupConfig = async (hasNewConfig, isInteractive) => {
     // Get config contents
     const config = await getConfig()
     // Build a list of any missing config options
-    const missingConfigSettings = getConfigIssues(config, hasNewConfig)
+    const missingConfigSettings = getConfigIssues(
+        config,
+        hasNewConfig,
+        isInteractive
+    )
     // Return the missing settings or the whole env
     return missingConfigSettings ? new Error(missingConfigSettings) : config
 }
@@ -27,7 +31,8 @@ const getConfig = async () => {
 }
 
 // Check that the required config settings exist
-const getConfigIssues = (config, hasNewConfig) => {
+// TODO: Convert to named parameters
+const getConfigIssues = (config, hasNewConfig, isInteractive = false) => {
     const requiredSettings = ['server.user', 'server.host', 'server.appPath']
     // Loop over the array and match against the keys in the users config
     const missingSettings = requiredSettings.filter(
@@ -48,7 +53,7 @@ const getConfigIssues = (config, hasNewConfig) => {
           }:${hasNewConfig ? '\n' : '\n\n'}${missingSettings
               .map(s => `- ${colourNotice(s)}`)
               .join('\n')}${
-              hasNewConfig
+              hasNewConfig && isInteractive
                   ? `\n\nOnce you've finished, rerun this task by pressing enter...`
                   : ''
           }`
