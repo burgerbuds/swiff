@@ -12,56 +12,115 @@ import updateNotifier from 'update-notifier'
 import pkg from './../package.json'
 updateNotifier({ pkg }).notify()
 
+const tasks = [
+    {
+        id: 'pull',
+        emoji: '📥',
+        title: 'Pull',
+        heading: 'Pull files',
+        description:
+            'Download fresh files on the remote server from your pull folders',
+        isListed: true,
+        needsSetup: true,
+        handler: 'handlePull',
+        flags: ['pull', 'd'],
+    },
+    {
+        id: 'push',
+        emoji: '🚀',
+        title: 'Push',
+        heading: 'Push files',
+        description:
+            'Upload and sync to the remote server from your push folders',
+        isListed: true,
+        needsSetup: true,
+        handler: 'handlePush',
+        flags: ['push', 'u'],
+    },
+    {
+        id: 'database',
+        emoji: '💫',
+        title: 'Database',
+        heading: 'Database download',
+        description: 'Refresh your website database with a remote database',
+        isListed: true,
+        needsSetup: true,
+        handler: 'handleDatabase',
+        flags: ['database', 't'],
+    },
+    {
+        id: 'composer',
+        emoji: '🎩',
+        title: 'Composer',
+        heading: 'Composer sync',
+        description: 'Refresh your composer files from the remote server',
+        isListed: false,
+        needsSetup: true,
+        handler: 'handleComposer',
+        flags: ['composer', 'c'],
+    },
+    {
+        id: 'backups',
+        emoji: '🏬',
+        title: 'Backups',
+        heading: 'Open backups folder',
+        description:
+            'Open the backups folder containing database and composer files',
+        isListed: false,
+        needsSetup: false,
+        handler: 'handleOpenBackups',
+        flags: ['backups', 'b'],
+    },
+    {
+        id: 'ssh',
+        emoji: '💻',
+        title: 'Terminal',
+        heading: 'Remote terminal connection',
+        description:
+            'Launch a remote terminal session into the remote app folder',
+        isListed: false,
+        needsSetup: true,
+        keepRunning: true,
+        handler: 'handleSsh',
+        flags: ['ssh', 's'],
+    },
+]
+
+const taskInstructions = tasks =>
+    tasks
+        .map(
+            task =>
+                `${task.emoji}  ${task.description}\n  ${task.flags
+                    .map(
+                        flag =>
+                            `${colourHighlight(
+                                `swiff ${flag.length === 1 ? '-' : '--'}${flag}`
+                            )}`
+                    )
+                    .join(' / ')}`
+        )
+        .join('\n\n')
+
+const taskHelp = `
+Run ${colourHighlight(
+    'swiff'
+)} within your project folder root to start the task interface.\nOtherwise use the following commands to quickly run a task:\n\n${taskInstructions(
+    tasks
+)}`
+
+const taskFlags = tasks.map(task => ({
+    [task.flags.shift()]: {
+        type: 'boolean',
+        alias: task.flags.toString(),
+    },
+}))
+
 const cli = meow(
     // Set the help message shown when the user runs swiff --help
-    `
-    Run ${colourHighlight('swiff')} to start the task interface.
-
-    Otherwise use these flags for quick task launches:
-
-    📥  Pull: ${colourHighlight('swiff -d')}
-    alias 'swiff -pull'
-
-    🚀  Push: ${colourHighlight('swiff -u')}
-    alias 'swiff -push'
-
-    💫  Database: ${colourHighlight('swiff -db')}
-    alias 'swiff -database'
-
-    🎩  Composer: ${colourHighlight('swiff -c')}
-    alias 'swiff -composer'
-
-    💻  Remote terminal: ${colourHighlight('swiff -ssh')}
-
-    🏬  Open the backups folder: ${colourHighlight('swiff -b')}
-    alias 'swiff --backups'
-`,
+    taskHelp,
     {
-        flags: {
-            pull: {
-                type: 'boolean',
-                alias: 'd',
-            },
-            push: {
-                type: 'boolean',
-                alias: 'u',
-            },
-            database: {
-                type: 'boolean',
-                alias: 'db',
-            },
-            composer: {
-                type: 'boolean',
-                alias: 'c',
-            },
-            backups: {
-                type: 'boolean',
-                alias: 'b',
-            },
-            ssh: {
-                type: 'boolean',
-            },
-        },
+        description: false,
+        flags: Object.assign(...taskFlags),
     }
 )
 
@@ -83,4 +142,4 @@ process.stdin.on('data', key => {
     }
 })
 
-render(<Swiff {...cli.flags} pkg={cli.pkg} />)
+render(<Swiff flags={cli.flags} pkg={cli.pkg} tasks={tasks} taskHelp={taskHelp} />)
