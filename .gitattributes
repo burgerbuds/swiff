@@ -1,0 +1,2 @@
+# Set files to binary so they don't register for annoying merge commits
+package-lock.json   binary
