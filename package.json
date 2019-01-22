@@ -19,7 +19,8 @@
         "development-environment",
         "web-tools",
         "command-line-tool",
-        "command-line-app"
+        "command-line-app",
+        "staging-tool"
     ],
     "bugs": {
         "url": "https://github.com/simple-integrated-marketing/swiff/issues"
@@ -43,17 +44,12 @@
         "fs-extra": "^7.0.1",
         "import-jsx": "^1.3.0",
         "ink": "^0.5.1",
-        "ink-box": "^0.1.0",
-        "ink-divider": "^1.1.1",
         "ink-select-input": "^2.0.0",
         "ink-spinner": "^2.0.0",
         "lodash": "^4.17.11",
         "meow": "^5.0.0",
-        "mysql": "^2.16.0",
-        "mysql-import": "^1.0.9",
         "node-cmd": "^3.0.0",
         "node-ssh": "^5.1.2",
-        "nodemon": "^1.18.9",
         "promise-mysql": "^3.3.1",
         "ssh2": "^0.7.1",
         "universal-analytics": "^0.4.20",
@@ -66,13 +62,10 @@
         "@babel/node": "^7.2.2",
         "@babel/plugin-proposal-class-properties": "^7.2.3",
         "@babel/preset-env": "^7.2.3",
-        "ava": "^1.0.1",
         "babel-plugin-transform-react-jsx": "^6.24.1",
-        "eslint-config-xo-react": "^0.17.0",
+        "eslint": "^5.12.1",
         "eslint-plugin-react": "^7.12.3",
-        "prettier": "^1.15.3",
-        "semantic-release": "^15.13.3",
-        "xo": "^0.23.0"
+        "prettier": "^1.15.3"
     },
     "ava": {
         "babel": {
