@@ -6,16 +6,17 @@
 module.exports = {
     server: {
         // The username for connecting to the host server
-        user: '',
+        // user: '',
+
         // The IP/hostname of the remote host
-        // eg '100.10.10.100'
-        host: '',
+        // host: '1.1.1.1',
+
         // The working directory for the remote app folder
-        // eg: '/srv/users/[user]/apps/[app]'
-        appPath: '',
+        // appPath: '/srv/users/[user]/apps/[app]'
     },
     // Folders to upload and sync with the server
     // pushFolders: ['templates', 'config'],
+
     // Folders to pull new or changed files from
     // pullFolders: ['public/assets/volumes'],
 }
