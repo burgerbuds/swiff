@@ -6,10 +6,9 @@
     "scripts": {
         "start": "node dist/index.js",
         "dev": "nodemon -q --no-stdin --ignore dist --exec babel-node --ignore swiff.config.js src",
-        "build": "babel src --out-dir dist",
-        "test": "xo && ava",
         "format": "prettier --write --ignore-path .gitignore {src,.}/*.js",
-        "semantic-release": "semantic-release"
+        "build": "babel src --out-dir dist",
+        "prepublish": "babel src --out-dir dist"
     },
     "repository": {
         "type": "git",

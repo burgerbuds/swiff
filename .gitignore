@@ -2,3 +2,4 @@ node_modules
 tester/
 composer.json
 composer.lock
+dist
