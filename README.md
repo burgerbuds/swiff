@@ -1,33 +1,30 @@
 # Swiff
 
-Swiff simplifies common staging server tasks when developing an app or website.
+Swiff saves you time with common SSH tasks during the development of websites/apps:
 
-📥 **File downloading**<br>
-Download fresh remote files from specific folders
+🚀 **File uploads**<br>
+Upload and sync files to remote folders via SSH
 
-🚀 **File pushing**<br>
-Upload and sync specific folders with a remote server
+📥 **File downloads**<br>
+Download fresh files from remote folders via SSH
 
 💫 **Local database updates**<br>
-Refresh your website database with a remote database
+Quick replacement of your project database with the remote
 
-💻 **Quick remote terminal**<br>
-Launch a remote terminal session into the remote app folder.<br>
-Start the remote session with: `swiff --ssh`
+💻 **Remote terminal connection**<br>
+Launch a SSH session directly into the remote site/app folder
 
 🎩 **Local composer.json/lock updates**<br>
-Refresh your composer files with the latest updates from the remote<br>
-(helps with Craft CMS development)<br>
-Download the remote composer files with: `swiff --composer`
+Refresh your composer files with the latest updates from the remote
 
 ## Getting started
 
-1. Install swiff globally with npm:<br>
+1. Install Swiff globally with NPM:<br>
 `npm install --global swiff`
 
-2. Then type `swiff` within a project folder to start the task interface
+2. Type `swiff` within a project folder to start the task interface
 
-Type `swiff --help` to see a complete list of flags you can pass to Swiff.
+Type `swiff --help` for a list of flags for your 'once off' tasks.
 
 ## Additional features
 
@@ -41,22 +38,19 @@ Run `swiff --backups` to open the backups folder.
 
 ## Requirements
 
-Swiff requires mySQL to import the remote database.<br>
-You can download mySQL at [dev.mysql.com](https://dev.mysql.com/downloads/mysql/).
+Swiff requires MySQL to use the database update feature.<br>
+You can download MySQL at [dev.mysql.com](https://dev.mysql.com/downloads/mysql/).
 
-Running Windows or Linux? So far, Swiff has only been tested macOS so there's probably some issues on other operating systems.
+Running Windows or Linux? Swiff has been tested on MacOS so there's probably some issues on other operating systems.
 
-## Technology used
+## Technology
 
 - [Node.js](https://nodejs.org/en/) - A JavaScript runtime built on Chrome's V8 JavaScript engine
 - [Ink](https://github.com/vadimdemedes/ink) - React for interactive command-line apps
 - Babel - For JavaScript transpiling
-- [Nodemon](https://github.com/remy/nodemon) - Dev code watcher
 - [Prettier](https://github.com/prettier/prettier) - Code cleaning
 
 ## Credits
 
-Interface sounds from [Emoji Sounds](https://icons8.com/sounds)<br>
+Sounds by [Emoji Sounds](https://icons8.com/sounds)<br>
 Created by [@benrogerson](https://twitter.com/benrogerson) and Sam Stevens
-
-Crafted at [Simple](https://simple.com.au/)
