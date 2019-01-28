@@ -4,19 +4,22 @@
  * Head to 'https://github.com/simple-integrated-marketing/swiff' for further information.
  */
 module.exports = {
+    // Remote SSH server details
     server: {
-        // The username for connecting to the host server
-        // user: '',
-
-        // The IP/hostname of the remote host
-        // host: '1.1.1.1',
-
-        // The working directory for the remote app folder
-        // appPath: '/srv/users/[user]/apps/[app]'
+        // The SSH login username
+        user: '',
+        // The IP/hostname of the remote server (eg: 100.100.100.100)
+        host: '',
+        // The working directory of the remote app folder
+        // eg: /srv/users/[user]/apps/[app]
+        appPath: '',
+        // The SSH port to connect on (22 is the SSH default)
+        port: 22,
     },
     // Folders to upload and sync with the server
-    // pushFolders: ['templates', 'config'],
-
+    // eg: pushFolders: ['templates', 'config', 'public/assets/build'],
+    pushFolders: [],
     // Folders to pull new or changed files from
-    // pullFolders: ['public/assets/volumes'],
+    // eg: pullFolders: ['public/assets/volumes'],
+    pullFolders: [],
 }
