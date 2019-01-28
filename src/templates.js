@@ -3,18 +3,19 @@ import SelectInput from 'ink-select-input'
 import Spinner from 'ink-spinner'
 import { isEmpty } from './utils'
 
-const OptionsTemplate = ({ selectProps }) => (
-    <div>
-        <SelectInput {...selectProps} />
-    </div>
-)
+const OptionsTemplate = ({ selectProps }) => <SelectInput {...selectProps} />
 
-const MessageTemplate = ({ messages }) => (
-    <div>
+const MessageTemplate = ({ messages, isFlaggedStart }) => (
+    <Text>
         {!isEmpty(messages) &&
             messages.map(({ text, type }, i) => (
                 <Text>
-                    {type === 'heading' && <Text bold>{`\n${text}\n`}</Text>}
+                    {type === 'heading' && !isFlaggedStart && (
+                        <Text bold>{`—— ${text} ——\n`}</Text>
+                    )}
+                    {type === 'heading' && isFlaggedStart && (
+                        <Text bold>{`${text}\n`}</Text>
+                    )}
                     <Text dim={messages.length - 1 !== i}>
                         {type === 'error' && `💩  ${text}`}
                         {type === 'success' && `👌  ${text}`}
@@ -30,7 +31,7 @@ const MessageTemplate = ({ messages }) => (
                     </Text>
                 </Text>
             ))}
-    </div>
+    </Text>
 )
 
 export { OptionsTemplate, MessageTemplate }
