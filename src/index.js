@@ -80,7 +80,7 @@ const tasks = [
             'Launch a remote terminal session into the remote app folder',
         isListed: false,
         needsSetup: true,
-        keepRunning: true,
+        fullscreen: true,
         handler: 'handleSsh',
         flags: ['ssh', 's'],
     },
@@ -142,4 +142,6 @@ process.stdin.on('data', key => {
     }
 })
 
-render(<Swiff flags={cli.flags} pkg={cli.pkg} tasks={tasks} taskHelp={taskHelp} />)
+render(
+    <Swiff flags={cli.flags} pkg={cli.pkg} tasks={tasks} taskHelp={taskHelp} />
+)

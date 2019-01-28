@@ -1,6 +1,7 @@
 import { h } from 'ink'
 import fs from 'fs-extra'
 import dotenv from 'dotenv'
+import path from 'path'
 import { isEmpty } from './utils'
 import { colourNotice } from './palette'
 import { pathLocalEnv, pathLocalEnvTemplate } from './paths'
@@ -11,19 +12,19 @@ const createEnv = (fromPath = pathLocalEnvTemplate, toPath = pathLocalEnv) =>
 
 const setupLocalEnv = async isInteractive => {
     // Get the local env file
-    const localEnv = getParsedEnv(pathLocalEnv)
+    let localEnv = getParsedEnv(pathLocalEnv)
     const isEnvMissing = localEnv instanceof Error
     // If env isn't available then create one
     if (isEnvMissing) {
         await createEnv()
-        return setupLocalEnv(isInteractive)
+        localEnv = getParsedEnv(pathLocalEnv)
     }
     // Get a summary of any env issues
     const localEnvIssues = getEnvIssues(
         localEnv,
         isEnvMissing,
         false,
-        isInteractive,
+        isInteractive
     )
     // Return the missing settings error or the env contents
     return localEnvIssues ? new Error(localEnvIssues) : localEnv
@@ -64,25 +65,23 @@ const getEnvIssues = (
             (setting === 'DB_DATABASE' && isEmpty(env[setting]))
     )
     // Return the error if any
-    return !isEmpty(missingSettings)
-        ? `${
-              isEnvMissing
-                  ? `Please add an ${colourNotice('.env')} file in ${isRemoteEnv ? 'the remote' : 'your local'} folder:\n${colourNotice(appPath)}\n\nWithin the env please add`
-                  : `${
-                        isRemoteEnv ? 'The remote' : 'Your local'
-                    } ${colourNotice('.env')} needs`
-          } ${
-              missingSettings.length > 1
-                  ? 'values for these settings'
-                  : 'a value for this setting'
-          }:\n\n${missingSettings
+    return isEmpty(missingSettings)
+        ? ''
+        : `${
+              isRemoteEnv
+                  ? `Add the following ${
+                        missingSettings.length > 1 ? 'values' : 'value'
+                    } to the remote .env:\n${colourNotice(`${appPath}/.env`)}`
+                  : `Add the following ${
+                        missingSettings.length > 1 ? 'values' : 'value'
+                    } to your${
+                        isEnvMissing ? ` new` : ''
+                    } project .env:\n${colourNotice(pathLocalEnv)}`
+          }\n\n${missingSettings
               .map(s => `${s}="${colourNotice(`value`)}"`)
               .join('\n')}${
-              isEnvMissing && isInteractive
-                  ? `\n\nOnce you've finished, rerun this task by pressing enter...`
-                  : ''
+              isInteractive ? `\n\nThen hit [ enter ↵ ] to rerun this task` : ''
           }`
-        : null
 }
 
 const getRemoteEnv = async ({ sshKeyPath, serverConfig, isInteractive }) => {
@@ -96,8 +95,23 @@ const getRemoteEnv = async ({ sshKeyPath, serverConfig, isInteractive }) => {
     }
     // Connect via SSH to get the contents of the remote .env
     const remoteEnv = await getSshEnv(sshConfig)
+    if (remoteEnv instanceof Error) {
+        return String(remoteEnv).includes('Error: No such file')
+            ? new Error(
+                  `First add an .env file on the remote server:\n  ${colourNotice(
+                      path.join(serverConfig.appPath, '/.env')
+                  )}`
+              )
+            : remoteEnv
+    }
     // Validate the remote env
-    const remoteEnvIssues = getEnvIssues(remoteEnv, (remoteEnv instanceof Error), true, isInteractive, serverConfig.appPath)
+    const remoteEnvIssues = getEnvIssues(
+        remoteEnv,
+        remoteEnv === false,
+        true,
+        isInteractive,
+        serverConfig.appPath
+    )
     // Return the missing settings error or the env contents
     return remoteEnvIssues ? new Error(remoteEnvIssues) : remoteEnv
 }

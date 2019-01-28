@@ -2,11 +2,12 @@ import { h } from 'ink'
 import nodeSsh from 'node-ssh'
 import resolveUsername from 'username'
 import path from 'path'
-import { executeCommands, cmdPromise, isEmpty } from './utils'
+import { executeCommands, cmdPromise, isEmpty, isFunction } from './utils'
 import { getParsedEnv } from './env'
 import { getDbDumpZipCommands } from './database'
 import { pathBackups, pathApp } from './paths'
-import { colourAttention } from './palette'
+import { colourAttention, colourNotice } from './palette'
+import chalk from 'chalk'
 
 const getSshInit = async ({ host, user, port, sshKeyPath }) => {
     // Connect to the remote server via SSH
@@ -61,22 +62,19 @@ const sshConnect = async ({ host, username, port, sshKeyPath }) => {
                   )}\n\nCheck the ${colourAttention(
                       `SWIFF_CUSTOM_KEY`
                   )} value is correct in your local .env\n\nmacOS path example:\n${colourAttention(
-                      `SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"`
+                      `SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/[key-filename]"`
                   )}`
                 : errorMessage
         )
     return ssh
 }
 
-const getSshEnv = async ({ host, username, appPath, sshKeyPath }) => {
+const getSshEnv = async ({ host, username, port, appPath, sshKeyPath }) => {
     let errorMessage
     // Create a SSH connection
-    const ssh = await sshConnect({ host, username, sshKeyPath })
+    const ssh = await sshConnect({ host, username, port, sshKeyPath })
     // If there’s any connection issues then return the messages
-    if (ssh instanceof Error) {
-        ssh.dispose()
-        return ssh
-    }
+    if (ssh instanceof Error) return ssh
     // Set where we’ll be downloading the temporary remote .env file
     const backupPath = `${pathBackups}/.env`
     // Download the remote .env file
@@ -135,6 +133,7 @@ const getSshPushCommands = ({
     workingDirectory,
     sshKeyPath,
 }) => {
+    // https://download.samba.org/pub/rsync/rsync.html
     const flags = [
         // '--dry-run',
         // Preserve permissions
@@ -154,10 +153,17 @@ const getSshPushCommands = ({
     ].join(' ')
     // Build the final command string from an array of folders
     const rsyncCommands = pushFolders
-        .map(
-            path =>
-                `echo '!${path}' && (rsync ${flags} ${pathApp}/${path}/ ${user}@${host}:${workingDirectory}/${path}/)`
-        )
+        .map(item => {
+            const rSyncFrom = `${path.join(pathApp, item)}/`
+            const rSyncTo = `${path.join(workingDirectory, item)}/`
+            // Folders aren't created by rsync natively
+            // https://stackoverflow.com/questions/1636889/rsync-how-can-i-configure-it-to-create-target-directory-on-server
+            const createFolderCmd = `--rsync-path="mkdir -p ${rSyncTo} && rsync"`
+            return [
+                `echo '!${item}'`,
+                `(rsync ${createFolderCmd} ${flags} ${rSyncFrom} ${user}@${host}:${rSyncTo})`,
+            ].join(' && ')
+        })
         .join(' && ')
     // Use grep to filter the rsync output
     const greppage = `grep -E '^(!|>|<|\\*)'`
@@ -172,6 +178,7 @@ const getSshPullCommands = ({
     appPath,
     sshKeyPath,
 }) => {
+    // https://download.samba.org/pub/rsync/rsync.html
     const flags = [
         // '--dry-run',
         // Preserve permissions
@@ -188,11 +195,14 @@ const getSshPullCommands = ({
     ].join(' ')
     // Build the final command string from an array of folders
     const rsyncCommands = pullFolders
-        .map(path => {
-            const rSyncFrom = `${appPath}/${path}/`
-            const rSyncTo = `./${path}/`
+        .map(item => {
+            const rSyncFrom = `${path.join(appPath, item)}/`
+            const rSyncTo = `./${item}/`
+            // Folders aren't created by rsync natively
+            const createFolderCmd = `mkdir -p ${rSyncTo}`
             return [
-                `echo '!${path}'`,
+                `echo '!${item}'`,
+                createFolderCmd,
                 `rsync ${flags} ${user}@${host}:${rSyncFrom} ${rSyncTo}`,
             ].join(' && ')
         })
@@ -229,18 +239,24 @@ const getSshDatabase = async ({
     // If there’s connection issues then return the messages
     if (ssh instanceof Error) return ssh
     // Dump the database and gzip on the remote server
+    const zipCommandConfig = {
+        database: remoteEnv.DB_DATABASE,
+        user: remoteEnv.DB_USER,
+        password: remoteEnv.DB_PASSWORD,
+        gzipFilePath: gzipFileName,
+    }
     await ssh
-        .execCommand(
-            getDbDumpZipCommands({
-                database: remoteEnv.DB_DATABASE,
-                user: remoteEnv.DB_USER,
-                password: remoteEnv.DB_PASSWORD,
-                gzipFilePath: gzipFileName,
-            }),
-            {
-                cwd: sshAppPath,
-            }
-        )
+        .execCommand(getDbDumpZipCommands(zipCommandConfig), {
+            cwd: sshAppPath,
+        })
+        .then(result => {
+            if (String(result.stderr).includes('Access denied'))
+                errorMessage = `Couldn't connect with the remote .env database settings:\n\n${colourAttention(
+                    `DB_DATABASE="${zipCommandConfig.database}"\nDB_USER="${
+                        zipCommandConfig.user
+                    }"\nDB_PASSWORD="${zipCommandConfig.password}"`
+                )}`
+        })
         .catch(e => (errorMessage = e))
     // If there’s db dump/gzip issues then return the messages
     if (errorMessage) return new Error(errorMessage)
