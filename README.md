@@ -22,7 +22,7 @@ Refresh your composer files with the latest updates from the remote
 1. Install Swiff globally with NPM:<br>
 `npm install --global swiff`
 
-2. Type `swiff` within a project folder to start the task interface
+2. Type `swiff` within a project root to start the task interface
 
 Type `swiff --help` for a list of flags for your 'once off' tasks.
 
@@ -38,8 +38,9 @@ Run `swiff --backups` to open the backups folder.
 
 ## Requirements
 
-Swiff requires MySQL to use the database update feature.<br>
-You can download MySQL at [dev.mysql.com](https://dev.mysql.com/downloads/mysql/).
+Swiff requires MySQL to use the database features.
+We recommend using MariaDB, an enhanced, drop-in replacement for MySQL.
+`brew install mariadb@10.2` (latest version as of 25.01.19).
 
 Running Windows or Linux? Swiff has been tested on MacOS so there's probably some issues on other operating systems.
 
