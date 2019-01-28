@@ -8,12 +8,13 @@ import { getDbDumpZipCommands } from './database'
 import { pathBackups, pathApp } from './paths'
 import { colourAttention } from './palette'
 
-const getSshInit = async ({ host, user, sshKeyPath }) => {
+const getSshInit = async ({ host, user, port, sshKeyPath }) => {
     // Connect to the remote server via SSH
     // Get the remote env file
     const config = {
         host: host,
         username: user,
+        port: port,
     }
     // Get the custom privateKey if it's set
     sshKeyPath = !isEmpty(sshKeyPath) ? { sshKeyPath: sshKeyPath } : null
@@ -36,7 +37,7 @@ const getSshFile = async ({ connection, from, to }) => {
 }
 
 // Connect to the remote server via SSH
-const sshConnect = async ({ host, username, sshKeyPath }) => {
+const sshConnect = async ({ host, username, port, sshKeyPath }) => {
     let errorMessage
     // Get the local username so we can get the default key below (macOS path)
     const user = await resolveUsername()
@@ -46,6 +47,7 @@ const sshConnect = async ({ host, username, sshKeyPath }) => {
         .connect({
             host: host,
             username: username,
+            port: port,
             privateKey: !isEmpty(sshKeyPath)
                 ? sshKeyPath
                 : `/Users/${user}/.ssh/id_rsa`,
@@ -107,15 +109,20 @@ const getSshEnv = async ({ host, username, appPath, sshKeyPath }) => {
     return remoteEnv
 }
 
-const getSshCopyInstructions = ({ server }) =>
-    `Haven’t added your key to the server?\nAdd your key to the remote server with ssh-copy-id:\nssh-copy-id ${
-        server.user
-    }@${server.host}`
+const getSshCopyInstructions = ({ server }, sshKeyPath) =>
+    `${chalk.bold(
+        `Haven’t added your key to the server?`
+    )}\nYou can quickly add it with ssh-copy-id:\n${colourNotice(
+        `ssh-copy-id ${!isEmpty(sshKeyPath) ? `-i ${sshKeyPath} ` : ''}${
+            server.port !== 22 ? `-p ${server.port} ` : ''
+        }${server.user}@${server.host}`
+    )}`
 
 const getSshPushCommands = ({
     pushFolders,
     user,
     host,
+    port,
     workingDirectory,
     sshKeyPath,
 }) => {
@@ -160,7 +167,11 @@ const getSshPullCommands = ({
         '--compress',
         // Output a change-summary for all updates
         '--itemize-changes',
-        !isEmpty(sshKeyPath) ? `-e "ssh -i ${sshKeyPath}"` : '',
+        // Connect via a port number
+        // Set the custom identity if provided
+        `-e "ssh -p ${port}${
+            !isEmpty(sshKeyPath) ? ` -i '${sshKeyPath}'` : ''
+        }"`,
     ].join(' ')
     // Build the final command string from an array of folders
     const rsyncCommands = pullFolders
@@ -178,15 +189,19 @@ const getSshPullCommands = ({
     return `(${rsyncCommands}) | ${greppage}`
 }
 
-// Build command to test ssh connection
-const getSshTestCommand = (user, host) =>
-    `ssh -o BatchMode=yes -o ConnectTimeout=5 ${user}@${host} echo 'SSH access is setup' 2>&1`
+// Build command to test the SSH connection is setup
+const getSshTestCommand = (user, host, port, sshKeyPath) => {
+    // Set the custom identity if provided
+    const sshKeyString = !isEmpty(sshKeyPath) ? `-i "${sshKeyPath}"` : ''
+    return `ssh -p ${port} ${sshKeyString} -o BatchMode=yes -o ConnectTimeout=5 ${user}@${host} echo 'SSH access is setup' 2>&1`
+}
 
 // Download a database over SSH to a local folder
 const getSshDatabase = async ({
     remoteEnv,
     host,
     user,
+    port,
     sshAppPath,
     gzipFileName,
     sshKeyPath,
@@ -195,6 +210,7 @@ const getSshDatabase = async ({
     const ssh = await getSshInit({
         host: host,
         user: user,
+        port: port,
         sshKeyPath: sshKeyPath,
     })
     // If there’s connection issues then return the messages

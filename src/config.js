@@ -33,7 +33,12 @@ const getConfig = async () => {
 // Check that the required config settings exist
 // TODO: Convert to named parameters
 const getConfigIssues = (config, hasNewConfig, isInteractive = false) => {
-    const requiredSettings = ['server.user', 'server.host', 'server.appPath']
+    const requiredSettings = [
+        'server.user',
+        'server.host',
+        'server.appPath',
+        'server.port',
+    ]
     // Loop over the array and match against the keys in the users config
     const missingSettings = requiredSettings.filter(
         setting =>

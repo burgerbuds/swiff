@@ -330,16 +330,26 @@ class Swiff extends Component {
             )
         // Check the users SSH key has been added to the server
         const checkSshSetup = await executeCommands(
-            getSshTestCommand(config.server.user, config.server.host)
+            getSshTestCommand(
+                config.server.user,
+                config.server.host,
+                config.server.port,
+                !isEmpty(localEnv.SWIFF_CUSTOM_KEY)
+                    ? localEnv.SWIFF_CUSTOM_KEY
+                    : null
+            )
         )
         // If there's an issue with the connection then give some assistance
         if (checkSshSetup instanceof Error) {
             return this.setMessage(
-                `A SSH connection couldn’t be made with these details:\n\n${colourNotice(
-                    `Server host: ${config.server.host}\nServer user: ${
-                        config.server.user
-                    }\nSSH key: ${sshKey}`
-                )}\n\n${getSshCopyInstructions(config)}\n\n${
+                `A SSH connection couldn’t be made with these details:\n\nServer host: ${
+                    config.server.host
+                }\nServer user: ${config.server.user}\nPort: ${
+                    config.server.port
+                }\nSSH key: ${sshKey}\n\n${getSshCopyInstructions(
+                    config,
+                    sshKey
+                )}\n\n${
                     isEmpty(localEnv.SWIFF_CUSTOM_KEY)
                         ? `Using a different SSH key?\nAdd the path to your project .env\neg: SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"`
                         : ''
@@ -351,7 +361,7 @@ class Swiff extends Component {
 
     handlePull = async () => {
         const { pullFolders, server } = this.state.config
-        const { user, host, appPath } = server
+        const { user, host, appPath, port } = server
         const localEnv = this.state.localEnv
         const { SWIFF_CUSTOM_KEY } = localEnv
         // Check if the user has defined some pull folders
@@ -376,8 +386,8 @@ class Swiff extends Component {
             pullFolders: filteredPullFolders,
             user: user,
             host: host,
+            port: port,
             appPath: appPath,
-            // Set the custom identity if provided
             sshKeyPath: SWIFF_CUSTOM_KEY,
         })
         // Get the remote env file via SSH
@@ -434,7 +444,7 @@ class Swiff extends Component {
         const { SWIFF_CUSTOM_KEY } = localEnv
         const { pushFolders } = this.state.config
         const serverConfig = this.state.config.server
-        const { user, host, appPath } = serverConfig
+        const { user, host, appPath, port } = serverConfig
         // Get the remote env file via SSH
         const remoteEnv = await getRemoteEnv({
             serverConfig,
@@ -499,6 +509,7 @@ class Swiff extends Component {
             pushFolders: filteredPushFolders,
             user: user,
             host: host,
+            port: port,
             workingDirectory: appPath,
             sshKeyPath: SWIFF_CUSTOM_KEY,
         })
@@ -565,6 +576,7 @@ class Swiff extends Component {
             remoteEnv: remoteEnv,
             host: serverConfig.host,
             user: serverConfig.user,
+            port: serverConfig.port,
             sshAppPath: serverConfig.appPath,
             gzipFileName: remoteDbNameZipped,
             sshKeyPath: SWIFF_CUSTOM_KEY,
@@ -767,6 +779,7 @@ class Swiff extends Component {
             host: serverConfig.host,
             privateKey: require('fs').readFileSync(privateKey),
             username: serverConfig.user,
+            port: serverConfig.port,
         })
         // Push our input to the server input
         // http://stackoverflow.com/questions/5006821/nodejs-how-to-read-keystrokes-from-stdin

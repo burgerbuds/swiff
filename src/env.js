@@ -91,6 +91,7 @@ const getRemoteEnv = async ({ sshKeyPath, serverConfig, isInteractive }) => {
         host: serverConfig.host,
         username: serverConfig.user,
         appPath: serverConfig.appPath,
+        port: serverConfig.port,
         sshKeyPath: sshKeyPath,
     }
     // Connect via SSH to get the contents of the remote .env
