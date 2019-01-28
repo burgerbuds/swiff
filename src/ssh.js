@@ -87,7 +87,12 @@ const getSshEnv = async ({ host, username, appPath, sshKeyPath }) => {
         .catch(error => (errorMessage = error))
     // If there’s any .env download issues then return the messages
     if (errorMessage) {
-        ssh.dispose()
+        // If dispose is a function call it
+        if (
+            ssh.dispose() &&
+            {}.toString.call(ssh.dispose()) === '[object Function]'
+        )
+            ssh.dispose()
         return new Error(errorMessage)
     }
     // Return the contents of the .env file
@@ -99,7 +104,11 @@ const getSshEnv = async ({ host, username, appPath, sshKeyPath }) => {
         )
         // If there’s any .env removal issues then return the messages
         if (errorMessage) {
-            ssh.dispose()
+            if (
+                ssh.dispose() &&
+                {}.toString.call(ssh.dispose()) === '[object Function]'
+            )
+                ssh.dispose()
             return new Error(errorMessage)
         }
     }

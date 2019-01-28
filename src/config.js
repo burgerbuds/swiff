@@ -47,21 +47,18 @@ const getConfigIssues = (config, hasNewConfig, isInteractive = false) => {
     )
     // Return the error if any
     return !isEmpty(missingSettings)
-        ? `${
+        ? `Add the following ${
+              missingSettings.length > 1 ? 'values' : 'value'
+          } to your ${
               hasNewConfig
-                  ? `Your new Swiff config was created at:\n${colourNotice(
-                        pathConfig
-                    )}\n\nThe config`
-                  : `Your ${colourNotice(configFileName)}`
-          } needs values for ${
-              missingSettings.length > 1 ? 'these settings' : 'this setting'
-          }:${hasNewConfig ? '\n' : '\n\n'}${missingSettings
-              .map(s => `- ${colourNotice(s)}`)
-              .join('\n')}${
-              hasNewConfig && isInteractive
-                  ? `\n\nOnce you've finished, rerun this task by pressing enter...`
-                  : ''
-          }`
+                  ? `new config:\n${colourNotice(pathConfig)}`
+                  : `${colourNotice(configFileName)}:`
+          }\n\n${missingSettings
+              .map((s, i) => `${colourNotice(`— `)} ${s}`)
+              .join('\n')}\n\n${
+              isInteractive ? `Then hit [ enter ↵ ] to rerun this task` : ``
+          }
+        `
         : null
 }
 
