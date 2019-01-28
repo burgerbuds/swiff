@@ -86,6 +86,7 @@ const replaceRsyncOutput = (outputText, folders) =>
               .map(i => (i.startsWith('!') ? `\n${i.substring(1)}` : i))
               // Remove 'modified date updated'
               .filter(i => !i.startsWith('<f..t'))
+              .filter(i => !i.startsWith('>f..t'))
               .map(
                   i =>
                       i
