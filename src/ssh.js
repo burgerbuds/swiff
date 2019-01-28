@@ -137,8 +137,11 @@ const getSshPushCommands = ({
         // Delete extraneous files from dest dirs
         '--delete',
         '--exclude ".env"',
+        // Connect via a port number
         // Set the custom identity if provided
-        !isEmpty(sshKeyPath) ? `-e "ssh -i ${sshKeyPath}"` : '',
+        `-e "ssh -p ${port}${
+            !isEmpty(sshKeyPath) ? ` -i '${sshKeyPath}'` : ''
+        }"`,
     ].join(' ')
     // Build the final command string from an array of folders
     const rsyncCommands = pushFolders
@@ -156,6 +159,7 @@ const getSshPullCommands = ({
     pullFolders,
     user,
     host,
+    port,
     appPath,
     sshKeyPath,
 }) => {
