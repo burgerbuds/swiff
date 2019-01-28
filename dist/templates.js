@@ -17,18 +17,21 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 const OptionsTemplate = ({
   selectProps
-}) => (0, _ink.h)("div", null, (0, _ink.h)(_inkSelectInput.default, selectProps));
+}) => (0, _ink.h)(_inkSelectInput.default, selectProps);
 
 exports.OptionsTemplate = OptionsTemplate;
 
 const MessageTemplate = ({
-  messages
-}) => (0, _ink.h)("div", null, !(0, _utils.isEmpty)(messages) && messages.map(({
+  messages,
+  isFlaggedStart
+}) => (0, _ink.h)(_ink.Text, null, !(0, _utils.isEmpty)(messages) && messages.map(({
   text,
   type
-}, i) => (0, _ink.h)(_ink.Text, null, type === 'heading' && (0, _ink.h)(_ink.Text, {
+}, i) => (0, _ink.h)(_ink.Text, null, type === 'heading' && !isFlaggedStart && (0, _ink.h)(_ink.Text, {
   bold: true
-}, `\n${text}\n`), (0, _ink.h)(_ink.Text, {
+}, `—— ${text} ——\n`), type === 'heading' && isFlaggedStart && (0, _ink.h)(_ink.Text, {
+  bold: true
+}, `${text}\n`), (0, _ink.h)(_ink.Text, {
   dim: messages.length - 1 !== i
 }, type === 'error' && `💩  ${text}`, type === 'success' && `👌  ${text}`, type === 'message' && `💁‍  ${text}`, type === 'working' && (messages.length - 1 === i ? (0, _ink.h)(_inkSpinner.default, {
   type: "runner"

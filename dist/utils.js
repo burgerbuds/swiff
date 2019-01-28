@@ -146,7 +146,7 @@ outputText.split('\n').filter(Boolean).length === folders.length ? '' : outputTe
   return e.startsWith('!') && (isNextAFolder || isLast) ? '' : e;
 }) // Style folder headings
 .map(i => i.startsWith('!') ? `\n${i.substring(1)}` : i) // Remove 'modified date updated'
-.filter(i => !i.startsWith('<f..t')).map(i => i.replace(/(\<|\>)f.st..../g, (0, _palette.colourHighlight)('^')) // Updated
+.filter(i => !i.startsWith('<f..t')).filter(i => !i.startsWith('>f..t')).map(i => i.replace(/(\<|\>)f.st..../g, (0, _palette.colourHighlight)('^')) // Updated
 .replace(/(\<|\>)f\+\+\+\+\+\+\+/g, (0, _palette.colourHighlight)('+')) // Added
 .replace(/\*deleting/g, (0, _palette.colourAttention)('-')) // Deleted
 ) // Remove empty items

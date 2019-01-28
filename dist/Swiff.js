@@ -15,6 +15,8 @@ var _username = _interopRequireDefault(require("username"));
 
 var _ssh = _interopRequireDefault(require("ssh2"));
 
+var _chalk = _interopRequireDefault(require("chalk"));
+
 var _utils = require("./utils");
 
 var _paths = require("./paths");
@@ -121,7 +123,7 @@ class Swiff extends _ink.Component {
         heading,
         handler,
         needsSetup,
-        keepRunning
+        fullscreen
       } = taskData;
       const {
         messages,
@@ -152,13 +154,17 @@ class Swiff extends _ink.Component {
 
 
           const isSetup = yield _this.handleSetup();
-          if (isSetup !== true) return;
+
+          if (isSetup !== true) {
+            // End the process after 500 ticks if started with flags
+            return !isTaskRunning(messages) && isFlaggedStart && !fullscreen ? setTimeout(() => process.exit(), 500) : null;
+          }
         } // Start the chosen task
 
 
         yield _this[handler](); // End the process after 500 ticks if started with flags
 
-        if (!isTaskRunning(messages) && isFlaggedStart && !keepRunning) // Wait a little to allow setState to finish
+        if (!isTaskRunning(messages) && isFlaggedStart && !fullscreen) // Wait a little to allow setState to finish
           setTimeout(() => process.exit(), 500);
       }));
     });
@@ -178,7 +184,7 @@ class Swiff extends _ink.Component {
       const newTasks = tasks.filter(task => showAll ? !task.isListed : task.isListed);
       newTasks.push({
         id: 'toggle',
-        title: 'More tasks'
+        title: showAll ? `   ○ ${_chalk.default.white('●')}` : `   ${_chalk.default.white('●')} ○`
       });
       return newTasks;
     });
@@ -241,26 +247,13 @@ class Swiff extends _ink.Component {
       // Check if the config exists
       const doesConfigExist = yield (0, _utils.doesFileExist)(_paths.pathConfig); // If no config, create it
 
-      if (!doesConfigExist) yield (0, _config.createConfig)(); // Get the config
-
-      const {
-        isFlaggedStart
-      } = _this.state;
-      const isInteractive = !isFlaggedStart; // TODO: Convert to named parameters
+      if (!doesConfigExist) yield (0, _config.createConfig)();
+      const isInteractive = !_this.state.isFlaggedStart; // Get the config
+      // TODO: Convert to named parameters
 
       const config = yield (0, _config.setupConfig)(!doesConfigExist, isInteractive); // If there's any missing config options then open the config file and show the error
 
-      if (config instanceof Error) {
-        // Open the config file after a few seconds
-        // fail silently because it doesn't matter so much
-        setTimeout(
-        /*#__PURE__*/
-        _asyncToGenerator(function* () {
-          return yield (0, _utils.executeCommands)(`open '${_paths.pathConfig}'`);
-        }), 2000);
-        return _this.setMessage(config);
-      } // Add the config to the global state
-
+      if (config instanceof Error) return _this.setMessage(config); // Add the config to the global state
 
       _this.setState({
         config
@@ -269,17 +262,7 @@ class Swiff extends _ink.Component {
 
       const localEnv = yield (0, _env.setupLocalEnv)(isInteractive); // If there's anything wrong with the env then return an error
 
-      if (localEnv instanceof Error) {
-        // Open the env file after a few seconds
-        // fail silently because it doesn't matter so much
-        setTimeout(
-        /*#__PURE__*/
-        _asyncToGenerator(function* () {
-          return yield (0, _utils.executeCommands)(`open '${_paths.pathLocalEnv}'`);
-        }), 2000);
-        return _this.setMessage(localEnv);
-      } // Add the env to the global state
-
+      if (localEnv instanceof Error) return _this.setMessage(localEnv); // Add the env to the global state
 
       _this.setState({
         localEnv
@@ -291,12 +274,12 @@ class Swiff extends _ink.Component {
       const sshKey = !(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? localEnv.SWIFF_CUSTOM_KEY : `/Users/${user}/.ssh/id_rsa`;
       const doesSshKeyExist = yield (0, _utils.doesFileExist)(sshKey); // If the key isn't found then show a message
 
-      if (!doesSshKeyExist) return _this.setMessage(`Your SSH key file wasn’t found\n\nEither create a new one at:\n${(0, _palette.colourNotice)(sshKey)}\n\nor add the path in your project .env, eg:\nSWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"`); // Check the users SSH key has been added to the server
+      if (!doesSshKeyExist) return _this.setMessage(`Your${!(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? ' custom' : ''} SSH key file wasn’t found at:\n  ${(0, _palette.colourNotice)(sshKey)}\n\nYou can either:\n\na) Create a SSH key with this command (leave passphrase empty):\n  ${(0, _palette.colourNotice)(`ssh-keygen -m PEM -t rsa -b 4096 -f ${sshKey} -C "your_email@example.com"`)}\n\nb) Or add an existing key path in your .env with:\n  ${(0, _palette.colourNotice)(`SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/[your-key-name]"`)}${isInteractive ? `\n\nThen hit [ enter ↵ ] to rerun this task` : ''}`); // Check the users SSH key has been added to the server
 
-      const checkSshSetup = yield (0, _utils.executeCommands)((0, _ssh2.getSshTestCommand)(config.server.user, config.server.host)); // If there's an issue with the connection then give some assistance
+      const checkSshSetup = yield (0, _utils.executeCommands)((0, _ssh2.getSshTestCommand)(config.server.user, config.server.host, config.server.port, !(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? localEnv.SWIFF_CUSTOM_KEY : null)); // If there's an issue with the connection then give some assistance
 
       if (checkSshSetup instanceof Error) {
-        return _this.setMessage(`A SSH connection couldn’t be made with these details:\n\n${(0, _palette.colourNotice)(`Server host: ${config.server.host}\nServer user: ${config.server.user}\nSSH key: ${sshKey}`)}\n\n${(0, _ssh2.getSshCopyInstructions)(config)}\n\n${(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? `Using a different SSH key?\nAdd the path to your project .env\neg: SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"` : ''}`);
+        return _this.setMessage(`A SSH connection couldn’t be made with these details:\n\nServer host: ${config.server.host}\nServer user: ${config.server.user}\nPort: ${config.server.port}\nSSH key: ${sshKey}\n\n${(0, _ssh2.getSshCopyInstructions)(config, sshKey)}\n\n${(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? `${_chalk.default.bold(`Is the SSH key above incorrect?`)}\nAdd the path to your project .env\neg: SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"` : ''}`);
       }
 
       return true;
@@ -312,7 +295,8 @@ class Swiff extends _ink.Component {
       const {
         user,
         host,
-        appPath
+        appPath,
+        port
       } = server;
       const localEnv = _this.state.localEnv;
       const {
@@ -330,8 +314,8 @@ class Swiff extends _ink.Component {
         pullFolders: filteredPullFolders,
         user: user,
         host: host,
+        port: port,
         appPath: appPath,
-        // Set the custom identity if provided
         sshKeyPath: SWIFF_CUSTOM_KEY
       }); // Get the remote env file via SSH
 
@@ -356,7 +340,7 @@ class Swiff extends _ink.Component {
       }
 
       const output = (0, _utils.replaceRsyncOutput)(pullStatus, filteredPullFolders);
-      return _this.setSuccess((0, _utils.isEmpty)(output) ? `No pull required, ${(0, _palette.colourHighlight)(localEnv.DB_SERVER)} is already up-to-date!` : `The file pull${!(0, _utils.isEmpty)(remoteEnvironment) ? ` from ${(0, _palette.colourHighlight)(remoteEnvironment)}` : ''} was successful\n${output}`);
+      return _this.setSuccess((0, _utils.isEmpty)(output) ? `No pull required, ${(0, _palette.colourHighlight)(localEnv.DB_SERVER)} is already up-to-date!` : `Success! These are the local files that changed:\n${output}\n\nThe file pull${!(0, _utils.isEmpty)(remoteEnvironment) ? ` from ${(0, _palette.colourHighlight)(remoteEnvironment)}` : ''} was successful`);
     }));
 
     _defineProperty(this, "handlePush",
@@ -374,7 +358,8 @@ class Swiff extends _ink.Component {
       const {
         user,
         host,
-        appPath
+        appPath,
+        port
       } = serverConfig; // Get the remote env file via SSH
 
       const remoteEnv = yield (0, _env.getRemoteEnv)({
@@ -408,6 +393,7 @@ class Swiff extends _ink.Component {
         pushFolders: filteredPushFolders,
         user: user,
         host: host,
+        port: port,
         workingDirectory: appPath,
         sshKeyPath: SWIFF_CUSTOM_KEY
       }); // Send the commands to the push task
@@ -419,7 +405,7 @@ class Swiff extends _ink.Component {
       }
 
       const output = (0, _utils.replaceRsyncOutput)(pushStatus, _this.state.config.pushFolders);
-      return _this.setSuccess((0, _utils.isEmpty)(output) ? `No push required, ${!(0, _utils.isEmpty)(remoteEnvironment) ? `${(0, _palette.colourHighlight)(remoteEnvironment)}` : 'the remote'} is already up-to-date` : `The file push${!(0, _utils.isEmpty)(remoteEnvironment) ? ` from ${(0, _palette.colourHighlight)(remoteEnvironment)}` : ''} was successful\n${output}`);
+      return _this.setSuccess((0, _utils.isEmpty)(output) ? `No push required, ${!(0, _utils.isEmpty)(remoteEnvironment) ? `${(0, _palette.colourHighlight)(remoteEnvironment)}` : 'the remote'} is already up-to-date` : `Success! These are the remote files that changed:\n${output}\n\nThe file push${!(0, _utils.isEmpty)(remoteEnvironment) ? ` from ${(0, _palette.colourHighlight)(remoteEnvironment)}` : ''} was successful`);
     }));
 
     _defineProperty(this, "handleDatabase",
@@ -440,12 +426,9 @@ class Swiff extends _ink.Component {
         serverConfig,
         isInteractive: _this.state.isFlaggedStart,
         sshKeyPath: SWIFF_CUSTOM_KEY
-      }); // If the env can't be found then show a message
+      }); // If the env can't be found then return a message
 
-      if (remoteEnv instanceof Error) {
-        return _this.setMessage(remoteEnv);
-      } // Share what's happening with the user
-
+      if (remoteEnv instanceof Error) return _this.setMessage(remoteEnv); // Share what's happening with the user
 
       _this.setWorking(`Fetching ${(0, _palette.colourHighlight)(remoteEnv.DB_DATABASE)} from ${(0, _palette.colourHighlight)(remoteEnv.ENVIRONMENT)}`); // Set the remote database variables
 
@@ -458,6 +441,7 @@ class Swiff extends _ink.Component {
         remoteEnv: remoteEnv,
         host: serverConfig.host,
         user: serverConfig.user,
+        port: serverConfig.port,
         sshAppPath: serverConfig.appPath,
         gzipFileName: remoteDbNameZipped,
         sshKeyPath: SWIFF_CUSTOM_KEY
@@ -466,7 +450,7 @@ class Swiff extends _ink.Component {
       if (dbSsh instanceof Error) return _this.setError(dbSsh); // Backup the existing local database
 
       const localBackupFilePath = `${_paths.pathBackups}/${DB_DATABASE}-local.sql.gz`;
-      const localDbDump = (0, _database.doLocalDbDump)({
+      const localDbDump = yield (0, _database.doLocalDbDump)({
         database: DB_DATABASE,
         user: DB_USER,
         password: DB_PASSWORD,
@@ -571,7 +555,8 @@ class Swiff extends _ink.Component {
     _asyncToGenerator(function* () {
       // Clear the messages so they don't display in our interactive session
       _this.setState({
-        messages: null
+        messages: null,
+        removeOptions: true
       }); // Set some variables for later
 
 
@@ -591,11 +576,11 @@ class Swiff extends _ink.Component {
         conn.shell((err, stream) => {
           if (err) throw err; // Build the commands to run once we're logged in
 
-          const initialCommands = [`cd ${serverConfig.appPath}`, 'clear', 'll', `echo "\nYou're now connected with: ${serverConfig.user}@${serverConfig.host}\nWorking directory: ${serverConfig.appPath}\n"`].join(' && '); // Run the commands
+          const initialCommands = [`cd ${serverConfig.appPath}`, 'clear', 'll', `echo "\n💁  You're now connected with: ${serverConfig.user}@${serverConfig.host}\nWorking directory: ${serverConfig.appPath}\n"`].join(' && '); // Run the commands
 
           stream.write(`${initialCommands}\n`);
           stream.on('close', () => {
-            console.log((0, _palette.colourHighlight)('\nYour SSH connection ended\n'));
+            console.log((0, _palette.colourHighlight)('\n💁  Your SSH connection ended, bye!\n'));
             conn.end();
             process.exit();
           }).on('data', data => {
@@ -610,7 +595,8 @@ class Swiff extends _ink.Component {
       }).connect({
         host: serverConfig.host,
         privateKey: require('fs').readFileSync(privateKey),
-        username: serverConfig.user
+        username: serverConfig.user,
+        port: serverConfig.port
       }); // Push our input to the server input
       // http://stackoverflow.com/questions/5006821/nodejs-how-to-read-keystrokes-from-stdin
 
@@ -642,7 +628,8 @@ class Swiff extends _ink.Component {
       // Whether the app was started with flags
       tasks: this.getTaskList(),
       currentTask: null,
-      showMoreTasks: false
+      showMoreTasks: false,
+      removeOptions: false
     };
   }
 
@@ -650,7 +637,8 @@ class Swiff extends _ink.Component {
     messages,
     currentTask,
     tasks,
-    isFlaggedStart
+    isFlaggedStart,
+    removeOptions
   }) {
     const OptionsSelectProps = {
       items: tasks,
@@ -671,13 +659,14 @@ class Swiff extends _ink.Component {
       },
       indicatorComponent: () => {}
     };
-    const removeOptions = isFlaggedStart || currentTask && currentTask.keepRunning;
-    return (0, _ink.h)(_ink.Text, null, !removeOptions ? (0, _ink.h)(_ink.Text, {
+    const showOptions = !isFlaggedStart && !removeOptions;
+    return (0, _ink.h)(_ink.Text, null, showOptions ? (0, _ink.h)(_ink.Text, {
       dim: isTaskRunning(messages)
     }, (0, _ink.h)(_templates.OptionsTemplate, {
       selectProps: OptionsSelectProps
-    })) : null, !(0, _utils.isEmpty)(messages) && (0, _ink.h)(_templates.MessageTemplate, {
-      messages: messages
+    }), (0, _ink.h)("br", null)) : null, !(0, _utils.isEmpty)(messages) && (0, _ink.h)(_templates.MessageTemplate, {
+      messages: messages,
+      isFlaggedStart: isFlaggedStart
     }));
   }
 

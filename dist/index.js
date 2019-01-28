@@ -81,7 +81,7 @@ const tasks = [{
   description: 'Launch a remote terminal session into the remote app folder',
   isListed: false,
   needsSetup: true,
-  keepRunning: true,
+  fullscreen: true,
   handler: 'handleSsh',
   flags: ['ssh', 's']
 }];

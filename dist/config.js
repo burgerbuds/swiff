@@ -67,9 +67,10 @@ function () {
 exports.getConfig = getConfig;
 
 const getConfigIssues = (config, hasNewConfig, isInteractive = false) => {
-  const requiredSettings = ['server.user', 'server.host', 'server.appPath']; // Loop over the array and match against the keys in the users config
+  const requiredSettings = ['server.user', 'server.host', 'server.appPath', 'server.port']; // Loop over the array and match against the keys in the users config
 
   const missingSettings = requiredSettings.filter(setting => (0, _get.default)(config, setting) === undefined || (0, _get.default)(config, setting).length === 0); // Return the error if any
 
-  return !(0, _utils.isEmpty)(missingSettings) ? `${hasNewConfig ? `Your new Swiff config was created at:\n${(0, _palette.colourNotice)(_paths.pathConfig)}\n\nThe config` : `Your ${(0, _palette.colourNotice)(_paths.configFileName)}`} needs values for ${missingSettings.length > 1 ? 'these settings' : 'this setting'}:${hasNewConfig ? '\n' : '\n\n'}${missingSettings.map(s => `- ${(0, _palette.colourNotice)(s)}`).join('\n')}${hasNewConfig && isInteractive ? `\n\nOnce you've finished, rerun this task by pressing enter...` : ''}` : null;
+  return !(0, _utils.isEmpty)(missingSettings) ? `Add the following ${missingSettings.length > 1 ? 'values' : 'value'} to your ${hasNewConfig ? `new config:\n${(0, _palette.colourNotice)(_paths.pathConfig)}` : `${(0, _palette.colourNotice)(_paths.configFileName)}:`}\n\n${missingSettings.map((s, i) => `${(0, _palette.colourNotice)(`— `)} ${s}`).join('\n')}\n\n${isInteractive ? `Then hit [ enter ↵ ] to rerun this task` : ``}
+        ` : null;
 };

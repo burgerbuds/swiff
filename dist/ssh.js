@@ -23,6 +23,8 @@ var _paths = require("./paths");
 
 var _palette = require("./palette");
 
+var _chalk = _interopRequireDefault(require("chalk"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
@@ -39,13 +41,15 @@ function () {
   var _ref = _asyncToGenerator(function* ({
     host,
     user,
+    port,
     sshKeyPath
   }) {
     // Connect to the remote server via SSH
     // Get the remote env file
     const config = {
       host: host,
-      username: user // Get the custom privateKey if it's set
+      username: user,
+      port: port // Get the custom privateKey if it's set
 
     };
     sshKeyPath = !(0, _utils.isEmpty)(sshKeyPath) ? {
@@ -94,6 +98,7 @@ function () {
   var _ref3 = _asyncToGenerator(function* ({
     host,
     username,
+    port,
     sshKeyPath
   }) {
     let errorMessage; // Get the local username so we can get the default key below (macOS path)
@@ -104,9 +109,10 @@ function () {
     yield ssh.connect({
       host: host,
       username: username,
+      port: port,
       privateKey: !(0, _utils.isEmpty)(sshKeyPath) ? sshKeyPath : `/Users/${user}/.ssh/id_rsa`
     }).catch(error => errorMessage = error);
-    if (errorMessage) return new Error(String(errorMessage).includes('config.privateKey does not exist at') ? `Your custom SSH identity file isn’t found at ${(0, _palette.colourAttention)(sshKeyPath)}\n\nCheck the ${(0, _palette.colourAttention)(`SWIFF_CUSTOM_KEY`)} value is correct in your local .env\n\nmacOS path example:\n${(0, _palette.colourAttention)(`SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"`)}` : errorMessage);
+    if (errorMessage) return new Error(String(errorMessage).includes('config.privateKey does not exist at') ? `Your custom SSH identity file isn’t found at ${(0, _palette.colourAttention)(sshKeyPath)}\n\nCheck the ${(0, _palette.colourAttention)(`SWIFF_CUSTOM_KEY`)} value is correct in your local .env\n\nmacOS path example:\n${(0, _palette.colourAttention)(`SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/[key-filename]"`)}` : errorMessage);
     return ssh;
   });
 
@@ -121,6 +127,7 @@ function () {
   var _ref4 = _asyncToGenerator(function* ({
     host,
     username,
+    port,
     appPath,
     sshKeyPath
   }) {
@@ -129,14 +136,11 @@ function () {
     const ssh = yield sshConnect({
       host,
       username,
+      port,
       sshKeyPath
     }); // If there’s any connection issues then return the messages
 
-    if (ssh instanceof Error) {
-      ssh.dispose();
-      return ssh;
-    } // Set where we’ll be downloading the temporary remote .env file
-
+    if (ssh instanceof Error) return ssh; // Set where we’ll be downloading the temporary remote .env file
 
     const backupPath = `${_paths.pathBackups}/.env`; // Download the remote .env file
     // We can’t read the env contents with this package so we have to download
@@ -145,7 +149,8 @@ function () {
     yield ssh.getFile(backupPath, _path.default.join(appPath, '.env')).catch(error => errorMessage = error); // If there’s any .env download issues then return the messages
 
     if (errorMessage) {
-      ssh.dispose();
+      // If dispose is a function call it
+      if (ssh.dispose() && {}.toString.call(ssh.dispose()) === '[object Function]') ssh.dispose();
       return new Error(errorMessage);
     } // Return the contents of the .env file
 
@@ -157,7 +162,7 @@ function () {
       yield (0, _utils.cmdPromise)(`rm ${backupPath}`).catch(error => errorMessage = error); // If there’s any .env removal issues then return the messages
 
       if (errorMessage) {
-        ssh.dispose();
+        if (ssh.dispose() && {}.toString.call(ssh.dispose()) === '[object Function]') ssh.dispose();
         return new Error(errorMessage);
       }
     } // Close the SSH connection
@@ -177,7 +182,7 @@ exports.getSshEnv = getSshEnv;
 
 const getSshCopyInstructions = ({
   server
-}) => `Haven’t added your key to the server?\nAdd your key to the remote server with ssh-copy-id:\nssh-copy-id ${server.user}@${server.host}`;
+}, sshKeyPath) => `${_chalk.default.bold(`Haven’t added your key to the server?`)}\nYou can quickly add it with ssh-copy-id:\n${(0, _palette.colourNotice)(`ssh-copy-id ${!(0, _utils.isEmpty)(sshKeyPath) ? `-i ${sshKeyPath} ` : ''}${server.port !== 22 ? `-p ${server.port} ` : ''}${server.user}@${server.host}`)}`;
 
 exports.getSshCopyInstructions = getSshCopyInstructions;
 
@@ -185,18 +190,28 @@ const getSshPushCommands = ({
   pushFolders,
   user,
   host,
+  port,
   workingDirectory,
   sshKeyPath
 }) => {
+  // https://download.samba.org/pub/rsync/rsync.html
   const flags = [// '--dry-run',
   // Preserve permissions
   '--archive', // Compress file data during the transfer
   '--compress', // Output a change-summary for all updates
   '--itemize-changes', // Delete extraneous files from dest dirs
-  '--delete', '--exclude ".env"', // Set the custom identity if provided
-  !(0, _utils.isEmpty)(sshKeyPath) ? `-e "ssh -i ${sshKeyPath}"` : ''].join(' '); // Build the final command string from an array of folders
+  '--delete', '--exclude ".env"', // Connect via a port number
+  // Set the custom identity if provided
+  `-e "ssh -p ${port}${!(0, _utils.isEmpty)(sshKeyPath) ? ` -i '${sshKeyPath}'` : ''}"`].join(' '); // Build the final command string from an array of folders
 
-  const rsyncCommands = pushFolders.map(path => `echo '!${path}' && (rsync ${flags} ${_paths.pathApp}/${path}/ ${user}@${host}:${workingDirectory}/${path}/)`).join(' && '); // Use grep to filter the rsync output
+  const rsyncCommands = pushFolders.map(item => {
+    const rSyncFrom = `${_path.default.join(_paths.pathApp, item)}/`;
+    const rSyncTo = `${_path.default.join(workingDirectory, item)}/`; // Folders aren't created by rsync natively
+    // https://stackoverflow.com/questions/1636889/rsync-how-can-i-configure-it-to-create-target-directory-on-server
+
+    const createFolderCmd = `--rsync-path="mkdir -p ${rSyncTo} && rsync"`;
+    return [`echo '!${item}'`, `(rsync ${createFolderCmd} ${flags} ${rSyncFrom} ${user}@${host}:${rSyncTo})`].join(' && ');
+  }).join(' && '); // Use grep to filter the rsync output
 
   const greppage = `grep -E '^(!|>|<|\\*)'`;
   return `(${rsyncCommands}) | ${greppage}`;
@@ -208,29 +223,39 @@ const getSshPullCommands = ({
   pullFolders,
   user,
   host,
+  port,
   appPath,
   sshKeyPath
 }) => {
+  // https://download.samba.org/pub/rsync/rsync.html
   const flags = [// '--dry-run',
   // Preserve permissions
   '--archive', // Compress file data during the transfer
   '--compress', // Output a change-summary for all updates
-  '--itemize-changes', !(0, _utils.isEmpty)(sshKeyPath) ? `-e "ssh -i ${sshKeyPath}"` : ''].join(' '); // Build the final command string from an array of folders
+  '--itemize-changes', // Connect via a port number
+  // Set the custom identity if provided
+  `-e "ssh -p ${port}${!(0, _utils.isEmpty)(sshKeyPath) ? ` -i '${sshKeyPath}'` : ''}"`].join(' '); // Build the final command string from an array of folders
 
-  const rsyncCommands = pullFolders.map(path => {
-    const rSyncFrom = `${appPath}/${path}/`;
-    const rSyncTo = `./${path}/`;
-    return [`echo '!${path}'`, `rsync ${flags} ${user}@${host}:${rSyncFrom} ${rSyncTo}`].join(' && ');
+  const rsyncCommands = pullFolders.map(item => {
+    const rSyncFrom = `${_path.default.join(appPath, item)}/`;
+    const rSyncTo = `./${item}/`; // Folders aren't created by rsync natively
+
+    const createFolderCmd = `mkdir -p ${rSyncTo}`;
+    return [`echo '!${item}'`, createFolderCmd, `rsync ${flags} ${user}@${host}:${rSyncFrom} ${rSyncTo}`].join(' && ');
   }).join(';'); // Use grep to filter the rsync output
 
   const greppage = `grep -E '^(!|>|<|\\*)'`;
   return `(${rsyncCommands}) | ${greppage}`;
-}; // Build command to test ssh connection
+}; // Build command to test the SSH connection is setup
 
 
 exports.getSshPullCommands = getSshPullCommands;
 
-const getSshTestCommand = (user, host) => `ssh -o BatchMode=yes -o ConnectTimeout=5 ${user}@${host} echo 'SSH access is setup' 2>&1`; // Download a database over SSH to a local folder
+const getSshTestCommand = (user, host, port, sshKeyPath) => {
+  // Set the custom identity if provided
+  const sshKeyString = !(0, _utils.isEmpty)(sshKeyPath) ? `-i "${sshKeyPath}"` : '';
+  return `ssh -p ${port} ${sshKeyString} -o BatchMode=yes -o ConnectTimeout=5 ${user}@${host} echo 'SSH access is setup' 2>&1`;
+}; // Download a database over SSH to a local folder
 
 
 exports.getSshTestCommand = getSshTestCommand;
@@ -242,6 +267,7 @@ function () {
     remoteEnv,
     host,
     user,
+    port,
     sshAppPath,
     gzipFileName,
     sshKeyPath
@@ -250,18 +276,22 @@ function () {
     const ssh = yield getSshInit({
       host: host,
       user: user,
+      port: port,
       sshKeyPath: sshKeyPath
     }); // If there’s connection issues then return the messages
 
     if (ssh instanceof Error) return ssh; // Dump the database and gzip on the remote server
 
-    yield ssh.execCommand((0, _database.getDbDumpZipCommands)({
+    const zipCommandConfig = {
       database: remoteEnv.DB_DATABASE,
       user: remoteEnv.DB_USER,
       password: remoteEnv.DB_PASSWORD,
       gzipFilePath: gzipFileName
-    }), {
+    };
+    yield ssh.execCommand((0, _database.getDbDumpZipCommands)(zipCommandConfig), {
       cwd: sshAppPath
+    }).then(result => {
+      if (String(result.stderr).includes('Access denied')) errorMessage = `Couldn't connect with the remote .env database settings:\n\n${(0, _palette.colourAttention)(`DB_DATABASE="${zipCommandConfig.database}"\nDB_USER="${zipCommandConfig.user}"\nDB_PASSWORD="${zipCommandConfig.password}"`)}`;
     }).catch(e => errorMessage = e); // If there’s db dump/gzip issues then return the messages
 
     if (errorMessage) return new Error(errorMessage); // Download the file from the remote server
