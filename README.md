@@ -30,13 +30,13 @@ Type `swiff --help` for a list of flags for your 'once off' tasks.
 
 ## Additional features
 
-- Custom SSH identity: Swiff will attempt to use your identity located at `/Users/[currentUser]/.ssh/id_rsa`.<br>
-You can add a custom identity in your .env file with `SWIFF_CUSTOM_KEY="[fullFilePath]"`.
+- Custom SSH identity: Swiff will attempt to use your identity located at ```/Users/[currentUser]/.ssh/id_rsa```<br>
+You can add a custom identity in your .env file with: ```SWIFF_CUSTOM_KEY="/Users/[your-user]/.ssh/[key-filename]"```
 
 - Trustable backups: Your local database and composer files are backed up before they are replaced.<br>
-Run `swiff --backups` to open the backups folder.
+Run `swiff --backups` to open the backups folder
 
-- Single task shortcuts: Run a task without interactions using flags. Run `swiff --help` for the list of flags.
+- Single task shortcuts: Run a task without interactions using flags. Run `swiff --help` for the list of flags
 
 ## Requirements
 
@@ -44,7 +44,8 @@ Swiff requires MySQL to use the database features.
 We recommend using MariaDB, an enhanced, drop-in replacement for MySQL.
 `brew install mariadb@10.2` (latest version as of 25.01.19).
 
-A PEM format SSH key is required - you can create one with `ssh-keygen -m PEM -b 4096 -f [key-filename] -C "[youremail]"`
+A PEM format SSH key is required - you can create one with:
+```ssh-keygen -m PEM -b 4096 -f [key-filename] -C "[youremail]"```<br>
 `-C "[youremail]"` is optional but choose an empty passphrase when generating the key.
 
 Running Windows or Linux? Swiff has been tested on MacOS so there's probably some issues on other operating systems.
