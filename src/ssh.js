@@ -247,9 +247,11 @@ const getSshDatabase = async ({
     if (ssh instanceof Error) return ssh
     // Dump the database and gzip on the remote server
     const zipCommandConfig = {
-        database: remoteEnv.DB_DATABASE,
+        host: remoteEnv.DB_SERVER,
+        port: remoteEnv.DB_PORT,
         user: remoteEnv.DB_USER,
         password: remoteEnv.DB_PASSWORD,
+        database: remoteEnv.DB_DATABASE,
         gzipFilePath: gzipFileName,
     }
     await ssh

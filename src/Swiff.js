@@ -563,6 +563,7 @@ class Swiff extends Component {
         const {
             SWIFF_CUSTOM_KEY,
             DB_SERVER,
+            DB_PORT,
             DB_DATABASE,
             DB_USER,
             DB_PASSWORD,
@@ -600,9 +601,11 @@ class Swiff extends Component {
         // Backup the existing local database
         const localBackupFilePath = `${pathBackups}/${DB_DATABASE}-local.sql.gz`
         const localDbDump = await doLocalDbDump({
-            database: DB_DATABASE,
+            host: DB_SERVER,
+            port: DB_PORT,
             user: DB_USER,
             password: DB_PASSWORD,
+            database: DB_DATABASE,
             gzipFilePath: localBackupFilePath,
         })
         // If there's any local db backup issues then return the messages
@@ -616,6 +619,7 @@ class Swiff extends Component {
         // Drop the tables from the local database
         const dropTables = await doDropAllDbTables({
             host: DB_SERVER,
+            port: DB_PORT,
             user: DB_USER,
             password: DB_PASSWORD,
             database: DB_DATABASE,
@@ -633,12 +637,14 @@ class Swiff extends Component {
                 : this.setError(
                       `There were issues connecting to your local ${colourAttention(
                           DB_DATABASE
-                      )} database\n\n${colourMuted(
+                      )} database\n\nCheck these settings are correct in your local .env file:\n\n${colourAttention(`DB_SERVER="${DB_SERVER}"\nDB_PORT="${DB_PORT}"\nDB_USER="${DB_USER}"\nDB_PASSWORD="${DB_PASSWORD}"\nDB_DATABASE="${DB_DATABASE}"`)}\n\n${colourMuted(
                           String(dropTables).replace('Error: ', '')
                       )}`
                   )
         // Import the remote .sql into the local database
         const importDatabase = await doImportDb({
+            host: DB_SERVER,
+            port: DB_PORT,
             user: DB_USER,
             password: DB_PASSWORD,
             database: DB_DATABASE,

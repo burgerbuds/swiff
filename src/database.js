@@ -1,6 +1,7 @@
 import { h } from 'ink'
 import mysql from 'promise-mysql'
 import { cmdPromise } from './utils'
+import { isEmpty } from './utils'
 
 // Clear out the tables in a database
 const doDropAllDbTables = async config => {
@@ -35,10 +36,10 @@ const doDropAllDbTables = async config => {
     conn.end()
 }
 
-const doImportDb = async ({ user, password, database, importFile }) => {
+const doImportDb = async ({ host = 'localhost', port = 3306, user, password, database, importFile }) => {
     let errorMessage
     await cmdPromise(
-        `mysql --user='${user}' --password='${password}' ${database} < ${importFile};`
+        `mysql --host='${host}' --port='${!isEmpty(port) ? port : 3306}' --user='${user}' --password='${password}' ${database} < ${importFile};`
     ).catch(e => (errorMessage = e))
     if (errorMessage) return new Error(errorMessage)
 }
@@ -51,8 +52,8 @@ const doLocalDbDump = async config => {
     if (errorMessage) return new Error(errorMessage)
 }
 
-const getDbDumpZipCommands = ({ database, user, password, gzipFilePath }) =>
+const getDbDumpZipCommands = ({ host = 'localhost', port = 3306, user, password, database, gzipFilePath }) =>
     // Dump and zip the remote db (can make it around 9 times smaller)
-    `mysqldump --user='${user}' --password='${password}' ${database} | gzip > '${gzipFilePath}'`
+    `mysqldump --host='${host}' --port='${port}' --user='${user}' --password='${password}' ${database} | gzip > '${gzipFilePath}'`
 
 export { getDbDumpZipCommands, doDropAllDbTables, doImportDb, doLocalDbDump }
