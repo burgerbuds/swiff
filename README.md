@@ -17,7 +17,7 @@ Launch a SSH session directly into the remote site/app folder
 🎩 **Local composer.json/lock updates**<br>
 Refresh your composer files with the latest updates from the remote
 
-Swiff is "battletested" by [Simple](https://simple.com.au) - an agency in Adelaide, Australia.
+Swiff is agency "battletested" by [Simple](https://simple.com.au) - an agency who specialises in Craft CMS located in Adelaide, Australia.
 
 ## Getting started
 
@@ -31,7 +31,7 @@ Type `swiff --help` for a list of flags for your 'once off' tasks.
 ## Additional features
 
 - Custom SSH identity: Swiff will attempt to use your identity located at: `/Users/[currentUser]/.ssh/id_rsa`<br>
-You can specify a custom SSH key in your .env file with:<br>
+You can specify a custom SSH key path in your .env file with:<br>
 `SWIFF_CUSTOM_KEY="/Users/[your-user]/.ssh/[key-filename]"`
 
 - Trustable backups: Your local database and composer files are backed up before they are replaced.<br>
@@ -43,13 +43,12 @@ Run `swiff --backups` to open the backups folder
 
 Swiff requires MySQL to use the database features.
 We recommend using MariaDB, an enhanced, drop-in replacement for MySQL.
-`brew install mariadb@10.2` (latest version as of 25.01.19).
+`brew install mariadb@10.2` (latest version as of 25.01.19)
 
-A PEM format SSH key is required - you can create one with:<br>
-`ssh-keygen -m PEM -b 4096 -f [key-filename] -C "[youremail]"`<br>
-Attaching your email to the key is optional but **choose an empty passphrase** when generating the key.
+For the Database & Composer tasks, a PEM format SSH key is required<br>
+Read about [how to create and add a new SSH key](https://github.com/simple-integrated-marketing/swiff/wiki/Creating-and-adding-a-new-SSH-key)
 
-Running Windows or Linux? Swiff has been tested on MacOS so there's probably some issues on other operating systems.
+Running Windows or Linux? Swiff has been tested on MacOS so there's probably some issues on other operating systems
 
 ## Technology
 
