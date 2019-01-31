@@ -17,7 +17,7 @@ Launch a SSH session directly into the remote site/app folder
 🎩 **Local composer.json/lock updates**<br>
 Refresh your composer files with the latest updates from the remote
 
-Swiff is agency "battletested" by [Simple](https://simple.com.au) - an agency who specialises in Craft CMS located in Adelaide, Australia.
+Swiff is agency "battletested" by [Simple](https://simple.com.au) who specialises in Craft CMS websites.
 
 ## Getting started
 
