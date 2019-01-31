@@ -75,7 +75,7 @@ const getEnvIssues = (env, isEnvMissing, isRemoteEnv, isInteractive = false, app
   setting === 'DB_USER' && (0, _utils.isEmpty)(env[setting]) || // Make sure there's a database defined
   setting === 'DB_DATABASE' && (0, _utils.isEmpty)(env[setting])); // Return the error if any
 
-  return (0, _utils.isEmpty)(missingSettings) ? '' : `${isRemoteEnv ? `Add the following ${missingSettings.length > 1 ? 'values' : 'value'} to the remote .env:\n${(0, _palette.colourNotice)(`${appPath}/.env`)}` : `Add the following ${missingSettings.length > 1 ? 'values' : 'value'} to your${isEnvMissing ? ` new` : ''} project .env:\n${(0, _palette.colourNotice)(_paths.pathLocalEnv)}`}\n\n${missingSettings.map(s => `${s}="${(0, _palette.colourNotice)(`value`)}"`).join('\n')}${isInteractive ? `\n\nThen hit [ enter ↵ ] to rerun this task` : ''}`;
+  return (0, _utils.isEmpty)(missingSettings) ? '' : `${isRemoteEnv ? `Add the following ${missingSettings.length > 1 ? 'values' : 'value'} to the remote .env:\n${(0, _palette.colourNotice)(_path.default.join(sshAppPath, '.env'))}` : `Add the following ${missingSettings.length > 1 ? 'values' : 'value'} to your${isEnvMissing ? ` new` : ''} project .env:\n${(0, _palette.colourNotice)(_paths.pathLocalEnv)}`}\n\n${missingSettings.map(s => `${s}="${(0, _palette.colourNotice)(`value`)}"`).join('\n')}${isInteractive ? `\n\nThen hit [ enter ↵ ] to rerun this task` : ''}`;
 };
 
 exports.getEnvIssues = getEnvIssues;

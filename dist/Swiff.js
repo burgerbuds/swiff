@@ -13,6 +13,8 @@ var _universalAnalytics = _interopRequireDefault(require("universal-analytics"))
 
 var _username = _interopRequireDefault(require("username"));
 
+var _path = _interopRequireDefault(require("path"));
+
 var _ssh = _interopRequireDefault(require("ssh2"));
 
 var _chalk = _interopRequireDefault(require("chalk"));
@@ -274,7 +276,7 @@ class Swiff extends _ink.Component {
       const sshKey = !(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? localEnv.SWIFF_CUSTOM_KEY : `/Users/${user}/.ssh/id_rsa`;
       const doesSshKeyExist = yield (0, _utils.doesFileExist)(sshKey); // If the key isn't found then show a message
 
-      if (!doesSshKeyExist) return _this.setMessage(`Your${!(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? ' custom' : ''} SSH key file wasn’t found at:\n  ${(0, _palette.colourNotice)(sshKey)}\n\nYou can either:\n\na) Create a SSH key with this command (leave passphrase empty):\n  ${(0, _palette.colourNotice)(`ssh-keygen -m PEM -t rsa -b 4096 -f ${sshKey} -C "your_email@example.com"`)}\n\nb) Or add an existing key path in your .env with:\n  ${(0, _palette.colourNotice)(`SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/[your-key-name]"`)}${isInteractive ? `\n\nThen hit [ enter ↵ ] to rerun this task` : ''}`); // Check the users SSH key has been added to the server
+      if (!doesSshKeyExist) return _this.setMessage(`Your${!(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? ' custom' : ''} SSH key file wasn’t found at:\n  ${(0, _palette.colourNotice)(sshKey)}\n\nYou can either:\n\na) Create a SSH key with this command (leave passphrase empty):\n  ${(0, _palette.colourNotice)(`ssh-keygen -m PEM -b 4096 -f ${sshKey}`)}\n\nb) Or add an existing key path in your .env with:\n  ${(0, _palette.colourNotice)(`SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/[your-key-name]"`)}${isInteractive ? `\n\nThen hit [ enter ↵ ] to rerun this task` : ''}`); // Check the users SSH key has been added to the server
 
       const checkSshSetup = yield (0, _utils.executeCommands)((0, _ssh2.getSshTestCommand)(config.server.user, config.server.host, config.server.port, !(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? localEnv.SWIFF_CUSTOM_KEY : null)); // If there's an issue with the connection then give some assistance
 
@@ -326,7 +328,7 @@ class Swiff extends _ink.Component {
       }); // If the env can't be found then show a message
 
       if (remoteEnv instanceof Error) {
-        _this.setWorking((0, _palette.colourNotice)(`Consider adding an .env file on the remote server\n   at ${appPath}/.env`));
+        _this.setWorking((0, _palette.colourNotice)(`Consider adding an .env file on the remote server\n   at ${_path.default.join(appPath, '.env')}`));
       } // Set the name of the remote environment
 
 
@@ -369,7 +371,7 @@ class Swiff extends _ink.Component {
       }); // If the env can't be found then show a message
 
       if (remoteEnv instanceof Error) {
-        _this.setWorking((0, _palette.colourNotice)(`Consider adding an .env file on the remote server\n   at ${appPath}/.env`));
+        _this.setWorking((0, _palette.colourNotice)(`Consider adding an .env file on the remote server\n   at ${_path.default.join(appPath, '.env')}`));
       } // Set the name of the remote environment
 
 
@@ -417,6 +419,7 @@ class Swiff extends _ink.Component {
       const {
         SWIFF_CUSTOM_KEY,
         DB_SERVER,
+        DB_PORT,
         DB_DATABASE,
         DB_USER,
         DB_PASSWORD
@@ -451,9 +454,11 @@ class Swiff extends _ink.Component {
 
       const localBackupFilePath = `${_paths.pathBackups}/${DB_DATABASE}-local.sql.gz`;
       const localDbDump = yield (0, _database.doLocalDbDump)({
-        database: DB_DATABASE,
+        host: DB_SERVER,
+        port: DB_PORT,
         user: DB_USER,
         password: DB_PASSWORD,
+        database: DB_DATABASE,
         gzipFilePath: localBackupFilePath
       }); // If there's any local db backup issues then return the messages
 
@@ -464,14 +469,17 @@ class Swiff extends _ink.Component {
 
       const dropTables = yield (0, _database.doDropAllDbTables)({
         host: DB_SERVER,
+        port: DB_PORT,
         user: DB_USER,
         password: DB_PASSWORD,
         database: DB_DATABASE
       }); // If there's any dropping issues then return the messages
 
-      if (dropTables instanceof Error) return String(dropTables).includes('ER_BAD_DB_ERROR: Unknown database ') ? _this.setMessage(`First create a database named ${(0, _palette.colourNotice)(DB_DATABASE)} with these login details:\n\nUsername: ${DB_USER}\nPassword: ${DB_PASSWORD}`) : _this.setError(`There were issues connecting to your local ${(0, _palette.colourAttention)(DB_DATABASE)} database\n\n${(0, _palette.colourMuted)(String(dropTables).replace('Error: ', ''))}`); // Import the remote .sql into the local database
+      if (dropTables instanceof Error) return String(dropTables).includes('ER_BAD_DB_ERROR: Unknown database ') ? _this.setMessage(`First create a database named ${(0, _palette.colourNotice)(DB_DATABASE)} on ${(0, _palette.colourNotice)(DB_SERVER)} with these login details:\n\nUsername: ${DB_USER}\nPassword: ${DB_PASSWORD}`) : _this.setError(`There were issues connecting to your local ${(0, _palette.colourAttention)(DB_DATABASE)} database\n\nCheck these settings are correct in your local .env file:\n\n${(0, _palette.colourAttention)(`DB_SERVER="${DB_SERVER}"\nDB_PORT="${DB_PORT}"\nDB_USER="${DB_USER}"\nDB_PASSWORD="${DB_PASSWORD}"\nDB_DATABASE="${DB_DATABASE}"`)}\n\n${(0, _palette.colourMuted)(String(dropTables).replace('Error: ', ''))}`); // Import the remote .sql into the local database
 
       const importDatabase = yield (0, _database.doImportDb)({
+        host: DB_SERVER,
+        port: DB_PORT,
         user: DB_USER,
         password: DB_PASSWORD,
         database: DB_DATABASE,
@@ -511,8 +519,8 @@ class Swiff extends _ink.Component {
 
       const sshDownload1 = yield (0, _ssh2.getSshFile)({
         connection: ssh,
-        from: `${serverConfig.appPath}/composer.json`,
-        to: `${_paths.pathApp}/composer.json`
+        from: _path.default.join(serverConfig.appPath, 'composer.json'),
+        to: _path.default.join(_paths.pathApp, 'composer.json')
       }); // If there's download issues then end the connection and return the messages
 
       if (sshDownload1 instanceof Error) {

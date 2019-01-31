@@ -103,16 +103,17 @@ function () {
   }) {
     let errorMessage; // Get the local username so we can get the default key below (macOS path)
 
-    const user = yield (0, _username.default)(); // Create a SSH connection
+    const user = yield (0, _username.default)();
+    const sshKeyResolvedPath = !(0, _utils.isEmpty)(sshKeyPath) ? sshKeyPath : `/Users/${user}/.ssh/id_rsa`; // Create a SSH connection
 
     const ssh = new _nodeSsh.default();
     yield ssh.connect({
       host: host,
       username: username,
       port: port,
-      privateKey: !(0, _utils.isEmpty)(sshKeyPath) ? sshKeyPath : `/Users/${user}/.ssh/id_rsa`
+      privateKey: sshKeyResolvedPath
     }).catch(error => errorMessage = error);
-    if (errorMessage) return new Error(String(errorMessage).includes('config.privateKey does not exist at') ? `Your custom SSH identity file isn’t found at ${(0, _palette.colourAttention)(sshKeyPath)}\n\nCheck the ${(0, _palette.colourAttention)(`SWIFF_CUSTOM_KEY`)} value is correct in your local .env\n\nmacOS path example:\n${(0, _palette.colourAttention)(`SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/[key-filename]"`)}` : errorMessage);
+    if (errorMessage) return new Error(String(errorMessage).includes('Error: Cannot parse privateKey: Unsupported key format') ? `Your SSH key isn't in a format Swiff can work with\n  (${sshKeyResolvedPath})\n\n1. Generate a new one with:\n  ${(0, _palette.colourNotice)(`ssh-keygen -m PEM -b 4096 -f /Users/${user}/.ssh/swiff`)}\n\n2. Then add the key to the server:\n  ${(0, _palette.colourNotice)(`ssh-copy-id /Users/${user}/.ssh/swiff ${port !== 22 ? `-p ${port} ` : ''}${username}@${host}`)}` : String(errorMessage).includes('config.privateKey does not exist at') ? `Your SSH key isn’t found at ${(0, _palette.colourAttention)(sshKeyResolvedPath)}\n\nCheck the ${(0, _palette.colourAttention)(`SWIFF_CUSTOM_KEY`)} value is correct in your local .env\n\nmacOS path example:\n${(0, _palette.colourAttention)(`SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/[key-filename]"`)}` : errorMessage);
     return ssh;
   });
 
@@ -142,11 +143,12 @@ function () {
 
     if (ssh instanceof Error) return ssh; // Set where we’ll be downloading the temporary remote .env file
 
-    const backupPath = `${_paths.pathBackups}/.env`; // Download the remote .env file
+    const tempBackupPath = _path.default.join(_paths.pathBackups, '.env'); // Download the remote .env file
     // We can’t read the env contents with this package so we have to download
     // then read it
 
-    yield ssh.getFile(backupPath, _path.default.join(appPath, '.env')).catch(error => errorMessage = error); // If there’s any .env download issues then return the messages
+
+    yield ssh.getFile(tempBackupPath, _path.default.join(appPath, '.env')).catch(error => errorMessage = error); // If there’s any .env download issues then return the messages
 
     if (errorMessage) {
       // If dispose is a function call it
@@ -155,11 +157,11 @@ function () {
     } // Return the contents of the .env file
 
 
-    const remoteEnv = (0, _env.getParsedEnv)(backupPath);
+    const remoteEnv = (0, _env.getParsedEnv)(tempBackupPath);
 
     if (remoteEnv) {
       // Remove the temporary remote .env file
-      yield (0, _utils.cmdPromise)(`rm ${backupPath}`).catch(error => errorMessage = error); // If there’s any .env removal issues then return the messages
+      yield (0, _utils.cmdPromise)(`rm ${tempBackupPath}`).catch(error => errorMessage = error); // If there’s any .env removal issues then return the messages
 
       if (errorMessage) {
         if (ssh.dispose() && {}.toString.call(ssh.dispose()) === '[object Function]') ssh.dispose();
@@ -283,15 +285,26 @@ function () {
     if (ssh instanceof Error) return ssh; // Dump the database and gzip on the remote server
 
     const zipCommandConfig = {
-      database: remoteEnv.DB_DATABASE,
+      host: remoteEnv.DB_SERVER,
+      port: remoteEnv.DB_PORT,
       user: remoteEnv.DB_USER,
       password: remoteEnv.DB_PASSWORD,
+      database: remoteEnv.DB_DATABASE,
       gzipFilePath: gzipFileName
     };
     yield ssh.execCommand((0, _database.getDbDumpZipCommands)(zipCommandConfig), {
       cwd: sshAppPath
     }).then(result => {
-      if (String(result.stderr).includes('Access denied')) errorMessage = `Couldn't connect with the remote .env database settings:\n\n${(0, _palette.colourAttention)(`DB_DATABASE="${zipCommandConfig.database}"\nDB_USER="${zipCommandConfig.user}"\nDB_PASSWORD="${zipCommandConfig.password}"`)}`;
+      const errorOutput = String(result.stderr); // There's an error found (mysql makes this check tedious)
+
+      if (errorOutput.toLowerCase().includes('error')) {
+        // Close the connection
+        ssh.dispose(); // Format the remote env settings for display
+
+        const remoteSettings = `${(0, _palette.colourAttention)(`DB_SERVER="${remoteEnv.DB_SERVER}"\nDB_PORT="${remoteEnv.DB_PORT}"\nDB_USER="${zipCommandConfig.user}"\nDB_PASSWORD="${zipCommandConfig.password}"\nDB_DATABASE="${zipCommandConfig.database}"`)}\n\n${_path.default.join(sshAppPath, '.env')}`; // Set the error message
+
+        errorMessage = errorOutput.includes('Unknown MySQL server host') ? `There were issues connecting to the remote database server ${(0, _palette.colourAttention)(remoteEnv.DB_SERVER)}\nVerify the settings in the remote env are correct:\n\n${remoteSettings}` : errorOutput.includes('Access denied') ? `Couldn’t connect with the remote .env database settings:\n\n${remoteSettings}` : errorOutput;
+      }
     }).catch(e => errorMessage = e); // If there’s db dump/gzip issues then return the messages
 
     if (errorMessage) return new Error(errorMessage); // Download the file from the remote server

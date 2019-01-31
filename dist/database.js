@@ -66,13 +66,15 @@ const doImportDb =
 /*#__PURE__*/
 function () {
   var _ref2 = _asyncToGenerator(function* ({
+    host = 'localhost',
+    port = 3306,
     user,
     password,
     database,
     importFile
   }) {
     let errorMessage;
-    yield (0, _utils.cmdPromise)(`mysql --user='${user}' --password='${password}' ${database} < ${importFile};`).catch(e => errorMessage = e);
+    yield (0, _utils.cmdPromise)(`mysql --host='${host}' --port='${!(0, _utils.isEmpty)(port) ? port : 3306}' --user='${user}' --password='${password}' ${database} < ${importFile};`).catch(e => errorMessage = e);
     if (errorMessage) return new Error(errorMessage);
   });
 
@@ -100,11 +102,13 @@ function () {
 exports.doLocalDbDump = doLocalDbDump;
 
 const getDbDumpZipCommands = ({
-  database,
+  host = 'localhost',
+  port = 3306,
   user,
   password,
+  database,
   gzipFilePath
 }) => // Dump and zip the remote db (can make it around 9 times smaller)
-`mysqldump --user='${user}' --password='${password}' ${database} | gzip > '${gzipFilePath}'`;
+`mysqldump --host='${host}' --port='${port}' --user='${user}' --password='${password}' ${database} | gzip > '${gzipFilePath}'`;
 
 exports.getDbDumpZipCommands = getDbDumpZipCommands;
