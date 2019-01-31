@@ -42,6 +42,7 @@ const sshConnect = async ({ host, username, port, sshKeyPath }) => {
     let errorMessage
     // Get the local username so we can get the default key below (macOS path)
     const user = await resolveUsername()
+    const sshKeyResolvedPath = !isEmpty(sshKeyPath) ? sshKeyPath : `/Users/${user}/.ssh/id_rsa`
     // Create a SSH connection
     const ssh = new nodeSsh()
     await ssh
@@ -49,9 +50,7 @@ const sshConnect = async ({ host, username, port, sshKeyPath }) => {
             host: host,
             username: username,
             port: port,
-            privateKey: !isEmpty(sshKeyPath)
-                ? sshKeyPath
-                : `/Users/${user}/.ssh/id_rsa`,
+            privateKey: sshKeyResolvedPath,
         })
         .catch(error => (errorMessage = error))
     if (errorMessage)
@@ -83,12 +82,12 @@ const getSshEnv = async ({ host, username, port, appPath, sshKeyPath }) => {
     // If there’s any connection issues then return the messages
     if (ssh instanceof Error) return ssh
     // Set where we’ll be downloading the temporary remote .env file
-    const backupPath = `${pathBackups}/.env`
+    const tempBackupPath = path.join(pathBackups, '.env')
     // Download the remote .env file
     // We can’t read the env contents with this package so we have to download
     // then read it
     await ssh
-        .getFile(backupPath, path.join(appPath, '.env'))
+        .getFile(tempBackupPath, path.join(appPath, '.env'))
         .catch(error => (errorMessage = error))
     // If there’s any .env download issues then return the messages
     if (errorMessage) {
@@ -101,10 +100,10 @@ const getSshEnv = async ({ host, username, port, appPath, sshKeyPath }) => {
         return new Error(errorMessage)
     }
     // Return the contents of the .env file
-    const remoteEnv = getParsedEnv(backupPath)
+    const remoteEnv = getParsedEnv(tempBackupPath)
     if (remoteEnv) {
         // Remove the temporary remote .env file
-        await cmdPromise(`rm ${backupPath}`).catch(
+        await cmdPromise(`rm ${tempBackupPath}`).catch(
             error => (errorMessage = error)
         )
         // If there’s any .env removal issues then return the messages

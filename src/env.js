@@ -71,7 +71,7 @@ const getEnvIssues = (
               isRemoteEnv
                   ? `Add the following ${
                         missingSettings.length > 1 ? 'values' : 'value'
-                    } to the remote .env:\n${colourNotice(`${appPath}/.env`)}`
+                    } to the remote .env:\n${colourNotice(path.join(sshAppPath, '.env'))}`
                   : `Add the following ${
                         missingSettings.length > 1 ? 'values' : 'value'
                     } to your${

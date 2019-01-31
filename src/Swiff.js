@@ -2,6 +2,7 @@ import { h, Component, Text } from 'ink'
 import { exec } from 'child_process'
 import ua from 'universal-analytics'
 import resolveUsername from 'username'
+import path from 'path'
 import ssh2 from 'ssh2'
 import chalk from 'chalk'
 import {
@@ -333,7 +334,7 @@ class Swiff extends Component {
                 } SSH key file wasn’t found at:\n  ${colourNotice(
                     sshKey
                 )}\n\nYou can either:\n\na) Create a SSH key with this command (leave passphrase empty):\n  ${colourNotice(
-                    `ssh-keygen -m PEM -t rsa -b 4096 -f ${sshKey} -C "your_email@example.com"`
+                    `ssh-keygen -m PEM -b 4096 -f ${sshKey}`
                 )}\n\nb) Or add an existing key path in your .env with:\n  ${colourNotice(
                     `SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/[your-key-name]"`
                 )}${
@@ -416,7 +417,7 @@ class Swiff extends Component {
         if (remoteEnv instanceof Error) {
             this.setWorking(
                 colourNotice(
-                    `Consider adding an .env file on the remote server\n   at ${appPath}/.env`
+                    `Consider adding an .env file on the remote server\n   at ${path.join(appPath, '.env')}`
                 )
             )
         }
@@ -471,7 +472,7 @@ class Swiff extends Component {
         if (remoteEnv instanceof Error) {
             this.setWorking(
                 colourNotice(
-                    `Consider adding an .env file on the remote server\n   at ${appPath}/.env`
+                    `Consider adding an .env file on the remote server\n   at ${path.join(appPath, '.env')}`
                 )
             )
         }
@@ -630,9 +631,7 @@ class Swiff extends Component {
                 'ER_BAD_DB_ERROR: Unknown database '
             )
                 ? this.setMessage(
-                      `First create a database named ${colourNotice(
-                          DB_DATABASE
-                      )} with these login details:\n\nUsername: ${DB_USER}\nPassword: ${DB_PASSWORD}`
+                      `First create a database named ${colourNotice(DB_DATABASE)} on ${colourNotice(DB_SERVER)} with these login details:\n\nUsername: ${DB_USER}\nPassword: ${DB_PASSWORD}`
                   )
                 : this.setError(
                       `There were issues connecting to your local ${colourAttention(
@@ -695,8 +694,8 @@ class Swiff extends Component {
         // Download composer.json from the remote server
         const sshDownload1 = await getSshFile({
             connection: ssh,
-            from: `${serverConfig.appPath}/composer.json`,
-            to: `${pathApp}/composer.json`,
+            from: path.join(serverConfig.appPath, 'composer.json'),
+            to: path.join(pathApp, 'composer.json'),
         })
         // If there's download issues then end the connection and return the messages
         if (sshDownload1 instanceof Error) {
