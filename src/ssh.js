@@ -56,15 +56,22 @@ const sshConnect = async ({ host, username, port, sshKeyPath }) => {
         .catch(error => (errorMessage = error))
     if (errorMessage)
         return new Error(
-            String(errorMessage).includes('config.privateKey does not exist at')
-                ? `Your custom SSH identity file isn’t found at ${colourAttention(
-                      sshKeyPath
-                  )}\n\nCheck the ${colourAttention(
-                      `SWIFF_CUSTOM_KEY`
-                  )} value is correct in your local .env\n\nmacOS path example:\n${colourAttention(
-                      `SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/[key-filename]"`
-                  )}`
-                : errorMessage
+            String(errorMessage).includes('Error: Cannot parse privateKey: Unsupported key format')
+                ? `Your SSH key isn't in a format Swiff can work with\n  (${sshKeyResolvedPath})\n\n1. Generate a new one with:\n  ${colourNotice(
+                    `ssh-keygen -m PEM -b 4096 -f /Users/${user}/.ssh/swiff`
+                )}\n\n2. Then add the key to the server:\n  ${colourNotice(
+                    `ssh-copy-id /Users/${user}/.ssh/swiff ${
+                        port !== 22 ? `-p ${port} ` : ''
+                    }${username}@${host}`)}`
+                : (String(errorMessage).includes('config.privateKey does not exist at')
+                    ? `Your SSH key isn’t found at ${colourAttention(
+                        sshKeyResolvedPath
+                    )}\n\nCheck the ${colourAttention(
+                        `SWIFF_CUSTOM_KEY`
+                    )} value is correct in your local .env\n\nmacOS path example:\n${colourAttention(
+                        `SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/[key-filename]"`
+                    )}`
+                    : errorMessage)
         )
     return ssh
 }
@@ -250,12 +257,28 @@ const getSshDatabase = async ({
             cwd: sshAppPath,
         })
         .then(result => {
-            if (String(result.stderr).includes('Access denied'))
-                errorMessage = `Couldn't connect with the remote .env database settings:\n\n${colourAttention(
-                    `DB_DATABASE="${zipCommandConfig.database}"\nDB_USER="${
-                        zipCommandConfig.user
-                    }"\nDB_PASSWORD="${zipCommandConfig.password}"`
-                )}`
+            const errorOutput = String(result.stderr)
+            // There's an error found (mysql makes this check tedious)
+            if (errorOutput.toLowerCase().includes('error')) {
+                // Close the connection
+                ssh.dispose()
+                // Format the remote env settings for display
+                const remoteSettings = `${colourAttention(
+                    `DB_SERVER="${remoteEnv.DB_SERVER}"\nDB_PORT="${remoteEnv.DB_PORT}"\nDB_USER="${zipCommandConfig.user}"\nDB_PASSWORD="${zipCommandConfig.password}"\nDB_DATABASE="${zipCommandConfig.database}"`)}\n\n${path.join(sshAppPath, '.env')}`
+                // Set the error message
+                errorMessage =
+                    errorOutput.includes('Unknown MySQL server host')
+                        ? (
+                            `There were issues connecting to the remote database server ${colourAttention(remoteEnv.DB_SERVER)}\nVerify the settings in the remote env are correct:\n\n${remoteSettings}`
+                        )
+                        : (
+                            errorOutput.includes('Access denied')
+                                ? (
+                                    `Couldn’t connect with the remote .env database settings:\n\n${remoteSettings}`
+                                )
+                                : errorOutput
+                        )
+            }
         })
         .catch(e => (errorMessage = e))
     // If there’s db dump/gzip issues then return the messages
