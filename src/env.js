@@ -26,6 +26,8 @@ const setupLocalEnv = async isInteractive => {
         false,
         isInteractive
     )
+    // Normalize the data
+    if (isEmpty(localEnv.DB_PORT)) localEnv.DB_PORT = 3306
     // Return the missing settings error or the env contents
     return localEnvIssues ? new Error(localEnvIssues) : localEnv
 }
@@ -112,8 +114,11 @@ const getRemoteEnv = async ({ sshKeyPath, serverConfig, isInteractive }) => {
         isInteractive,
         serverConfig.appPath
     )
-    // Return the missing settings error or the env contents
-    return remoteEnvIssues ? new Error(remoteEnvIssues) : remoteEnv
+    // Return any errors
+    if (remoteEnvIssues) return new Error(remoteEnvIssues)
+    // Normalize the data
+    if (isEmpty(remoteEnv.DB_PORT)) remoteEnv.DB_PORT = 3306
+    return remoteEnv
 }
 
 export { getRemoteEnv, setupLocalEnv, getParsedEnv, getEnvIssues }
