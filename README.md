@@ -1,5 +1,7 @@
 # Swiff
 
+[![npm version](https://badge.fury.io/js/swiff.svg)](https://www.npmjs.com/package/swiff)
+
 Swiff saves you time with common SSH tasks during the development of websites/apps:
 
 🚀 **File uploads**<br>
@@ -17,7 +19,7 @@ Launch a SSH session directly into the remote site/app folder
 🎩 **Local composer.json/lock updates**<br>
 Refresh your composer files with the latest updates from the remote
 
-Swiff is agency "battletested" by [Simple](https://simple.com.au) who specialises in Craft CMS websites.
+Swiff has been agency battletested by [Simple](https://simple.com.au) who specialises in Craft CMS websites
 
 ## Getting started
 
