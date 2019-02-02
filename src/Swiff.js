@@ -16,7 +16,6 @@ import {
 } from './utils'
 import {
     pathBackups,
-    pathLocalEnv,
     pathConfig,
     configFileName,
     pathApp,
@@ -146,7 +145,7 @@ class Swiff extends Component {
                                     ? hexHighlight
                                     : emoji
                                     ? hexDefault
-                                    : hexMuted
+                                    : '#777'
                             }
                             bold={emoji}
                         >{`${
@@ -243,11 +242,15 @@ class Swiff extends Component {
         const newTasks = tasks.filter(task =>
             showAll ? !task.isListed : task.isListed
         )
+        const hollowDot = '○'
+        const solidDot = chalk.hex('#777')('●')
         newTasks.push({
             id: 'toggle',
-            title: showAll
-                ? `   ○ ${chalk.white('●')}`
-                : `   ${chalk.white('●')} ○`,
+            title: (
+                showAll
+                    ? `   ${hollowDot} ${solidDot}`
+                    : `   ${solidDot} ${hollowDot}`
+            ),
         })
         return newTasks
     }
