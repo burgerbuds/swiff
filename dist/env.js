@@ -43,7 +43,9 @@ function () {
     } // Get a summary of any env issues
 
 
-    const localEnvIssues = getEnvIssues(localEnv, isEnvMissing, false, isInteractive); // Return the missing settings error or the env contents
+    const localEnvIssues = getEnvIssues(localEnv, isEnvMissing, false, isInteractive); // Normalize the data
+
+    if ((0, _utils.isEmpty)(localEnv.DB_PORT)) localEnv.DB_PORT = 3306; // Return the missing settings error or the env contents
 
     return localEnvIssues ? new Error(localEnvIssues) : localEnv;
   });
@@ -104,9 +106,12 @@ function () {
     } // Validate the remote env
 
 
-    const remoteEnvIssues = getEnvIssues(remoteEnv, remoteEnv === false, true, isInteractive, serverConfig.appPath); // Return the missing settings error or the env contents
+    const remoteEnvIssues = getEnvIssues(remoteEnv, remoteEnv === false, true, isInteractive, serverConfig.appPath); // Return any errors
 
-    return remoteEnvIssues ? new Error(remoteEnvIssues) : remoteEnv;
+    if (remoteEnvIssues) return new Error(remoteEnvIssues); // Normalize the data
+
+    if ((0, _utils.isEmpty)(remoteEnv.DB_PORT)) remoteEnv.DB_PORT = 3306;
+    return remoteEnv;
   });
 
   return function getRemoteEnv(_x2) {

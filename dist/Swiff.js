@@ -184,9 +184,13 @@ class Swiff extends _ink.Component {
     _defineProperty(this, "getTaskList", showAll => {
       const tasks = this.props.tasks.slice();
       const newTasks = tasks.filter(task => showAll ? !task.isListed : task.isListed);
+      const hollowDot = '○';
+
+      const solidDot = _chalk.default.hex('#777')('●');
+
       newTasks.push({
         id: 'toggle',
-        title: showAll ? `   ○ ${_chalk.default.white('●')}` : `   ${_chalk.default.white('●')} ○`
+        title: showAll ? `   ${hollowDot} ${solidDot}` : `   ${solidDot} ${hollowDot}`
       });
       return newTasks;
     });
@@ -659,7 +663,7 @@ class Swiff extends _ink.Component {
       }) => {
         const isActive = currentTask && currentTask.title === title && isTaskRunning(messages);
         return (0, _ink.h)(_ink.Text, null, (0, _ink.h)(_ink.Text, {
-          hex: isSelected ? _palette.hexHighlight : emoji ? _palette.hexDefault : _palette.hexMuted,
+          hex: isSelected ? _palette.hexHighlight : emoji ? _palette.hexDefault : '#777',
           bold: emoji
         }, `${isActive ? '⌛  ' : emoji ? `${emoji}  ` : ''}${title}`), (0, _ink.h)(_ink.Text, {
           hex: _palette.hexMuted
