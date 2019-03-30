@@ -554,7 +554,7 @@ class Swiff extends Component {
                   } is already up-to-date`
                 : `Success! These are the remote files that changed:\n${output}\n\nThe file push${
                       !isEmpty(remoteEnvironment)
-                          ? ` from ${colourHighlight(remoteEnvironment)}`
+                          ? ` to ${colourHighlight(remoteEnvironment)}`
                           : ''
                   } was successful`
         )
