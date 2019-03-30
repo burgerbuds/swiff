@@ -45,7 +45,7 @@ Run `swiff --backups` to open the backups folder
 
 Swiff requires MySQL to use the database features.
 We recommend using MariaDB, an enhanced, drop-in replacement for MySQL.
-`brew install mariadb@10.2` (latest Brew version as of 25.01.19)
+`brew install mariadb@10.2` (latest as of April 2019)
 
 For the Database & Composer tasks, a PEM format SSH key is required<br>
 Read about [how to create and add a new SSH key](https://github.com/simple-integrated-marketing/swiff/wiki/Creating-and-adding-a-new-SSH-key)
