@@ -1,6 +1,6 @@
 {
     "name": "swiff",
-    "version": "1.1.6",
+    "version": "1.2.0",
     "description": "Swiff saves you time with common SSH tasks during the development of websites/apps",
     "main": "index.js",
     "scripts": {
@@ -69,7 +69,6 @@
         "eslint-plugin-react": "^7.12.3",
         "prettier": "^1.15.3"
     },
-
     "xo": {
         "extends": [
             "xo-react"
