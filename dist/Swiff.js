@@ -411,7 +411,7 @@ class Swiff extends _ink.Component {
       }
 
       const output = (0, _utils.replaceRsyncOutput)(pushStatus, _this.state.config.pushFolders);
-      return _this.setSuccess((0, _utils.isEmpty)(output) ? `No push required, ${!(0, _utils.isEmpty)(remoteEnvironment) ? `${(0, _palette.colourHighlight)(remoteEnvironment)}` : 'the remote'} is already up-to-date` : `Success! These are the remote files that changed:\n${output}\n\nThe file push${!(0, _utils.isEmpty)(remoteEnvironment) ? ` from ${(0, _palette.colourHighlight)(remoteEnvironment)}` : ''} was successful`);
+      return _this.setSuccess((0, _utils.isEmpty)(output) ? `No push required, ${!(0, _utils.isEmpty)(remoteEnvironment) ? `${(0, _palette.colourHighlight)(remoteEnvironment)}` : 'the remote'} is already up-to-date` : `Success! These are the remote files that changed:\n${output}\n\nThe file push${!(0, _utils.isEmpty)(remoteEnvironment) ? ` to ${(0, _palette.colourHighlight)(remoteEnvironment)}` : ''} was successful`);
     }));
 
     _defineProperty(this, "handleDatabase",
