@@ -59,7 +59,7 @@ const sshConnect = async ({ host, username, port, sshKeyPath }) => {
                 ? `Your SSH key isn't in a format Swiff can work with\n  (${sshKeyResolvedPath})\n\n1. Generate a new one with:\n  ${colourNotice(
                     `ssh-keygen -m PEM -b 4096 -f /Users/${user}/.ssh/swiff`
                 )}\n\n2. Then add the key to the server:\n  ${colourNotice(
-                    `ssh-copy-id /Users/${user}/.ssh/swiff ${
+                    `ssh-copy-id -i /Users/${user}/.ssh/swiff ${
                         port !== 22 ? `-p ${port} ` : ''
                     }${username}@${host}`)}`
                 : (String(errorMessage).includes('config.privateKey does not exist at')
