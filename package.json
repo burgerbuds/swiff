@@ -8,7 +8,8 @@
         "dev": "nodemon -q --no-stdin --ignore dist --exec babel-node --ignore swiff.config.js src",
         "format": "prettier --write --ignore-path .gitignore {src,.}/*.js",
         "build": "babel src --out-dir dist",
-        "prepublish": "babel src --out-dir dist"
+        "prepublish": "babel src --out-dir dist",
+        "test": "ava"
     },
     "repository": {
         "type": "git",
@@ -62,27 +63,13 @@
         "@babel/node": "^7.2.2",
         "@babel/plugin-proposal-class-properties": "^7.2.3",
         "@babel/preset-env": "^7.2.3",
+        "ava": "^1.4.1",
         "babel-plugin-transform-react-jsx": "^6.24.1",
         "eslint": "^5.12.1",
         "eslint-plugin-react": "^7.12.3",
         "prettier": "^1.15.3"
     },
-    "ava": {
-        "babel": {
-            "presets": [
-                "@ava/stage-4"
-            ],
-            "plugins": [
-                [
-                    "transform-react-jsx",
-                    {
-                        "pragma": "h",
-                        "useBuiltIns": true
-                    }
-                ]
-            ]
-        }
-    },
+
     "xo": {
         "extends": [
             "xo-react"
