@@ -13,8 +13,8 @@ import {
 	const hasConfig = await doesFileExist('swiff.config.js')
 	const hasEnv = await doesFileExist('.env')
 
-	if (!hasConfig) console.log('No swiff.config.js')
-	if (!hasEnv) console.log('.env')
+	if (!hasConfig) console.error('No swiff.config.js')
+	if (!hasEnv) console.error('No .env')
 
 	if (!hasConfig || !hasEnv) return
 
