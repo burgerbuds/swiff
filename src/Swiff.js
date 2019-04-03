@@ -70,7 +70,7 @@ const getValidatedTaskFromFlags = (flags, tasks) => {
         : null
     return !isEmpty(validatedTask)
         ? validatedTask
-        : new Error(`The provided flag isn’t recognized`)
+        : new Error(`Poops. '${providedFlags.join()}' looks like a mistyped command`)
 }
 
 class Swiff extends Component {
@@ -370,8 +370,8 @@ class Swiff extends Component {
                 )}\n\n${
                     isEmpty(localEnv.SWIFF_CUSTOM_KEY)
                         ? `${chalk.bold(
-                              `Is the SSH key above incorrect?`
-                          )}\nAdd the path to your project .env\neg: SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"`
+                              `Is the 'SSH key' path above wrong?`
+                          )}\nAdd the correct path to your project .env like this:\nSWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"`
                         : ''
                 }`
             )
