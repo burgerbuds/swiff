@@ -103,30 +103,26 @@ const tasks = [
     },
 ]
 
-const taskInstructions = tasks =>
+const taskInstructions = (tasks, isVerbose) =>
     tasks
         .map(
             task =>
-                `${task.emoji}  ${task.description}\n  ${task.flags
-                    .map(
-                        flag =>
-                            `${colourHighlight(
-                                `swiff ${flag.length === 1 ? '-' : '--'}${flag}`
-                            )}`
-                    )
-                    .join(' / ')}`
+                `${task.emoji}  ${chalk.bold(task.title)}: ${colourHighlight(`swiff ${task.flags[0].length === 1 ? '-' : '--'}${task.flags[0]}`)}${isVerbose ? `\n  ${task.description}` : ''}\n  Aliases: ${
+                    task.flags.slice(1)
+                    .map(flag => `${flag.length === 1 ? '-' : '--'}${flag}`)
+                    .join(', ')}`
         )
         .join('\n\n')
 
-const taskHelp = `
-Run ${colourHighlight(
+const taskHelp = (isVerbose = false) => `
+${isVerbose ? `💁  Run ${colourHighlight(
     'swiff'
-)} within your project folder root to start the task interface.\nOtherwise use the following commands to quickly run a task:\n\n${taskInstructions(
-    tasks
-)}`
+)} within your project root for an interactive interface.\nOtherwise use the following commands to quickly run a task:` : `Try one of the following flags:`}\n\n${taskInstructions(
+    tasks, isVerbose
+)}\n\nPlease post any issues at: https://github.com/simple-integrated-marketing/swiff/issues`
 
 const taskFlags = tasks.map(task => ({
-    [task.flags.shift()]: {
+    [task.flags.slice().shift()]: {
         type: 'boolean',
         alias: task.flags.toString(),
     },
@@ -134,7 +130,7 @@ const taskFlags = tasks.map(task => ({
 
 const cli = meow(
     // Set the help message shown when the user runs swiff --help
-    taskHelp,
+    taskHelp(true),
     {
         description: false,
         flags: Object.assign(...taskFlags),
@@ -160,5 +156,5 @@ process.stdin.on('data', key => {
 })
 
 render(
-    <Swiff flags={cli.flags} pkg={cli.pkg} tasks={tasks} taskHelp={taskHelp} />
+    <Swiff flags={cli.flags} pkg={cli.pkg} tasks={tasks} taskHelp={taskHelp()} />
 )
