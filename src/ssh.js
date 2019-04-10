@@ -176,6 +176,31 @@ const getSshPushCommands = ({
     return `(${rsyncCommands}) | ${greppage}`
 }
 
+const getPushDatabaseCommands = ({
+    host,
+    user,
+    port,
+    fromPath,
+    toPath
+    sshKeyPath,
+}) => {
+    // https://download.samba.org/pub/rsync/rsync.html
+    const flags = [
+        // '--dry-run',
+        // Preserve permissions
+        '--archive',
+        // Compress file data during the transfer
+        '--compress',
+        // Connect via a port number
+        // Set the custom identity if provided
+        `-e "ssh -p ${port}${
+            !isEmpty(sshKeyPath) ? ` -i '${sshKeyPath}'` : ''
+        }"`,
+    ].join(' ')
+    // Build the command string
+    return `rsync ${flags} ${fromPath} ${user}@${host}:${toPath}`
+}
+
 const getSshPullCommands = ({
     pullFolders,
     user,
@@ -225,6 +250,22 @@ const getSshTestCommand = (user, host, port, sshKeyPath) => {
     return `ssh -p ${port} ${sshKeyString} -o BatchMode=yes -o ConnectTimeout=5 ${user}@${host} echo 'SSH access is setup' 2>&1`
 }
 
+// Upload a database over SSH to a remote folder
+const pushSshDatabase = async (config) => {
+
+console.log(getPushDatabaseCommands(config))
+
+    const pushDatabaseStatus = await executeCommands(
+        getPushDatabaseCommands(config)
+    )
+    if (pushDatabaseStatus instanceof Error) {
+        return this.setError(
+            `There was an issue uploading your local ${colorAttention(pushDatabaseConfig.host)} database\n\n${pushDatabaseStatus}`
+        )
+    }
+    return
+}
+
 // Download a database over SSH to a local folder
 const getSshDatabase = async ({
     remoteEnv,
@@ -235,7 +276,6 @@ const getSshDatabase = async ({
     gzipFileName,
     sshKeyPath,
 }) => {
-    let errorMessage
     const ssh = await getSshInit({
         host: host,
         user: user,
@@ -253,6 +293,7 @@ const getSshDatabase = async ({
         database: remoteEnv.DB_DATABASE,
         gzipFilePath: gzipFileName,
     }
+    let errorMessage
     await ssh
         .execCommand(getDbDumpZipCommands(zipCommandConfig), {
             cwd: sshAppPath,
@@ -331,4 +372,6 @@ export {
     getSshCopyInstructions,
     getSshPushCommands,
     getSshPullCommands,
+    pushSshDatabase,
+    sshConnect,
 }
