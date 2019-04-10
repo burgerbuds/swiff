@@ -22,7 +22,13 @@ import {
     pathMedia,
 } from './paths'
 import { getRemoteEnv, setupLocalEnv } from './env'
-import { doDropAllDbTables, doImportDb, doLocalDbDump } from './database'
+import {
+    doDropAllDbTables,
+    doImportDb,
+    doLocalDbDump,
+    dropDbQuery,
+    importDbQuery
+} from './database'
 import { OptionsTemplate, MessageTemplate } from './templates'
 import {
     getSshInit,
@@ -32,6 +38,8 @@ import {
     getSshCopyInstructions,
     getSshPushCommands,
     getSshPullCommands,
+    pushSshDatabase,
+    sshConnect,
 } from './ssh'
 import { setupConfig, createConfig } from './config'
 import {
@@ -590,7 +598,7 @@ class Swiff extends Component {
         const remoteDbName = `${remoteEnv.DB_DATABASE}-remote.sql`
         const remoteDbNameZipped = `${remoteDbName}.gz`
         const importFile = `${pathBackups}/${remoteDbName}`
-        // Download the remote DB via SSH
+        // Download and store the remote DB via SSH
         const dbSsh = await getSshDatabase({
             remoteEnv: remoteEnv,
             host: serverConfig.host,
@@ -668,6 +676,144 @@ class Swiff extends Component {
             )} database was refreshed with the ${colourHighlight(
                 remoteEnv.ENVIRONMENT
             )} database from ${colourHighlight(serverConfig.host)}`
+        )
+    }
+
+    handlePushDatabase = async () => {
+        // Set some variables for later
+        const localEnv = this.state.localEnv
+        const serverConfig = this.state.config.server
+        const {
+            SWIFF_CUSTOM_KEY,
+            DB_SERVER,
+            DB_PORT,
+            DB_DATABASE,
+            DB_USER,
+            DB_PASSWORD,
+        } = localEnv
+        // Share what's happening with the user
+        this.setWorking(
+            `Backing up the remote ${colourHighlight(remoteEnv.ENVIRONMENT)} database`
+        )
+        // Get the remote env file via SSH
+        const remoteEnv = await getRemoteEnv({
+            serverConfig,
+            isInteractive: this.state.isFlaggedStart,
+            sshKeyPath: SWIFF_CUSTOM_KEY,
+        })
+        // If the env can't be found then return a message
+        if (remoteEnv instanceof Error) return this.setMessage(remoteEnv)
+        // Set the remote database variables
+        const remoteDbName = `${remoteEnv.DB_DATABASE}-remote.sql`
+        const remoteDbNameZipped = `${remoteDbName}.gz`
+        const importFile = `${pathBackups}/${remoteDbName}`
+        // Download and store the remote DB via SSH
+        const dbSsh = await getSshDatabase({
+            remoteEnv: remoteEnv,
+            host: serverConfig.host,
+            user: serverConfig.user,
+            port: serverConfig.port,
+            sshAppPath: serverConfig.appPath,
+            gzipFileName: remoteDbNameZipped,
+            sshKeyPath: SWIFF_CUSTOM_KEY,
+        })
+        // If there's any env issues then return the messages
+        if (dbSsh instanceof Error) return this.setError(dbSsh)
+        // Share what's happening with the user
+        this.setWorking(
+            `Making a copy of your local ${colourHighlight(
+                DB_DATABASE
+            )} database`
+        )
+        // Backup the existing local database
+        const localDbDumpFile = `${DB_DATABASE}-local.sql.gz`
+        const localDbDumpFilePath = `${pathBackups}/${localDbDumpFile}`
+        const localDbDump = await doLocalDbDump({
+            host: DB_SERVER,
+            port: DB_PORT,
+            user: DB_USER,
+            password: DB_PASSWORD,
+            database: DB_DATABASE,
+            gzipFilePath: localDbDumpFilePath,
+        })
+        // If there's any local db backup issues then return the messages
+        if (localDbDump instanceof Error) return this.setError(localDbDump)
+        // Share what's happening with the user
+        this.setWorking(
+            `Uploading database copy to ${colourHighlight(remoteEnv.DB_SERVER)}`
+        )
+        const remoteDbDumpFolder = 'swiffWorking'
+        const remoteDbDumpFolderPath = path.join(sshAppPath, remoteDbDumpFolder)
+        // Upload local db to remote
+        const pushDatabase = await pushSshDatabase({
+            host: DB_SERVER,
+            user: DB_USER,
+            port: DB_PORT,
+            fromPath: localDbDumpFilePath,
+            toPath: remoteDbDumpFolderPath,
+            sshKeyPath: SWIFF_CUSTOM_KEY,
+        })
+        // If there's any push issues then return the error message
+        if (pushDatabase instanceof Error) return this.setError(pushDatabase)
+        // Drop the tables from the remote database
+        const dropTables = await doDropAllDbTables({
+            host: DB_SERVER,
+            port: DB_PORT,
+            user: DB_USER,
+            password: DB_PASSWORD,
+            database: DB_DATABASE,
+        })
+        let errorMessage
+        // Create a SSH connection
+        const ssh = await sshConnect({
+            host: DB_SERVER,
+            username: DB_USER,
+            port: DB_PORT,
+            sshKeyPath: SWIFF_CUSTOM_KEY,
+        })
+        // If there’s any connection issues then return the messages
+        if (ssh instanceof Error) return ssh
+        // Check the local database file has been uploaded
+        ssh.execCommand(`check that db file exists!!!!!!`, { cwd: sshAppPath }).then(function(result) {
+            console.log('STDOUT: ' + result.stdout)
+            console.log('STDERR: ' + result.stderr)
+        })
+        // Drop the tables in the remote database to prepare for import
+        ssh.execCommand(dropDbQuery, { cwd: sshAppPath }).then(function(result) {
+            console.log('STDOUT: ' + result.stdout)
+            console.log('STDERR: ' + result.stderr)
+        })
+        // Import the local database into the remote with mysql
+        ssh.execCommand(importDbQuery({
+            host: remoteEnv.DB_SERVER,
+            port: remoteEnv.DB_PORT,
+            user: remoteEnv.DB_USER,
+            password: remoteEnv.DB_USER,
+            database: remoteEnv.DB_PASSWORD,
+            importFile: path.join(remoteDbDumpFolderPath, localDbDumpFile),
+        })).then(function(result) {
+            console.log('STDOUT: ' + result.stdout)
+            console.log('STDERR: ' + result.stderr)
+        })
+
+
+// Cleanup remote db
+// Cleanup local db
+
+        // If there's any import issues then return the messages
+        // if (importDatabase instanceof Error)
+        //     return this.setError(
+        //         `There were issues refreshing your local ${colourAttention(
+        //             DB_DATABASE
+        //         )} database\n\n${colourMuted(importDatabase)}`
+        //     )
+        // Remove remote .sql working file
+        // await cmdPromise(`rm ${importFile}`).catch(this.setError)
+        // Show a success message
+        this.setSuccess(
+            `The remote ${colourHighlight(
+                remoteEnv.DB_DATABASE
+            )} database on ${colourHighlight(serverConfig.host)} was refreshed with your local ${colourHighlight(DB_DATABASE)} database`
         )
     }
 
