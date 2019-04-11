@@ -150,7 +150,10 @@ const getSshPushCommands = ({
         '--itemize-changes',
         // Delete extraneous files from dest dirs
         '--delete',
+        // Ignore misc files
+        '--exclude ".git"',
         '--exclude ".env"',
+        '--exclude ".DS_Store"',
         // Connect via a port number
         // Set the custom identity if provided
         `-e "ssh -p ${port}${
@@ -218,6 +221,10 @@ const getSshPullCommands = ({
         '--compress',
         // Output a change-summary for all updates
         '--itemize-changes',
+        // Ignore misc files
+        '--exclude ".git"',
+        '--exclude ".env"',
+        '--exclude ".DS_Store"',
         // Connect via a port number
         // Set the custom identity if provided
         `-e "ssh -p ${port}${
