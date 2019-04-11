@@ -117,9 +117,7 @@ const taskInstructions = (tasks, isVerbose) =>
 const taskHelp = (isVerbose = false) => `
 ${isVerbose ? `💁  Run ${colourHighlight(
     'swiff'
-)} within your project root for an interactive interface.\nOtherwise use the following commands to quickly run a task:` : `Try one of the following flags:`}\n\n${taskInstructions(
-    tasks, isVerbose
-)}\n\nPlease post any issues at: https://github.com/simple-integrated-marketing/swiff/issues`
+)} within your project root for an interactive interface.\nOtherwise use the following commands to quickly run a task:` : `Try one of the following flags:`}\n\n${taskInstructions(tasks, isVerbose)}`
 
 const taskFlags = tasks.map(task => ({
     [task.flags.slice().shift()]: {
