@@ -349,70 +349,85 @@ class Swiff extends _ink.Component {
       return _this.setSuccess((0, _utils.isEmpty)(output) ? `No pull required, ${(0, _palette.colourHighlight)(localEnv.DB_SERVER)} is already up-to-date!` : `Success! These are the local files that changed:\n${output}\n\nThe file pull${!(0, _utils.isEmpty)(remoteEnvironment) ? ` from ${(0, _palette.colourHighlight)(remoteEnvironment)}` : ''} was successful`);
     }));
 
-    _defineProperty(this, "handlePush",
+    _defineProperty(this, "handlePushDryRun",
     /*#__PURE__*/
     _asyncToGenerator(function* () {
-      // Set some variables for later
-      const localEnv = _this.state.localEnv;
-      const {
-        SWIFF_CUSTOM_KEY
-      } = localEnv;
-      const {
-        pushFolders
-      } = _this.state.config;
-      const serverConfig = _this.state.config.server;
-      const {
-        user,
-        host,
-        appPath,
-        port
-      } = serverConfig; // Get the remote env file via SSH
-
-      const remoteEnv = yield (0, _env.getRemoteEnv)({
-        serverConfig,
-        isInteractive: _this.state.isFlaggedStart,
-        sshKeyPath: SWIFF_CUSTOM_KEY
-      }); // If the env can't be found then show a message
-
-      if (remoteEnv instanceof Error) {
-        _this.setWorking((0, _palette.colourNotice)(`Consider adding an .env file on the remote server\n   at ${_path.default.join(appPath, '.env')}`));
-      } // Set the name of the remote environment
-
-
-      let remoteEnvironment = '';
-      if (!(remoteEnv instanceof Error)) remoteEnvironment = remoteEnv.ENVIRONMENT; // Shame the user if they are pushing to production
-
-      if (!(0, _utils.isEmpty)(remoteEnvironment) && (remoteEnvironment === 'production' || remoteEnvironment === 'live')) _this.setWorking((0, _palette.colourNotice)(`You’re pushing files straight to production,\nplease consider a more reliable way to deploy changes in the future`)); // Create a list of paths to push
-
-      if (pushFolders === undefined || !Array.isArray(pushFolders) || (0, _utils.isEmpty)(pushFolders.filter(i => i))) return _this.setMessage(`First specify some push folders in your ${(0, _palette.colourNotice)(_paths.configFileName)}\n\nFor example:\n\n${(0, _palette.colourMuted)(`{\n  `)}pushFolders: [ '${(0, _palette.colourNotice)('templates')}', '${(0, _palette.colourNotice)('config')}', '${(0, _palette.colourNotice)('public/assets/build')}' ]\n${(0, _palette.colourMuted)('}')}`); // Remove empty values from the array so users can’t accidentally upload the entire project
-
-      const filteredPushFolders = pushFolders.filter(i => i); // Check if the defined local paths exist
-
-      const hasMissingPaths = yield (0, _utils.getMissingPaths)(filteredPushFolders, 'pushFolders'); // If any local paths are missing then return the messages
-
-      if (hasMissingPaths instanceof Error) return _this.setError(hasMissingPaths); // Share what's happening with the user
-
-      _this.setWorking(`Pushing files in ${(0, _utils.commaAmpersander)(filteredPushFolders)}`); // Get the rsync push commands
-
-
-      const pushCommands = (0, _ssh2.getSshPushCommands)({
-        pushFolders: filteredPushFolders,
-        user: user,
-        host: host,
-        port: port,
-        workingDirectory: appPath,
-        sshKeyPath: SWIFF_CUSTOM_KEY
-      }); // Send the commands to the push task
-
-      const pushStatus = yield (0, _utils.executeCommands)(pushCommands); // Return the result to the user
-
-      if (pushStatus instanceof Error) {
-        return _this.setError(`There was an issue uploading the files\n\n${pushStatus}`);
-      }
-
-      const output = (0, _utils.replaceRsyncOutput)(pushStatus, _this.state.config.pushFolders);
-      return _this.setSuccess((0, _utils.isEmpty)(output) ? `No push required, ${!(0, _utils.isEmpty)(remoteEnvironment) ? `${(0, _palette.colourHighlight)(remoteEnvironment)}` : 'the remote'} is already up-to-date` : `Success! These are the remote files that changed:\n${output}\n\nThe file push${!(0, _utils.isEmpty)(remoteEnvironment) ? ` to ${(0, _palette.colourHighlight)(remoteEnvironment)}` : ''} was successful`);
+      const isDryRun = true;
+      return _this.handlePush(isDryRun);
     }));
+
+    _defineProperty(this, "handlePush",
+    /*#__PURE__*/
+    function () {
+      var _ref6 = _asyncToGenerator(function* (isDryRun = false) {
+        // Set some variables for later
+        const localEnv = _this.state.localEnv;
+        const {
+          SWIFF_CUSTOM_KEY
+        } = localEnv;
+        const {
+          pushFolders
+        } = _this.state.config;
+        const serverConfig = _this.state.config.server;
+        const {
+          user,
+          host,
+          appPath,
+          port
+        } = serverConfig; // Get the remote env file via SSH
+
+        const remoteEnv = yield (0, _env.getRemoteEnv)({
+          serverConfig,
+          isInteractive: _this.state.isFlaggedStart,
+          sshKeyPath: SWIFF_CUSTOM_KEY
+        }); // If the env can't be found then show a message
+
+        if (remoteEnv instanceof Error) {
+          _this.setWorking((0, _palette.colourNotice)(`Consider adding an .env file on the remote server\n   at ${_path.default.join(appPath, '.env')}`));
+        } // Set the name of the remote environment
+
+
+        let remoteEnvironment = '';
+        if (!(remoteEnv instanceof Error)) remoteEnvironment = remoteEnv.ENVIRONMENT; // Shame the user if they are pushing to production
+
+        if (!(0, _utils.isEmpty)(remoteEnvironment) && !isDryRun && (remoteEnvironment === 'production' || remoteEnvironment === 'live')) _this.setWorking((0, _palette.colourNotice)(`You’re pushing files straight to production,\nplease consider a more reliable way to deploy changes in the future`)); // Create a list of paths to push
+
+        if (pushFolders === undefined || !Array.isArray(pushFolders) || (0, _utils.isEmpty)(pushFolders.filter(i => i))) return _this.setMessage(`First specify some push folders in your ${(0, _palette.colourNotice)(_paths.configFileName)}\n\nFor example:\n\n${(0, _palette.colourMuted)(`{\n  `)}pushFolders: [ '${(0, _palette.colourNotice)('templates')}', '${(0, _palette.colourNotice)('config')}', '${(0, _palette.colourNotice)('public/assets/build')}' ]\n${(0, _palette.colourMuted)('}')}`); // Remove empty values from the array so users can’t accidentally upload the entire project
+
+        const filteredPushFolders = pushFolders.filter(i => i); // Check if the defined local paths exist
+
+        const hasMissingPaths = yield (0, _utils.getMissingPaths)(filteredPushFolders, 'pushFolders'); // If any local paths are missing then return the messages
+
+        if (hasMissingPaths instanceof Error) return _this.setError(hasMissingPaths); // Share what's happening with the user
+
+        _this.setWorking(`${isDryRun ? 'Checking' : 'Pushing'} files in ${(0, _utils.commaAmpersander)(filteredPushFolders)}`); // Get the rsync push commands
+
+
+        const pushCommands = (0, _ssh2.getSshPushCommands)({
+          pushFolders: filteredPushFolders,
+          user: user,
+          host: host,
+          port: port,
+          workingDirectory: appPath,
+          sshKeyPath: SWIFF_CUSTOM_KEY,
+          isDryRun
+        }); // Send the commands to the push task
+
+        const pushStatus = yield (0, _utils.executeCommands)(pushCommands); // Return the result to the user
+
+        if (pushStatus instanceof Error) {
+          return _this.setError(`There was an issue uploading the files\n\n${pushStatus}`);
+        }
+
+        const output = (0, _utils.replaceRsyncOutput)(pushStatus, _this.state.config.pushFolders);
+        return _this.setSuccess((0, _utils.isEmpty)(output) ? `No push required, ${!(0, _utils.isEmpty)(remoteEnvironment) ? `${(0, _palette.colourHighlight)(remoteEnvironment)}` : 'the remote'} is already up-to-date` : `Success! These are the remote files that ${isDryRun ? 'will be' : ''} changed:\n${output}
+                \n\n${isDryRun ? `` : `The file push${!(0, _utils.isEmpty)(remoteEnvironment) ? ` to ${(0, _palette.colourHighlight)(remoteEnvironment)}` : ''} was successful`}`);
+      });
+
+      return function () {
+        return _ref6.apply(this, arguments);
+      };
+    }());
 
     _defineProperty(this, "handleDatabase",
     /*#__PURE__*/

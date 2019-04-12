@@ -138,10 +138,11 @@ const getSshPushCommands = ({
     port,
     workingDirectory,
     sshKeyPath,
+    isDryRun = false,
 }) => {
     // https://download.samba.org/pub/rsync/rsync.html
     const flags = [
-        // '--dry-run',
+        ...(isDryRun ? ['--dry-run'] : []),
         // Preserve permissions
         '--archive',
         // Compress file data during the transfer
@@ -265,20 +266,20 @@ const getSshDatabase = async ({
                 ssh.dispose()
                 // Format the remote env settings for display
                 const remoteSettings = `${colourAttention(
-                    `DB_SERVER="${remoteEnv.DB_SERVER}"\nDB_PORT="${remoteEnv.DB_PORT}"\nDB_USER="${zipCommandConfig.user}"\nDB_PASSWORD="${zipCommandConfig.password}"\nDB_DATABASE="${zipCommandConfig.database}"`)}\n\n${path.join(sshAppPath, '.env')}`
+                    `DB_SERVER="${remoteEnv.DB_SERVER}"\nDB_PORT="${
+                        remoteEnv.DB_PORT
+                    }"\nDB_USER="${zipCommandConfig.user}"\nDB_PASSWORD="${
+                        zipCommandConfig.password
+                    }"\nDB_DATABASE="${zipCommandConfig.database}"`
+                )}\n\n${path.join(sshAppPath, '.env')}`
                 // Set the error message
-                errorMessage =
-                    errorOutput.includes('Unknown MySQL server host')
-                        ? (
-                            `There were issues connecting to the remote database server ${colourAttention(remoteEnv.DB_SERVER)}\nVerify the settings in the remote env are correct:\n\n${remoteSettings}`
-                        )
-                        : (
-                            errorOutput.includes('Access denied')
-                                ? (
-                                    `Couldn’t connect with the remote .env database settings:\n\n${remoteSettings}`
-                                )
-                                : errorOutput
-                        )
+                errorMessage = errorOutput.includes('Unknown MySQL server host')
+                    ? `There were issues connecting to the remote database server ${colourAttention(
+                          remoteEnv.DB_SERVER
+                      )}\nVerify the settings in the remote env are correct:\n\n${remoteSettings}`
+                    : errorOutput.includes('Access denied')
+                    ? `Couldn’t connect with the remote .env database settings:\n\n${remoteSettings}`
+                    : errorOutput
             }
         })
         .catch(e => (errorMessage = e))

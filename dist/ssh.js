@@ -194,11 +194,11 @@ const getSshPushCommands = ({
   host,
   port,
   workingDirectory,
-  sshKeyPath
+  sshKeyPath,
+  isDryRun = false
 }) => {
   // https://download.samba.org/pub/rsync/rsync.html
-  const flags = [// '--dry-run',
-  // Preserve permissions
+  const flags = [...(isDryRun ? ['--dry-run'] : []), // Preserve permissions
   '--archive', // Compress file data during the transfer
   '--compress', // Output a change-summary for all updates
   '--itemize-changes', // Delete extraneous files from dest dirs

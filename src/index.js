@@ -26,6 +26,18 @@ const tasks = [
         flags: ['pull', 'd'],
     },
     {
+        id: 'push-dry-run',
+        emoji: '🔮',
+        title: 'Push - dry run',
+        heading: 'Push files - dry run',
+        description:
+            'Try dry run push based on the current config and show the outcome without actually running it',
+        isListed: true,
+        needsSetup: true,
+        handler: 'handlePushDryRun',
+        flags: ['push-dry-run'],
+    },
+    {
         id: 'push',
         emoji: '🚀',
         title: 'Push',

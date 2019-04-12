@@ -458,7 +458,12 @@ class Swiff extends Component {
         )
     }
 
-    handlePush = async () => {
+    handlePushDryRun = async () => {
+        const isDryRun = true
+        return this.handlePush(isDryRun)
+    }
+
+    handlePush = async (isDryRun = false) => {
         // Set some variables for later
         const localEnv = this.state.localEnv
         const { SWIFF_CUSTOM_KEY } = localEnv
@@ -475,7 +480,10 @@ class Swiff extends Component {
         if (remoteEnv instanceof Error) {
             this.setWorking(
                 colourNotice(
-                    `Consider adding an .env file on the remote server\n   at ${path.join(appPath, '.env')}`
+                    `Consider adding an .env file on the remote server\n   at ${path.join(
+                        appPath,
+                        '.env'
+                    )}`
                 )
             )
         }
@@ -486,6 +494,7 @@ class Swiff extends Component {
         // Shame the user if they are pushing to production
         if (
             !isEmpty(remoteEnvironment) &&
+            !isDryRun &&
             (remoteEnvironment === 'production' || remoteEnvironment === 'live')
         )
             this.setWorking(
@@ -522,7 +531,9 @@ class Swiff extends Component {
             return this.setError(hasMissingPaths)
         // Share what's happening with the user
         this.setWorking(
-            `Pushing files in ${commaAmpersander(filteredPushFolders)}`
+            `${isDryRun ? 'Checking' : 'Pushing'} files in ${commaAmpersander(
+                filteredPushFolders
+            )}`
         )
         // Get the rsync push commands
         const pushCommands = getSshPushCommands({
@@ -532,6 +543,7 @@ class Swiff extends Component {
             port: port,
             workingDirectory: appPath,
             sshKeyPath: SWIFF_CUSTOM_KEY,
+            isDryRun,
         })
         // Send the commands to the push task
         const pushStatus = await executeCommands(pushCommands)
@@ -552,11 +564,18 @@ class Swiff extends Component {
                           ? `${colourHighlight(remoteEnvironment)}`
                           : 'the remote'
                   } is already up-to-date`
-                : `Success! These are the remote files that changed:\n${output}\n\nThe file push${
-                      !isEmpty(remoteEnvironment)
-                          ? ` to ${colourHighlight(remoteEnvironment)}`
-                          : ''
-                  } was successful`
+                : `Success! These are the remote files that ${
+                      isDryRun ? 'will be' : ''
+                  } changed:\n${output}
+                \n\n${
+                    isDryRun
+                        ? ``
+                        : `The file push${
+                              !isEmpty(remoteEnvironment)
+                                  ? ` to ${colourHighlight(remoteEnvironment)}`
+                                  : ''
+                          } was successful`
+                }`
         )
     }
 
