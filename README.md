@@ -6,40 +6,33 @@ Swiff saves you time with common SSH tasks during the development of websites/ap
 
 [![interface example demo](https://raw.githubusercontent.com/simple-integrated-marketing/swiff/master/resources/demo.gif)](https://raw.githubusercontent.com/simple-integrated-marketing/swiff/master/resources/demo.gif)
 
-🚀 **File uploads**<br>
-Upload and sync files to remote folders via SSH
+🚀 **Folder push and pull**<br>
+Keep folders in sync between two servers
 
-📥 **File downloads**<br>
-Download fresh files from remote folders via SSH
+💫 **Database push and pull**<br>
+Manage database updates from another server
 
-💫 **Local database updates**<br>
-Quick replacement of your project database with the remote
+🎩 **Composer file push and pull**<br>
+Move composer files between servers
 
 💻 **Remote terminal connection**<br>
 Launch a SSH session directly into the remote site/app folder
 
-🎩 **Local composer.json/lock updates**<br>
-Refresh your composer files with the latest updates from the remote
-
 ## Getting started
 
-1. Install Swiff globally with NPM:<br>
+1. Install Swiff globally with npm:<br>
 `npm install --global swiff`
 
 2. Run `swiff` within a project folder to start the task interface
 
-Run `swiff --help` for a list of flags for once off tasks
+Run `swiff --help` for a list of flags that run a specific task
 
 ## Additional features
 
 - Custom SSH identity: Swiff will attempt to use your identity located at: `/Users/[currentUser]/.ssh/id_rsa`<br>
 You can specify a custom SSH key path in your .env file with:<br>
 `SWIFF_CUSTOM_KEY="/Users/[your-user]/.ssh/[key-filename]"`
-
-- Trustable backups: Your local database and composer files are backed up before they are replaced.<br>
-Run `swiff --backups` to open the backups folder
-
-- Single run shortcuts: Complete tasks in 'non-interactive mode' using flags. See `swiff --help` for the list of flags
+- Gzipped backups: Your files and database get backed up and gzipped whenever they change
 
 ## Requirements
 
