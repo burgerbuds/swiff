@@ -78,7 +78,9 @@ const getValidatedTaskFromFlags = (flags, tasks) => {
         : null
     return !isEmpty(validatedTask)
         ? validatedTask
-        : new Error(`Poops. '${providedFlags.join()}' looks like a mistyped command`)
+        : new Error(
+              `Oops, I don't understand those flags`
+          )
 }
 
 class Swiff extends Component {
@@ -387,7 +389,7 @@ class Swiff extends Component {
         return true
     }
 
-    handlePull = async () => {
+    handlePullFolders = async () => {
         const { pullFolders, server } = this.state.config
         const { user, host, appPath, port } = server
         const localEnv = this.state.localEnv
@@ -428,7 +430,10 @@ class Swiff extends Component {
         if (remoteEnv instanceof Error) {
             this.setWorking(
                 colourNotice(
-                    `Consider adding an .env file on the remote server\n   at ${path.join(appPath, '.env')}`
+                    `Consider adding an .env file on the remote server\n   at ${path.join(
+                        appPath,
+                        '.env'
+                    )}`
                 )
             )
         }
@@ -466,7 +471,7 @@ class Swiff extends Component {
         )
     }
 
-    handlePush = async () => {
+    handlePushFolders = async () => {
         // Set some variables for later
         const localEnv = this.state.localEnv
         const { SWIFF_CUSTOM_KEY } = localEnv
@@ -483,7 +488,10 @@ class Swiff extends Component {
         if (remoteEnv instanceof Error) {
             this.setWorking(
                 colourNotice(
-                    `Consider adding an .env file on the remote server\n   at ${path.join(appPath, '.env')}`
+                    `Consider adding an .env file on the remote server\n   at ${path.join(
+                        appPath,
+                        '.env'
+                    )}`
                 )
             )
         }
@@ -568,7 +576,7 @@ class Swiff extends Component {
         )
     }
 
-    handleDatabase = async () => {
+    handlePullDatabase = async () => {
         // Set some variables for later
         const localEnv = this.state.localEnv
         const serverConfig = this.state.config.server
@@ -642,12 +650,18 @@ class Swiff extends Component {
                 'ER_BAD_DB_ERROR: Unknown database '
             )
                 ? this.setMessage(
-                      `First create a database named ${colourNotice(DB_DATABASE)} on ${colourNotice(DB_SERVER)} with these login details:\n\nUsername: ${DB_USER}\nPassword: ${DB_PASSWORD}`
+                      `First create a database named ${colourNotice(
+                          DB_DATABASE
+                      )} on ${colourNotice(
+                          DB_SERVER
+                      )} with these login details:\n\nUsername: ${DB_USER}\nPassword: ${DB_PASSWORD}`
                   )
                 : this.setError(
                       `There were issues connecting to your local ${colourAttention(
                           DB_DATABASE
-                      )} database\n\nCheck these settings are correct in your local .env file:\n\n${colourAttention(`DB_SERVER="${DB_SERVER}"\nDB_PORT="${DB_PORT}"\nDB_USER="${DB_USER}"\nDB_PASSWORD="${DB_PASSWORD}"\nDB_DATABASE="${DB_DATABASE}"`)}\n\n${colourMuted(
+                      )} database\n\nCheck these settings are correct in your local .env file:\n\n${colourAttention(
+                          `DB_SERVER="${DB_SERVER}"\nDB_PORT="${DB_PORT}"\nDB_USER="${DB_USER}"\nDB_PASSWORD="${DB_PASSWORD}"\nDB_DATABASE="${DB_DATABASE}"`
+                      )}\n\n${colourMuted(
                           String(dropTables).replace('Error: ', '')
                       )}`
                   )
@@ -673,9 +687,9 @@ class Swiff extends Component {
         this.setSuccess(
             `Your ${colourHighlight(
                 DB_DATABASE
-            )} database was refreshed with the ${colourHighlight(
+            )} database was updated with the ${colourHighlight(
                 remoteEnv.ENVIRONMENT
-            )} database from ${colourHighlight(serverConfig.host)}`
+            )} database`
         )
     }
 
@@ -691,16 +705,20 @@ class Swiff extends Component {
             DB_USER,
             DB_PASSWORD,
         } = localEnv
-        // Share what's happening with the user
-        this.setWorking(
-            `Backing up the remote ${colourHighlight(remoteEnv.ENVIRONMENT)} database`
-        )
         // Get the remote env file via SSH
         const remoteEnv = await getRemoteEnv({
             serverConfig,
             isInteractive: this.state.isFlaggedStart,
             sshKeyPath: SWIFF_CUSTOM_KEY,
         })
+        // If the env can't be found then return a message
+        if (remoteEnv instanceof Error) return this.setMessage(remoteEnv)
+        // Share what's happening with the user
+        this.setWorking(
+            `Backing up the remote ${colourHighlight(
+                remoteEnv.ENVIRONMENT
+            )} database`
+        )
         // If the env can't be found then return a message
         if (remoteEnv instanceof Error) return this.setMessage(remoteEnv)
         // Set the remote database variables
@@ -721,7 +739,7 @@ class Swiff extends Component {
         if (dbSsh instanceof Error) return this.setError(dbSsh)
         // Share what's happening with the user
         this.setWorking(
-            `Making a copy of your local ${colourHighlight(
+            `Exporting and uploading your local ${colourHighlight(
                 DB_DATABASE
             )} database`
         )
@@ -813,14 +831,18 @@ class Swiff extends Component {
         this.setSuccess(
             `The remote ${colourHighlight(
                 remoteEnv.DB_DATABASE
-            )} database on ${colourHighlight(serverConfig.host)} was refreshed with your local ${colourHighlight(DB_DATABASE)} database`
+            )} database was updated with your ${colourHighlight(DB_DATABASE)} database`
         )
     }
 
-    handleComposer = async () => {
+    handlePullComposer = async () => {
         // Set some variables for later
         const serverConfig = this.state.config.server
         const { DB_DATABASE, SWIFF_CUSTOM_KEY } = this.state.localEnv
+        // Share what's happening with the user
+        this.setWorking(
+            `Backing up your local composer files`
+        )
         // Backup the local composer files
         // I'm letting this command fail silently if the user doesn’t have composer files locally just yet
         await executeCommands(
@@ -836,7 +858,7 @@ class Swiff extends Component {
         if (ssh instanceof Error) return this.setError(ssh)
         // Share what's happening with the user
         this.setWorking(
-            `Fetching the files from the remote server at ${colourHighlight(
+            `Fetching the composer files from the remote server at ${colourHighlight(
                 serverConfig.host
             )}`
         )
@@ -874,9 +896,9 @@ class Swiff extends Component {
         ssh.dispose()
         // Show a success message
         return this.setSuccess(
-            `Your local ${colourHighlight(
-                'composer.json'
-            )} and ${colourHighlight('composer.lock')} were refreshed`
+            `Your composer files were updated from ${colourHighlight(serverConfig.host)}`
+        )
+    }
 
     handlePushComposer = async () => {
         // Set some variables for later
