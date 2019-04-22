@@ -18,7 +18,7 @@ import {
 
 	if (!hasConfig || !hasEnv) return
 
-	test('swiff --pull', async t => {
+	test('swiff --pull-folders', async t => {
 		const { stdout, stderr } = await exec('swiff --pull')
 		if (stderr) return t.fail(stderr)
 		if (!stdout) return t.fail('No output')
@@ -27,7 +27,7 @@ import {
 		t.fail(`Unknown output:\n\n${stdout}`)
 	})
 
-	test('swiff --database', async t => {
+	test('swiff --pull-database', async t => {
 		const { stdout, stderr } = await exec('swiff --database')
 		if (stderr) return t.fail(stderr)
 		if (!stdout) return t.fail('No output')
@@ -36,7 +36,7 @@ import {
 		t.fail(`Unknown output:\n\n${stdout}`)
 	})
 
-	test('swiff --composer', async t => {
+	test('swiff --pull-composer', async t => {
 		const { stdout, stderr } = await exec('swiff --composer')
 		if (stderr) return t.fail(stderr)
 		if (!stdout) return t.fail('No output')
