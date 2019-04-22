@@ -19,12 +19,33 @@ const tasks = [
         title: 'Pull folders',
         heading: 'Pull folders',
         description:
-            'Download fresh files on the remote server from your pull folders',
+            'Update local folders with the remote pull folders',
         isListed: true,
         needsSetup: true,
-        handler: 'handlePull',
-        flags: ['pull-folders', 'pullfolders', 'pullf', 'folderpull', 'df'],
-        // flags: ['pull', 'd'], // TODO: deprecate display
+        handler: 'handlePullFolders',
+        flags: ['pull-folders', 'pullfolders', 'pullf', 'folderpull', 'df', 'downf'],
+    },
+    {
+        id: 'pull-database',
+        emoji: '💫',
+        title: 'Pull database',
+        heading: 'Pull database',
+        description: 'Replace your local database with remote database',
+        isListed: true,
+        needsSetup: true,
+        handler: 'handlePullDatabase',
+        flags: ['pull-database', 'pulldb', 'dbpull', 'pulld', 'ddb'],
+    },
+    {
+        id: 'pull-composer',
+        emoji: '🎩',
+        title: 'Pull composer',
+        heading: 'Pull composer',
+        description: 'Update your project with the remote composer files',
+        isListed: true,
+        needsSetup: true,
+        handler: 'handlePullComposer',
+        flags: ['pull-composer', 'pullcomposer', 'pullcomp', 'pullc'],
     },
     {
         id: 'push-folders',
@@ -32,24 +53,11 @@ const tasks = [
         title: 'Push folders',
         heading: 'Push folders',
         description:
-            'Upload and sync to the remote server from your push folders',
+            'Update remote folders with your push folders',
         isListed: true,
         needsSetup: true,
-        handler: 'handlePush',
-        flags: ['push-folders', 'pushfolders', 'pushf', 'folderpush', 'uf'],
-        // flags: ['push', 'u'], // TODO: deprecate display
-    },
-    {
-        id: 'pull-database',
-        emoji: '💫',
-        title: 'Pull database',
-        heading: 'Pull database',
-        description: 'Overwrite your local with the remote database',
-        isListed: true,
-        needsSetup: true,
-        handler: 'handleDatabase',
-        flags: ['pull-database', 'pulldb', 'dbpull', 'pulld', 'ddb'],
-        // flags: ['database', 't'], // TODO: deprecate display
+        handler: 'handlePushFolders',
+        flags: ['push-folders', 'pushfolders', 'pushf', 'folderpush', 'uf', 'upf'],
     },
     {
         id: 'push-database',
@@ -57,24 +65,23 @@ const tasks = [
         title: 'Push database',
         heading: 'Push database',
         description:
-            'Overwrite the remote with your local database',
-        isListed: false,
+            'Replace the remote database with your local database',
+        isListed: true,
         needsSetup: true,
         fullscreen: true,
         handler: 'handlePushDatabase',
         flags: ['push-database', 'pushdb', 'dbpush', 'pushd', 'udb', 'updb', 'uploaddb'],
     },
     {
-        id: 'pull-composer',
+        id: 'push-composer',
         emoji: '🎩',
-        title: 'Pull composer',
-        heading: 'Pull composer',
-        description: 'Update your local composer files from the remote',
-        isListed: false,
+        title: 'Push composer',
+        heading: 'Push composer',
+        description: 'Update the remote with your local composer files',
+        isListed: true,
         needsSetup: true,
-        handler: 'handleComposer',
-        flags: ['pull-composer', 'pullcomposer', 'pullcomp', 'pullc'],
-        // flags: ['composer', 'c'], // TODO: deprecate display
+        handler: 'handlePushComposer',
+        flags: ['push-composer', 'pushcomposer', 'pushcomp', 'pushc'],
     },
     {
         id: 'backups',
@@ -82,8 +89,8 @@ const tasks = [
         title: 'View backups',
         heading: 'Open backups folder',
         description:
-            'View gzipped database and composer backups',
-        isListed: false,
+            'View your gzipped database and composer backups',
+        isListed: true,
         needsSetup: false,
         handler: 'handleOpenBackups',
         flags: ['backups', 'b'],
@@ -95,7 +102,7 @@ const tasks = [
         heading: 'Remote terminal connection',
         description:
             'Launch a remote terminal session into the remote app folder',
-        isListed: false,
+        isListed: true,
         needsSetup: true,
         fullscreen: true,
         handler: 'handleSsh',
@@ -148,7 +155,7 @@ process.on('uncaughtException', error => {
 // End process on ctrl+c or ESC
 process.stdin.on('data', key => {
     if (['\u0003', '\u001B'].includes(key)) {
-        console.log(colourHighlight('\n👌  Your SSH connection was ended'))
+        console.log(colourHighlight('\n👌  Your SSH connection has ended'))
         process.exit()
     }
 })
