@@ -13,6 +13,7 @@ import {
     doesFileExist,
     commaAmpersander,
     replaceRsyncOutput,
+    paginate,
 } from './utils'
 import {
     pathBackups,
@@ -26,8 +27,11 @@ import {
     doDropAllDbTables,
     doImportDb,
     doLocalDbDump,
-    dropDbQuery,
-    importDbQuery
+    checkForDb,
+    unzipDb,
+    clearDb,
+    importDb,
+    removeDb,
 } from './database'
 import { OptionsTemplate, MessageTemplate } from './templates'
 import {
@@ -88,7 +92,13 @@ class Swiff extends Component {
         super(props)
 
         const isFlaggedStart =
-            Object.entries(this.props.flags).filter(([k, v]) => v).length > 0
+            Object.values(this.props.flags).filter(v => v).length > 0
+
+        const tasks = this.getTasksListed()
+        const {
+            newTasks,
+            newPages,
+        } = this.getTasksPaginated(tasks, 1)
 
         this.state = {
             messages: [],
@@ -96,9 +106,10 @@ class Swiff extends Component {
             remoteEnv: null, // The contents of the remote env file
             config: null, // The contents of the config file
             isFlaggedStart: isFlaggedStart, // Whether the app was started with flags
-            tasks: this.getTaskList(),
+            tasks: newTasks,
+            currentPage: 1,
+            pages: newPages,
             currentTask: null,
-            showMoreTasks: false,
             removeOptions: false,
         }
     }
@@ -108,11 +119,12 @@ class Swiff extends Component {
         console.clear()
         const { flags, tasks, taskHelp } = this.props
         // Exit early and start interface if there's no flags set
-        if (Object.entries(flags).every(([k, v]) => !v)) {
+        if (Object.values(flags).every(v => !v)) {
             // Listen for keypress
             process.stdin.on('keypress', this.handleKeyPress)
             return
         }
+        this.changeTaskPage()
         // Check if the task can be run
         const validatedTask = getValidatedTaskFromFlags(flags, tasks)
         // Let the user know if their flag isn't correct
@@ -127,20 +139,20 @@ class Swiff extends Component {
     }
 
     handleKeyPress = (ch, key = {}) => {
-        const isArrowKey = ['left', 'right'].includes(key.name)
-        if (isArrowKey) this.toggleTaskPage()
+        if ('left' === key.name) return this.changeTaskPage(false)
+        if ('right' === key.name) return this.changeTaskPage()
         return
     }
 
     render(
         props,
-        { messages, currentTask, tasks, isFlaggedStart, removeOptions }
+        { messages, currentTask, tasks, isFlaggedStart, removeOptions, currentPage }
     ) {
         const OptionsSelectProps = {
             items: tasks,
             onSelect: task =>
                 task.id === 'toggle'
-                    ? this.toggleTaskPage()
+                    ? this.changeTaskPage()
                     : !isTaskRunning(messages) && this.startTask(task),
             itemComponent: ({ emoji, title, description, isSelected }) => {
                 const isActive =
@@ -175,7 +187,7 @@ class Swiff extends Component {
                 {showOptions ? (
                     <Text dim={isTaskRunning(messages)}>
                         <OptionsTemplate selectProps={OptionsSelectProps} />
-                        <br/>
+                        <br />
                     </Text>
                 ) : null}
                 {!isEmpty(messages) && (
@@ -239,30 +251,52 @@ class Swiff extends Component {
         )
     }
 
-    toggleTaskPage = () => {
-        const { showMoreTasks } = this.state
-        this.setState({
-            tasks: this.getTaskList(!showMoreTasks),
-            showMoreTasks: !showMoreTasks,
+    getTasksListed = () => this.props.tasks.slice().filter(task => task.isListed)
+
+    getTasksPaginated = (allTasks, currentPage) => {
+        const { startIndex, endIndex, pages } = paginate({
+            totalItems: allTasks.length,
+            currentPage: currentPage,
+            pageSize: 3,
         })
+        // Get the tasks for the next/prev page
+        const tasks = allTasks.slice(startIndex, endIndex+1)
+        // Add the pagination dots
+        const paginationDots = pages.map(
+            (page, index) => page === currentPage
+                ? chalk.hex('#777')('●')
+                : index+1 === currentPage+1 || (index+1 === 1 && currentPage === pages.length)  ? '○' : chalk.hex('#777')('○')
+        ).join(' ')
+        // Add the dots to the task list
+        const tasksWithPagination = pages.length > 1
+            ? tasks.slice().concat([{
+                id: 'toggle',
+                title: `   ${paginationDots}`
+            }])
+            : tasks
+        return {
+            newTasks: tasksWithPagination,
+            newPages: pages,
+        }
     }
 
-    getTaskList = showAll => {
-        const tasks = this.props.tasks.slice()
-        const newTasks = tasks.filter(task =>
-            showAll ? !task.isListed : task.isListed
-        )
-        const hollowDot = '○'
-        const solidDot = chalk.hex('#777')('●')
-        newTasks.push({
-            id: 'toggle',
-            title: (
-                showAll
-                    ? `   ${hollowDot} ${solidDot}`
-                    : `   ${solidDot} ${hollowDot}`
-            ),
+    getNewTaskPage = (currentPage, pageLength, isForwards) =>
+        isForwards
+            ? (currentPage >= pageLength ? 1 : currentPage + 1)
+            : (currentPage === 1 ? pageLength : currentPage - 1)
+
+    changeTaskPage = (isForwards = true) => {
+        const { currentPage, pages } = this.state
+        const newCurrentPage = this.getNewTaskPage(currentPage, pages.length, isForwards)
+        const {
+            newTasks,
+            newPages,
+        } = this.getTasksPaginated(this.getTasksListed(), newCurrentPage)
+        this.setState({
+            tasks: newTasks,
+            pages: newPages,
+            currentPage: newCurrentPage,
         })
-        return newTasks
     }
 
     setError = error => {
