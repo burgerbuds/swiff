@@ -877,6 +877,64 @@ class Swiff extends Component {
             `Your local ${colourHighlight(
                 'composer.json'
             )} and ${colourHighlight('composer.lock')} were refreshed`
+
+    handlePushComposer = async () => {
+        // Set some variables for later
+        const serverConfig = this.state.config.server
+        const { DB_DATABASE, SWIFF_CUSTOM_KEY } = this.state.localEnv
+        // Share what's happening with the user
+        this.setWorking(
+            `Backing up the remote composer files on ${colourHighlight(
+                serverConfig.host
+            )}`
+        )
+        // Connect to the remote server
+        const ssh = await getSshInit({
+            host: serverConfig.host,
+            user: serverConfig.user,
+            sshKeyPath: SWIFF_CUSTOM_KEY,
+        })
+        // Download composer.json from the remote server
+        const sshDownload1 = await getSshFile({
+            connection: ssh,
+            from: path.join(serverConfig.appPath, 'composer.json'),
+            to: path.join(pathBackups, `${DB_DATABASE}-remote-composer.json`),
+        })
+        // Download composer.lock from the remote server
+        const sshDownload2 = await getSshFile({
+            connection: ssh,
+            from: path.join(serverConfig.appPath, 'composer.lock'),
+            to: path.join(pathBackups, `${DB_DATABASE}-remote-composer.lock`),
+        })
+        // TODO: Test the responses of sshDownload1/sshDownload2 and provide error feedback
+        // Close the connection
+        ssh.dispose()
+        // Share what's happening with the user
+        this.setWorking(
+            `Pushing your composer files to the remote server`
+        )
+        //
+        // https://download.samba.org/pub/rsync/rsync.html
+        const flags = [
+            // '--dry-run',
+            // Preserve permissions
+            '--archive',
+            // Compress file data during the transfer
+            // '--compress',
+            // Connect via a port number
+            // Set the custom identity if provided
+            `-e "ssh -p ${serverConfig.port}${
+                !isEmpty(SWIFF_CUSTOM_KEY) ? ` -i '${SWIFF_CUSTOM_KEY}'` : ''
+            }"`,
+        ].join(' ')
+        await executeCommands(
+            `(rsync ${flags} ${path.join(pathApp,`composer.json`) } ${serverConfig.user}@${serverConfig.host}:${serverConfig.appPath})
+            (rsync ${flags} ${path.join(pathApp,`composer.lock`) } ${serverConfig.user}@${serverConfig.host}:${serverConfig.appPath})
+            `
+        )
+        // Show a success message
+        return this.setSuccess(
+            `Your composer files were pushed to ${colourHighlight(serverConfig.host)}`
         )
     }
 
