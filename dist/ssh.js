@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getSshPullCommands = exports.getSshPushCommands = exports.getSshCopyInstructions = exports.getSshTestCommand = exports.getSshDatabase = exports.getSshEnv = exports.getSshFile = exports.getSshInit = void 0;
+exports.sshConnect = exports.pushSshDatabase = exports.getSshPullCommands = exports.getSshPushCommands = exports.getSshCopyInstructions = exports.getSshTestCommand = exports.getSshDatabase = exports.getSshEnv = exports.getSshFile = exports.getSshInit = void 0;
 
 var _ink = require("ink");
 
@@ -122,6 +122,8 @@ function () {
   };
 }();
 
+exports.sshConnect = sshConnect;
+
 const getSshEnv =
 /*#__PURE__*/
 function () {
@@ -202,7 +204,8 @@ const getSshPushCommands = ({
   '--archive', // Compress file data during the transfer
   '--compress', // Output a change-summary for all updates
   '--itemize-changes', // Delete extraneous files from dest dirs
-  '--delete', '--exclude ".env"', // Connect via a port number
+  '--delete', // Ignore misc files
+  '--exclude ".git"', '--exclude ".env"', '--exclude ".DS_Store"', // Connect via a port number
   // Set the custom identity if provided
   `-e "ssh -p ${port}${!(0, _utils.isEmpty)(sshKeyPath) ? ` -i '${sshKeyPath}'` : ''}"`].join(' '); // Build the final command string from an array of folders
 
@@ -221,6 +224,25 @@ const getSshPushCommands = ({
 
 exports.getSshPushCommands = getSshPushCommands;
 
+const getPushDatabaseCommands = ({
+  host,
+  user,
+  port,
+  fromPath,
+  toPath,
+  sshKeyPath
+}) => {
+  // https://download.samba.org/pub/rsync/rsync.html
+  const flags = [// '--dry-run',
+  // Preserve permissions
+  '--archive', // Compress file data during the transfer
+  '--compress', // Connect via a port number
+  // Set the custom identity if provided
+  `-e "ssh -p ${port}${!(0, _utils.isEmpty)(sshKeyPath) ? ` -i '${sshKeyPath}'` : ''}"`].join(' '); // Build the command string
+
+  return `rsync ${flags} ${fromPath} ${user}@${host}:${toPath}`;
+};
+
 const getSshPullCommands = ({
   pullFolders,
   user,
@@ -234,7 +256,8 @@ const getSshPullCommands = ({
   // Preserve permissions
   '--archive', // Compress file data during the transfer
   '--compress', // Output a change-summary for all updates
-  '--itemize-changes', // Connect via a port number
+  '--itemize-changes', // Ignore misc files
+  '--exclude ".git"', '--exclude ".env"', '--exclude ".DS_Store"', // Connect via a port number
   // Set the custom identity if provided
   `-e "ssh -p ${port}${!(0, _utils.isEmpty)(sshKeyPath) ? ` -i '${sshKeyPath}'` : ''}"`].join(' '); // Build the final command string from an array of folders
 
@@ -257,24 +280,41 @@ const getSshTestCommand = (user, host, port, sshKeyPath) => {
   // Set the custom identity if provided
   const sshKeyString = !(0, _utils.isEmpty)(sshKeyPath) ? `-i "${sshKeyPath}"` : '';
   return `ssh -p ${port} ${sshKeyString} -o BatchMode=yes -o ConnectTimeout=5 ${user}@${host} echo 'SSH access is setup' 2>&1`;
-}; // Download a database over SSH to a local folder
+}; // Upload a database over SSH to a remote folder
 
 
 exports.getSshTestCommand = getSshTestCommand;
 
+const pushSshDatabase =
+/*#__PURE__*/
+function () {
+  var _ref5 = _asyncToGenerator(function* (config) {
+    const pushDatabaseStatus = yield (0, _utils.executeCommands)(getPushDatabaseCommands(config));
+    if (pushDatabaseStatus instanceof Error) return new Error(`There was an issue uploading your local ${(0, _palette.colourAttention)(config.dbName)} database\n\n${pushDatabaseStatus}`);
+    return;
+  });
+
+  return function pushSshDatabase(_x5) {
+    return _ref5.apply(this, arguments);
+  };
+}(); // Download a database over SSH to a local folder
+
+
+exports.pushSshDatabase = pushSshDatabase;
+
 const getSshDatabase =
 /*#__PURE__*/
 function () {
-  var _ref5 = _asyncToGenerator(function* ({
+  var _ref6 = _asyncToGenerator(function* ({
     remoteEnv,
     host,
     user,
     port,
     sshAppPath,
     gzipFileName,
-    sshKeyPath
+    sshKeyPath,
+    unzip = false
   }) {
-    let errorMessage;
     const ssh = yield getSshInit({
       host: host,
       user: user,
@@ -292,6 +332,7 @@ function () {
       database: remoteEnv.DB_DATABASE,
       gzipFilePath: gzipFileName
     };
+    let errorMessage;
     yield ssh.execCommand((0, _database.getDbDumpZipCommands)(zipCommandConfig), {
       cwd: sshAppPath
     }).then(result => {
@@ -326,12 +367,12 @@ function () {
     ssh.dispose(); // Unzip the database
     // -d : decompress / -f : force overwrite any existing file
 
-    yield (0, _utils.executeCommands)(`gzip -df '${downloadTo}'`);
+    unzip && (yield (0, _utils.executeCommands)(`gzip -df '${downloadTo}'`));
     return;
   });
 
-  return function getSshDatabase(_x5) {
-    return _ref5.apply(this, arguments);
+  return function getSshDatabase(_x6) {
+    return _ref6.apply(this, arguments);
   };
 }();
 

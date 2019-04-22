@@ -61,7 +61,7 @@ const getValidatedTaskFromFlags = (flags, tasks) => {
   const allowedFlags = providedFlags.filter(([k, v]) => taskIdList.includes(k)); // Get the first allowed flag
 
   const validatedTask = !(0, _utils.isEmpty)(allowedFlags.slice().shift()) ? allowedFlags.shift()[0] : null;
-  return !(0, _utils.isEmpty)(validatedTask) ? validatedTask : new Error(`The provided flag isn’t recognized`);
+  return !(0, _utils.isEmpty)(validatedTask) ? validatedTask : new Error(`Oops, I don't understand those flags`);
 };
 
 class Swiff extends _ink.Component {
@@ -82,11 +82,13 @@ class Swiff extends _ink.Component {
         taskHelp
       } = _this.props; // Exit early and start interface if there's no flags set
 
-      if (Object.entries(flags).every(([k, v]) => !v)) {
+      if (Object.values(flags).every(v => !v)) {
         // Listen for keypress
         process.stdin.on('keypress', _this.handleKeyPress);
         return;
-      } // Check if the task can be run
+      }
+
+      _this.changeTaskPage(); // Check if the task can be run
 
 
       const validatedTask = getValidatedTaskFromFlags(flags, tasks); // Let the user know if their flag isn't correct
@@ -104,8 +106,8 @@ class Swiff extends _ink.Component {
     }));
 
     _defineProperty(this, "handleKeyPress", (ch, key = {}) => {
-      const isArrowKey = ['left', 'right'].includes(key.name);
-      if (isArrowKey) this.toggleTaskPage();
+      if ('left' === key.name) return this.changeTaskPage(false);
+      if ('right' === key.name) return this.changeTaskPage();
       return;
     });
 
@@ -171,28 +173,50 @@ class Swiff extends _ink.Component {
       }));
     });
 
-    _defineProperty(this, "toggleTaskPage", () => {
+    _defineProperty(this, "getTasksListed", () => this.props.tasks.slice().filter(task => task.isListed));
+
+    _defineProperty(this, "getTasksPaginated", (allTasks, currentPage) => {
       const {
-        showMoreTasks
-      } = this.state;
-      this.setState({
-        tasks: this.getTaskList(!showMoreTasks),
-        showMoreTasks: !showMoreTasks
-      });
+        startIndex,
+        endIndex,
+        pages
+      } = (0, _utils.paginate)({
+        totalItems: allTasks.length,
+        currentPage: currentPage,
+        pageSize: 3
+      }); // Get the tasks for the next/prev page
+
+      const tasks = allTasks.slice(startIndex, endIndex + 1); // Add the pagination dots
+
+      const paginationDots = pages.map((page, index) => page === currentPage ? _chalk.default.hex('#777')('●') : index + 1 === currentPage + 1 || index + 1 === 1 && currentPage === pages.length ? '○' : _chalk.default.hex('#777')('○')).join(' '); // Add the dots to the task list
+
+      const tasksWithPagination = pages.length > 1 ? tasks.slice().concat([{
+        id: 'toggle',
+        title: `   ${paginationDots}`
+      }]) : tasks;
+      return {
+        newTasks: tasksWithPagination,
+        newPages: pages
+      };
     });
 
-    _defineProperty(this, "getTaskList", showAll => {
-      const tasks = this.props.tasks.slice();
-      const newTasks = tasks.filter(task => showAll ? !task.isListed : task.isListed);
-      const hollowDot = '○';
+    _defineProperty(this, "getNewTaskPage", (currentPage, pageLength, isForwards) => isForwards ? currentPage >= pageLength ? 1 : currentPage + 1 : currentPage === 1 ? pageLength : currentPage - 1);
 
-      const solidDot = _chalk.default.hex('#777')('●');
-
-      newTasks.push({
-        id: 'toggle',
-        title: showAll ? `   ${hollowDot} ${solidDot}` : `   ${solidDot} ${hollowDot}`
+    _defineProperty(this, "changeTaskPage", (isForwards = true) => {
+      const {
+        currentPage,
+        pages
+      } = this.state;
+      const newCurrentPage = this.getNewTaskPage(currentPage, pages.length, isForwards);
+      const {
+        newTasks,
+        newPages
+      } = this.getTasksPaginated(this.getTasksListed(), newCurrentPage);
+      this.setState({
+        tasks: newTasks,
+        pages: newPages,
+        currentPage: newCurrentPage
       });
-      return newTasks;
     });
 
     _defineProperty(this, "setError", error => {
@@ -250,6 +274,9 @@ class Swiff extends _ink.Component {
     _defineProperty(this, "handleSetup",
     /*#__PURE__*/
     _asyncToGenerator(function* () {
+      // TODO: Check if package.json exists
+      // If no package.json or .git folder, notify that you may be in the wrong directory
+      // ...
       // Check if the config exists
       const doesConfigExist = yield (0, _utils.doesFileExist)(_paths.pathConfig); // If no config, create it
 
@@ -285,13 +312,13 @@ class Swiff extends _ink.Component {
       const checkSshSetup = yield (0, _utils.executeCommands)((0, _ssh2.getSshTestCommand)(config.server.user, config.server.host, config.server.port, !(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? localEnv.SWIFF_CUSTOM_KEY : null)); // If there's an issue with the connection then give some assistance
 
       if (checkSshSetup instanceof Error) {
-        return _this.setMessage(`A SSH connection couldn’t be made with these details:\n\nServer host: ${config.server.host}\nServer user: ${config.server.user}\nPort: ${config.server.port}\nSSH key: ${sshKey}\n\n${(0, _ssh2.getSshCopyInstructions)(config, sshKey)}\n\n${(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? `${_chalk.default.bold(`Is the SSH key above incorrect?`)}\nAdd the path to your project .env\neg: SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"` : ''}`);
+        return _this.setMessage(`A SSH connection couldn’t be made with these details:\n\nServer host: ${config.server.host}\nServer user: ${config.server.user}\nPort: ${config.server.port}\nSSH key: ${sshKey}\n\n${(0, _ssh2.getSshCopyInstructions)(config, sshKey)}\n\n${(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? `${_chalk.default.bold(`Is the 'SSH key' path above wrong?`)}\nAdd the correct path to your project .env like this:\nSWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"` : ''}`);
       }
 
       return true;
     }));
 
-    _defineProperty(this, "handlePull",
+    _defineProperty(this, "handlePullFolders",
     /*#__PURE__*/
     _asyncToGenerator(function* () {
       const {
@@ -349,7 +376,7 @@ class Swiff extends _ink.Component {
       return _this.setSuccess((0, _utils.isEmpty)(output) ? `No pull required, ${(0, _palette.colourHighlight)(localEnv.DB_SERVER)} is already up-to-date!` : `Success! These are the local files that changed:\n${output}\n\nThe file pull${!(0, _utils.isEmpty)(remoteEnvironment) ? ` from ${(0, _palette.colourHighlight)(remoteEnvironment)}` : ''} was successful`);
     }));
 
-    _defineProperty(this, "handlePush",
+    _defineProperty(this, "handlePushFolders",
     /*#__PURE__*/
     _asyncToGenerator(function* () {
       // Set some variables for later
@@ -414,7 +441,7 @@ class Swiff extends _ink.Component {
       return _this.setSuccess((0, _utils.isEmpty)(output) ? `No push required, ${!(0, _utils.isEmpty)(remoteEnvironment) ? `${(0, _palette.colourHighlight)(remoteEnvironment)}` : 'the remote'} is already up-to-date` : `Success! These are the remote files that changed:\n${output}\n\nThe file push${!(0, _utils.isEmpty)(remoteEnvironment) ? ` to ${(0, _palette.colourHighlight)(remoteEnvironment)}` : ''} was successful`);
     }));
 
-    _defineProperty(this, "handleDatabase",
+    _defineProperty(this, "handlePullDatabase",
     /*#__PURE__*/
     _asyncToGenerator(function* () {
       // Set some variables for later
@@ -442,7 +469,7 @@ class Swiff extends _ink.Component {
 
       const remoteDbName = `${remoteEnv.DB_DATABASE}-remote.sql`;
       const remoteDbNameZipped = `${remoteDbName}.gz`;
-      const importFile = `${_paths.pathBackups}/${remoteDbName}`; // Download the remote DB via SSH
+      const importFile = `${_paths.pathBackups}/${remoteDbName}`; // Download and store the remote DB via SSH
 
       const dbSsh = yield (0, _ssh2.getSshDatabase)({
         remoteEnv: remoteEnv,
@@ -451,7 +478,8 @@ class Swiff extends _ink.Component {
         port: serverConfig.port,
         sshAppPath: serverConfig.appPath,
         gzipFileName: remoteDbNameZipped,
-        sshKeyPath: SWIFF_CUSTOM_KEY
+        sshKeyPath: SWIFF_CUSTOM_KEY,
+        unzip: true
       }); // If there's any env issues then return the messages
 
       if (dbSsh instanceof Error) return _this.setError(dbSsh); // Backup the existing local database
@@ -494,10 +522,134 @@ class Swiff extends _ink.Component {
 
       yield (0, _utils.cmdPromise)(`rm ${importFile}`).catch(_this.setError); // Show a success message
 
-      _this.setSuccess(`Your ${(0, _palette.colourHighlight)(DB_DATABASE)} database was refreshed with the ${(0, _palette.colourHighlight)(remoteEnv.ENVIRONMENT)} database from ${(0, _palette.colourHighlight)(serverConfig.host)}`);
+      _this.setSuccess(`Your ${(0, _palette.colourHighlight)(DB_DATABASE)} database was updated with the ${(0, _palette.colourHighlight)(remoteEnv.ENVIRONMENT)} database`);
     }));
 
-    _defineProperty(this, "handleComposer",
+    _defineProperty(this, "handlePushDatabase",
+    /*#__PURE__*/
+    _asyncToGenerator(function* () {
+      // Set some variables for later
+      const localEnv = _this.state.localEnv;
+      const serverConfig = _this.state.config.server;
+      const {
+        SWIFF_CUSTOM_KEY,
+        DB_SERVER,
+        DB_PORT,
+        DB_DATABASE,
+        DB_USER,
+        DB_PASSWORD
+      } = localEnv; // Get the remote env file via SSH
+
+      const remoteEnv = yield (0, _env.getRemoteEnv)({
+        serverConfig,
+        isInteractive: _this.state.isFlaggedStart,
+        sshKeyPath: SWIFF_CUSTOM_KEY
+      }); // If the env can't be found then return a message
+
+      if (remoteEnv instanceof Error) return _this.setMessage(remoteEnv); // Share what's happening with the user
+
+      _this.setWorking(`Backing up the remote ${(0, _palette.colourHighlight)(remoteEnv.ENVIRONMENT)} database`); // If the env can't be found then return a message
+
+
+      if (remoteEnv instanceof Error) return _this.setMessage(remoteEnv); // Set the remote database variables
+
+      const remoteDbName = `${remoteEnv.DB_DATABASE}-remote.sql`;
+      const remoteDbNameZipped = `${remoteDbName}.gz`; // Download and store the remote DB via SSH
+
+      const dbSsh = yield (0, _ssh2.getSshDatabase)({
+        remoteEnv: remoteEnv,
+        host: serverConfig.host,
+        user: serverConfig.user,
+        port: serverConfig.port,
+        sshAppPath: serverConfig.appPath,
+        gzipFileName: remoteDbNameZipped,
+        sshKeyPath: SWIFF_CUSTOM_KEY
+      }); // If there's any env issues then return the messages
+
+      if (dbSsh instanceof Error) return _this.setError(dbSsh); // Share what's happening with the user
+
+      _this.setWorking(`Exporting and uploading your local ${(0, _palette.colourHighlight)(DB_DATABASE)} database`); // Backup the existing local database
+
+
+      const localDbDumpFile = `swiff-${DB_DATABASE}-push.sql`;
+      const localDbDumpFileZipped = `${localDbDumpFile}.gz`;
+      const localDbDumpFilePath = `${_paths.pathBackups}/${localDbDumpFileZipped}`;
+      const localDbDump = yield (0, _database.doLocalDbDump)({
+        host: DB_SERVER,
+        port: DB_PORT,
+        user: DB_USER,
+        password: DB_PASSWORD,
+        database: DB_DATABASE,
+        gzipFilePath: localDbDumpFilePath
+      }); // If there's any local db backup issues then return the messages
+
+      if (localDbDump instanceof Error) return _this.setError(localDbDump);
+      const remoteDbDumpPath = serverConfig.appPath; // Upload local db to remote
+
+      const pushDatabase = yield (0, _ssh2.pushSshDatabase)({
+        host: serverConfig.host,
+        user: serverConfig.user,
+        port: serverConfig.port,
+        dbName: DB_DATABASE,
+        fromPath: localDbDumpFilePath,
+        toPath: remoteDbDumpPath,
+        sshKeyPath: SWIFF_CUSTOM_KEY
+      }); // If there's any push issues then return the error message
+
+      if (pushDatabase instanceof Error) return _this.setError(pushDatabase); // Create a SSH connection
+      // TODO: Test swiff custom key
+
+      const ssh = yield (0, _ssh2.sshConnect)({
+        host: serverConfig.host,
+        username: serverConfig.user,
+        port: serverConfig.port,
+        sshKeyPath: SWIFF_CUSTOM_KEY
+      }); // If there’s any connection issues then return the messages
+
+      if (ssh instanceof Error) return _this.setError(ssh); // Check the remote database dump exists
+
+      const doCheckForDb = yield (0, _database.checkForDb)({
+        dbFilePath: _path.default.join(remoteDbDumpPath, localDbDumpFileZipped),
+        sshConn: ssh
+      });
+      if (doCheckForDb instanceof Error) return _this.setError(doCheckForDb); // Unzip the remote database to ready it for import
+
+      const doUnzipDb = yield (0, _database.unzipDb)({
+        dbFilePath: _path.default.join(remoteDbDumpPath, localDbDumpFileZipped),
+        sshConn: ssh
+      });
+      if (doUnzipDb instanceof Error) return _this.setError(doUnzipDb); // Clear out the remote database ahead of import
+
+      const doClearDb = yield (0, _database.clearDb)({
+        remoteEnv: remoteEnv,
+        sshConn: ssh
+      });
+      if (doClearDb instanceof Error) return _this.setError(doClearDb); // Share what's happening with the user
+
+      _this.setWorking(`Updating remote database on ${(0, _palette.colourHighlight)(remoteEnv.ENVIRONMENT)}`); // Import the local database dump into the remote database
+
+
+      const doImportDb = yield (0, _database.importDb)({
+        remoteEnv: remoteEnv,
+        dbFilePath: _path.default.join(remoteDbDumpPath, localDbDumpFile),
+        sshConn: ssh
+      });
+      if (doImportDb instanceof Error) return _this.setError(doImportDb); // Remove the database dump file on remote
+
+      const doRemoveDb = yield (0, _database.removeDb)({
+        dbFilePath: _path.default.join(remoteDbDumpPath, localDbDumpFile),
+        sshConn: ssh
+      });
+      if (doRemoveDb instanceof Error) return _this.setError(doRemoveDb); // Close the remote SSH connection
+
+      ssh.dispose(); // Remove the database dump file on local
+
+      yield (0, _utils.cmdPromise)(`rm ${localDbDumpFilePath}`).catch(_this.setError); // Show a success message
+
+      _this.setSuccess(`The remote ${(0, _palette.colourHighlight)(remoteEnv.DB_DATABASE)} database was updated with your ${(0, _palette.colourHighlight)(DB_DATABASE)} database`);
+    }));
+
+    _defineProperty(this, "handlePullComposer",
     /*#__PURE__*/
     _asyncToGenerator(function* () {
       // Set some variables for later
@@ -505,8 +657,11 @@ class Swiff extends _ink.Component {
       const {
         DB_DATABASE,
         SWIFF_CUSTOM_KEY
-      } = _this.state.localEnv; // Backup the local composer files
+      } = _this.state.localEnv; // Share what's happening with the user
+
+      _this.setWorking(`Backing up your local composer files`); // Backup the local composer files
       // I'm letting this command fail silently if the user doesn’t have composer files locally just yet
+
 
       yield (0, _utils.executeCommands)(`cp composer.json ${_paths.pathBackups}/${DB_DATABASE}-local-composer.json && cp composer.lock ${_paths.pathBackups}/${DB_DATABASE}-local-composer.lock`); // Connect to the remote server
 
@@ -518,7 +673,7 @@ class Swiff extends _ink.Component {
 
       if (ssh instanceof Error) return _this.setError(ssh); // Share what's happening with the user
 
-      _this.setWorking(`Fetching the files from the remote server at ${(0, _palette.colourHighlight)(serverConfig.host)}`); // Download composer.json from the remote server
+      _this.setWorking(`Fetching the composer files from the remote server at ${(0, _palette.colourHighlight)(serverConfig.host)}`); // Download composer.json from the remote server
 
 
       const sshDownload1 = yield (0, _ssh2.getSshFile)({
@@ -535,8 +690,8 @@ class Swiff extends _ink.Component {
 
       const sshDownload2 = yield (0, _ssh2.getSshFile)({
         connection: ssh,
-        from: `${serverConfig.appPath}/composer.lock`,
-        to: `${_paths.pathApp}/composer.lock`
+        from: _path.default.join(serverConfig.appPath, 'composer.lock'),
+        to: _path.default.join(_paths.pathApp, 'composer.lock')
       }); // If there's download issues then end the connection and return the messages
 
       if (sshDownload2 instanceof Error) {
@@ -547,7 +702,59 @@ class Swiff extends _ink.Component {
 
       ssh.dispose(); // Show a success message
 
-      return _this.setSuccess(`Your local ${(0, _palette.colourHighlight)('composer.json')} and ${(0, _palette.colourHighlight)('composer.lock')} were refreshed`);
+      return _this.setSuccess(`Your composer files were updated from ${(0, _palette.colourHighlight)(serverConfig.host)}`);
+    }));
+
+    _defineProperty(this, "handlePushComposer",
+    /*#__PURE__*/
+    _asyncToGenerator(function* () {
+      // Set some variables for later
+      const serverConfig = _this.state.config.server;
+      const {
+        DB_DATABASE,
+        SWIFF_CUSTOM_KEY
+      } = _this.state.localEnv; // Share what's happening with the user
+
+      _this.setWorking(`Backing up the remote composer files on ${(0, _palette.colourHighlight)(serverConfig.host)}`); // Connect to the remote server
+
+
+      const ssh = yield (0, _ssh2.getSshInit)({
+        host: serverConfig.host,
+        user: serverConfig.user,
+        sshKeyPath: SWIFF_CUSTOM_KEY
+      }); // Download composer.json from the remote server
+
+      const sshDownload1 = yield (0, _ssh2.getSshFile)({
+        connection: ssh,
+        from: _path.default.join(serverConfig.appPath, 'composer.json'),
+        to: _path.default.join(_paths.pathBackups, `${DB_DATABASE}-remote-composer.json`)
+      }); // Download composer.lock from the remote server
+
+      const sshDownload2 = yield (0, _ssh2.getSshFile)({
+        connection: ssh,
+        from: _path.default.join(serverConfig.appPath, 'composer.lock'),
+        to: _path.default.join(_paths.pathBackups, `${DB_DATABASE}-remote-composer.lock`)
+      }); // TODO: Test the responses of sshDownload1/sshDownload2 and provide error feedback
+      // Close the connection
+
+      ssh.dispose(); // Share what's happening with the user
+
+      _this.setWorking(`Pushing your composer files to the remote server`); //
+      // https://download.samba.org/pub/rsync/rsync.html
+
+
+      const flags = [// '--dry-run',
+      // Preserve permissions
+      '--archive', // Compress file data during the transfer
+      // '--compress',
+      // Connect via a port number
+      // Set the custom identity if provided
+      `-e "ssh -p ${serverConfig.port}${!(0, _utils.isEmpty)(SWIFF_CUSTOM_KEY) ? ` -i '${SWIFF_CUSTOM_KEY}'` : ''}"`].join(' ');
+      yield (0, _utils.executeCommands)(`(rsync ${flags} ${_path.default.join(_paths.pathApp, `composer.json`)} ${serverConfig.user}@${serverConfig.host}:${serverConfig.appPath})
+            (rsync ${flags} ${_path.default.join(_paths.pathApp, `composer.lock`)} ${serverConfig.user}@${serverConfig.host}:${serverConfig.appPath})
+            `); // Show a success message
+
+      return _this.setSuccess(`Your composer files were pushed to ${(0, _palette.colourHighlight)(serverConfig.host)}`);
     }));
 
     _defineProperty(this, "handleOpenBackups",
@@ -626,8 +833,14 @@ class Swiff extends _ink.Component {
       });
     }));
 
-    const _isFlaggedStart = Object.entries(this.props.flags).filter(([k, v]) => v).length > 0;
+    const _isFlaggedStart = Object.values(this.props.flags).filter(v => v).length > 0;
 
+    const _tasks = this.getTasksListed();
+
+    const {
+      newTasks: _newTasks,
+      newPages: _newPages
+    } = this.getTasksPaginated(_tasks, 1);
     this.state = {
       messages: [],
       localEnv: null,
@@ -638,9 +851,10 @@ class Swiff extends _ink.Component {
       // The contents of the config file
       isFlaggedStart: _isFlaggedStart,
       // Whether the app was started with flags
-      tasks: this.getTaskList(),
+      tasks: _newTasks,
+      currentPage: 1,
+      pages: _newPages,
       currentTask: null,
-      showMoreTasks: false,
       removeOptions: false
     };
   }
@@ -650,11 +864,12 @@ class Swiff extends _ink.Component {
     currentTask,
     tasks,
     isFlaggedStart,
-    removeOptions
+    removeOptions,
+    currentPage
   }) {
     const OptionsSelectProps = {
       items: tasks,
-      onSelect: task => task.id === 'toggle' ? this.toggleTaskPage() : !isTaskRunning(messages) && this.startTask(task),
+      onSelect: task => task.id === 'toggle' ? this.changeTaskPage() : !isTaskRunning(messages) && this.startTask(task),
       itemComponent: ({
         emoji,
         title,

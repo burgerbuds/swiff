@@ -15,7 +15,7 @@ Object.defineProperty(exports, "isEmpty", {
     return _isEmpty.default;
   }
 });
-exports.replaceRsyncOutput = exports.commaAmpersander = exports.doesFileExist = exports.cmdPromise = exports.getMissingPaths = exports.executeCommands = exports.resolveApp = void 0;
+exports.paginate = exports.replaceRsyncOutput = exports.commaAmpersander = exports.doesFileExist = exports.cmdPromise = exports.getMissingPaths = exports.executeCommands = exports.resolveApp = void 0;
 
 var _path = _interopRequireDefault(require("path"));
 
@@ -150,6 +150,67 @@ outputText.split('\n').filter(Boolean).length === folders.length ? '' : outputTe
 .replace(/(\<|\>)f\+\+\+\+\+\+\+/g, (0, _palette.colourHighlight)('+')) // Added
 .replace(/\*deleting/g, (0, _palette.colourAttention)('-')) // Deleted
 ) // Remove empty items
-.filter(Boolean).join('\n');
+.filter(Boolean).join('\n'); // Source: http://jasonwatmore.com/post/2018/08/07/javascript-pure-pagination-logic-in-vanilla-js-typescript
+
 
 exports.replaceRsyncOutput = replaceRsyncOutput;
+
+const paginate = ({
+  totalItems,
+  currentPage,
+  pageSize = 10,
+  maxPages = 999
+}) => {
+  // calculate total pages
+  let totalPages = Math.ceil(totalItems / pageSize);
+  let startPage = 1;
+  let endPage = null; // ensure current page isn't out of range
+
+  if (currentPage < 1) {
+    currentPage = 1;
+  } else if (currentPage > totalPages) {
+    currentPage = totalPages;
+  }
+
+  if (totalPages <= maxPages) {
+    // total pages less than max so show all pages
+    endPage = totalPages;
+  } else {
+    // total pages more than max so calculate start and end pages
+    let maxPagesBeforeCurrentPage = Math.floor(maxPages / 2);
+    let maxPagesAfterCurrentPage = Math.ceil(maxPages / 2) - 1;
+
+    if (currentPage <= maxPagesBeforeCurrentPage) {
+      // current page near the start
+      endPage = maxPages;
+    } else if (currentPage + maxPagesAfterCurrentPage >= totalPages) {
+      // current page near the end
+      startPage = totalPages - maxPages + 1;
+      endPage = totalPages;
+    } else {
+      // current page somewhere in the middle
+      startPage = currentPage - maxPagesBeforeCurrentPage;
+      endPage = currentPage + maxPagesAfterCurrentPage;
+    }
+  } // calculate start and end item indexes
+
+
+  let startIndex = (currentPage - 1) * pageSize;
+  let endIndex = Math.min(startIndex + pageSize - 1, totalItems - 1); // create an array of pages to ng-repeat in the pager control
+
+  let pages = Array.from(Array(endPage + 1 - startPage).keys()).map(i => startPage + i); // return object with all pager properties required by the view
+
+  return {
+    totalItems: totalItems,
+    currentPage: currentPage,
+    pageSize: pageSize,
+    totalPages: totalPages,
+    startPage: startPage,
+    endPage: endPage,
+    startIndex: startIndex,
+    endIndex: endIndex,
+    pages: pages
+  };
+};
+
+exports.paginate = paginate;

@@ -24,52 +24,73 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
   pkg: _package.default
 }).notify();
 const tasks = [{
-  id: 'pull',
+  id: 'pull-folders',
   emoji: '📥',
-  title: 'Pull',
-  heading: 'Pull files',
-  description: 'Download fresh files on the remote server from your pull folders',
+  title: 'Pull folders',
+  heading: 'Pull folders',
+  description: 'Update local folders with the remote pull folders',
   isListed: true,
   needsSetup: true,
-  handler: 'handlePull',
-  flags: ['pull', 'd']
+  handler: 'handlePullFolders',
+  flags: ['pull-folders', 'pullfolders', 'pullf', 'folderpull', 'df', 'downf']
 }, {
-  id: 'push',
-  emoji: '🚀',
-  title: 'Push',
-  heading: 'Push files',
-  description: 'Upload and sync to the remote server from your push folders',
-  isListed: true,
-  needsSetup: true,
-  handler: 'handlePush',
-  flags: ['push', 'u']
-}, {
-  id: 'database',
+  id: 'pull-database',
   emoji: '💫',
-  title: 'Database',
-  heading: 'Database download',
-  description: 'Refresh your website database with a remote database',
+  title: 'Pull database',
+  heading: 'Pull database',
+  description: 'Replace your local database with remote database',
   isListed: true,
   needsSetup: true,
-  handler: 'handleDatabase',
-  flags: ['database', 't']
+  handler: 'handlePullDatabase',
+  flags: ['pull-database', 'pulldb', 'dbpull', 'pulld', 'ddb']
 }, {
-  id: 'composer',
+  id: 'pull-composer',
   emoji: '🎩',
-  title: 'Composer',
-  heading: 'Composer sync',
-  description: 'Refresh your composer files from the remote server',
-  isListed: false,
+  title: 'Pull composer',
+  heading: 'Pull composer',
+  description: 'Update your project with the remote composer files',
+  isListed: true,
   needsSetup: true,
-  handler: 'handleComposer',
-  flags: ['composer', 'c']
+  handler: 'handlePullComposer',
+  flags: ['pull-composer', 'pullcomposer', 'pullcomp', 'pullc']
+}, {
+  id: 'push-folders',
+  emoji: '🚀',
+  title: 'Push folders',
+  heading: 'Push folders',
+  description: 'Update remote folders with your push folders',
+  isListed: true,
+  needsSetup: true,
+  handler: 'handlePushFolders',
+  flags: ['push-folders', 'pushfolders', 'pushf', 'folderpush', 'uf', 'upf']
+}, {
+  id: 'push-database',
+  emoji: '💫',
+  title: 'Push database',
+  heading: 'Push database',
+  description: 'Replace the remote database with your local database',
+  isListed: true,
+  needsSetup: true,
+  fullscreen: true,
+  handler: 'handlePushDatabase',
+  flags: ['push-database', 'pushdb', 'dbpush', 'pushd', 'udb', 'updb', 'uploaddb']
+}, {
+  id: 'push-composer',
+  emoji: '🎩',
+  title: 'Push composer',
+  heading: 'Push composer',
+  description: 'Update the remote with your local composer files',
+  isListed: true,
+  needsSetup: true,
+  handler: 'handlePushComposer',
+  flags: ['push-composer', 'pushcomposer', 'pushcomp', 'pushc']
 }, {
   id: 'backups',
   emoji: '🏬',
-  title: 'Backups',
+  title: 'View backups',
   heading: 'Open backups folder',
-  description: 'Open the backups folder containing database and composer files',
-  isListed: false,
+  description: 'View your gzipped database and composer backups',
+  isListed: true,
   needsSetup: false,
   handler: 'handleOpenBackups',
   flags: ['backups', 'b']
@@ -79,25 +100,26 @@ const tasks = [{
   title: 'Terminal',
   heading: 'Remote terminal connection',
   description: 'Launch a remote terminal session into the remote app folder',
-  isListed: false,
+  isListed: true,
   needsSetup: true,
   fullscreen: true,
   handler: 'handleSsh',
   flags: ['ssh', 's']
 }];
 
-const taskInstructions = tasks => tasks.map(task => `${task.emoji}  ${task.description}\n  ${task.flags.map(flag => `${(0, _palette.colourHighlight)(`swiff ${flag.length === 1 ? '-' : '--'}${flag}`)}`).join(' / ')}`).join('\n\n');
+const taskInstructions = (tasks, isVerbose) => tasks.map(task => `${task.emoji}  ${_chalk.default.bold(task.title)}: ${(0, _palette.colourHighlight)(`swiff ${task.flags[0].length === 1 ? '-' : '--'}${task.flags[0]}`)}${isVerbose ? `\n  ${task.description}` : ''}\n  Aliases: ${task.flags.slice(1).map(flag => `${flag.length === 1 ? '-' : '--'}${flag}`).join(', ')}`).join('\n\n');
 
-const taskHelp = `
-Run ${(0, _palette.colourHighlight)('swiff')} within your project folder root to start the task interface.\nOtherwise use the following commands to quickly run a task:\n\n${taskInstructions(tasks)}`;
+const taskHelp = (isVerbose = false) => `
+${isVerbose ? `💁  Run ${(0, _palette.colourHighlight)('swiff')} within your project root for an interactive interface.\nOtherwise use the following commands to quickly run a task:` : `Try one of the following flags:`}\n\n${taskInstructions(tasks, isVerbose)}`;
+
 const taskFlags = tasks.map(task => ({
-  [task.flags.shift()]: {
+  [task.flags.slice().shift()]: {
     type: 'boolean',
     alias: task.flags.toString()
   }
 }));
 const cli = (0, _meow.default)( // Set the help message shown when the user runs swiff --help
-taskHelp, {
+taskHelp(true), {
   description: false,
   flags: Object.assign(...taskFlags)
 }); // Catch unhandled rejections
@@ -112,7 +134,7 @@ process.on('uncaughtException', error => {
 
 process.stdin.on('data', key => {
   if (['\u0003', '\u001B'].includes(key)) {
-    console.log((0, _palette.colourHighlight)('\n👌  Your SSH connection was ended'));
+    console.log((0, _palette.colourHighlight)('\n👌  Your SSH connection has ended'));
     process.exit();
   }
 });
@@ -120,5 +142,5 @@ process.stdin.on('data', key => {
   flags: cli.flags,
   pkg: cli.pkg,
   tasks: tasks,
-  taskHelp: taskHelp
+  taskHelp: taskHelp()
 }));
