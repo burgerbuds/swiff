@@ -282,6 +282,7 @@ const getSshDatabase = async ({
     sshAppPath,
     gzipFileName,
     sshKeyPath,
+    unzip = false,
 }) => {
     const ssh = await getSshInit({
         host: host,
@@ -366,7 +367,7 @@ const getSshDatabase = async ({
     ssh.dispose()
     // Unzip the database
     // -d : decompress / -f : force overwrite any existing file
-    await executeCommands(`gzip -df '${downloadTo}'`)
+    unzip && await executeCommands(`gzip -df '${downloadTo}'`)
     return
 }
 
