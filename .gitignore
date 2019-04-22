@@ -2,3 +2,7 @@ node_modules
 tester/
 composer.json
 composer.lock
+
+# testing files
+/.env
+/swiff.config.js
