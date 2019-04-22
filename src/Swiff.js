@@ -348,6 +348,9 @@ class Swiff extends Component {
     }
 
     handleSetup = async () => {
+        // TODO: Check if package.json exists
+        // If no package.json or .git folder, notify that you may be in the wrong directory
+        // ...
         // Check if the config exists
         const doesConfigExist = await doesFileExist(pathConfig)
         // If no config, create it
@@ -649,6 +652,7 @@ class Swiff extends Component {
             sshAppPath: serverConfig.appPath,
             gzipFileName: remoteDbNameZipped,
             sshKeyPath: SWIFF_CUSTOM_KEY,
+            unzip: true,
         })
         // If there's any env issues then return the messages
         if (dbSsh instanceof Error) return this.setError(dbSsh)
@@ -758,7 +762,6 @@ class Swiff extends Component {
         // Set the remote database variables
         const remoteDbName = `${remoteEnv.DB_DATABASE}-remote.sql`
         const remoteDbNameZipped = `${remoteDbName}.gz`
-        const importFile = `${pathBackups}/${remoteDbName}`
         // Download and store the remote DB via SSH
         const dbSsh = await getSshDatabase({
             remoteEnv: remoteEnv,
@@ -778,8 +781,9 @@ class Swiff extends Component {
             )} database`
         )
         // Backup the existing local database
-        const localDbDumpFile = `${DB_DATABASE}-local.sql.gz`
-        const localDbDumpFilePath = `${pathBackups}/${localDbDumpFile}`
+        const localDbDumpFile = `swiff-${DB_DATABASE}-push.sql`
+        const localDbDumpFileZipped = `${localDbDumpFile}.gz`
+        const localDbDumpFilePath = `${pathBackups}/${localDbDumpFileZipped}`
         const localDbDump = await doLocalDbDump({
             host: DB_SERVER,
             port: DB_PORT,
