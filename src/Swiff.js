@@ -911,8 +911,8 @@ class Swiff extends Component {
         // Download composer.lock from the remote server
         const sshDownload2 = await getSshFile({
             connection: ssh,
-            from: `${serverConfig.appPath}/composer.lock`,
-            to: `${pathApp}/composer.lock`,
+            from: path.join(serverConfig.appPath, 'composer.lock'),
+            to: path.join(pathApp, 'composer.lock'),
         })
         // If there's download issues then end the connection and return the messages
         if (sshDownload2 instanceof Error) {
