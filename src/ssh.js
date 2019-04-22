@@ -184,7 +184,7 @@ const getPushDatabaseCommands = ({
     user,
     port,
     fromPath,
-    toPath
+    toPath,
     sshKeyPath,
 }) => {
     // https://download.samba.org/pub/rsync/rsync.html
@@ -259,17 +259,13 @@ const getSshTestCommand = (user, host, port, sshKeyPath) => {
 
 // Upload a database over SSH to a remote folder
 const pushSshDatabase = async (config) => {
-
-console.log(getPushDatabaseCommands(config))
-
     const pushDatabaseStatus = await executeCommands(
         getPushDatabaseCommands(config)
     )
-    if (pushDatabaseStatus instanceof Error) {
-        return this.setError(
-            `There was an issue uploading your local ${colorAttention(pushDatabaseConfig.host)} database\n\n${pushDatabaseStatus}`
+    if (pushDatabaseStatus instanceof Error)
+        return new Error(
+            `There was an issue uploading your local ${colourAttention(config.dbName)} database\n\n${pushDatabaseStatus}`
         )
-    }
     return
 }
 
