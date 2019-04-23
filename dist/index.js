@@ -107,7 +107,7 @@ const tasks = [{
   flags: ['ssh', 's']
 }];
 
-const taskInstructions = (tasks, isVerbose) => tasks.map(task => `${task.emoji}  ${_chalk.default.bold(task.title)}: ${(0, _palette.colourHighlight)(`swiff ${task.flags[0].length === 1 ? '-' : '--'}${task.flags[0]}`)}${isVerbose ? `\n  ${task.description}` : ''}\n  Aliases: ${task.flags.slice(1).map(flag => `${flag.length === 1 ? '-' : '--'}${flag}`).join(', ')}`).join('\n\n');
+const taskInstructions = (tasks, isVerbose) => tasks.map(task => `${task.emoji}  ${_chalk.default.bold(task.title)}: ${(0, _palette.colourHighlight)(`swiff ${task.flags[0].length === 1 ? '-' : '--'}${task.flags[0]}`)}${isVerbose ? `\n   ${task.description}` : ''}\n   Aliases: ${task.flags.slice(1).map(flag => `${flag.length === 1 ? '-' : '--'}${flag}`).join(', ')}`).join('\n\n');
 
 const taskHelp = (isVerbose = false) => `
 ${isVerbose ? `💁  Run ${(0, _palette.colourHighlight)('swiff')} within your project root for an interactive interface.\nOtherwise use the following commands to quickly run a task:` : `Try one of the following flags:`}\n\n${taskInstructions(tasks, isVerbose)}`;
