@@ -114,7 +114,7 @@ const taskInstructions = (tasks, isVerbose) =>
     tasks
         .map(
             task =>
-                `${task.emoji}  ${chalk.bold(task.title)}: ${colourHighlight(`swiff ${task.flags[0].length === 1 ? '-' : '--'}${task.flags[0]}`)}${isVerbose ? `\n  ${task.description}` : ''}\n  Aliases: ${
+                `${task.emoji}  ${chalk.bold(task.title)}: ${colourHighlight(`swiff ${task.flags[0].length === 1 ? '-' : '--'}${task.flags[0]}`)}${isVerbose ? `\n   ${task.description}` : ''}\n   Aliases: ${
                     task.flags.slice(1)
                     .map(flag => `${flag.length === 1 ? '-' : '--'}${flag}`)
                     .join(', ')}`
