@@ -4,8 +4,6 @@
 
 Swiff saves you time with common SSH tasks during the development of websites/apps
 
-[![interface example demo](https://raw.githubusercontent.com/simple-integrated-marketing/swiff/master/resources/demo.gif)](https://raw.githubusercontent.com/simple-integrated-marketing/swiff/master/resources/demo.gif)
-
 🚀 **Folder push and pull**<br>
 Keep folders in sync between servers
 
