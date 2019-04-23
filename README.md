@@ -7,10 +7,10 @@ Swiff saves you time with common SSH tasks during the development of websites/ap
 [![interface example demo](https://raw.githubusercontent.com/simple-integrated-marketing/swiff/master/resources/demo.gif)](https://raw.githubusercontent.com/simple-integrated-marketing/swiff/master/resources/demo.gif)
 
 🚀 **Folder push and pull**<br>
-Keep folders in sync between two servers
+Keep folders in sync between servers
 
 💫 **Database push and pull**<br>
-Manage database updates from another server
+Manage the database between servers
 
 🎩 **Composer file push and pull**<br>
 Move composer files between servers
