@@ -16,10 +16,10 @@ const tasks = [
     {
         id: 'pull-folders',
         emoji: '📥',
-        title: 'Pull folders',
-        heading: 'Pull folders',
+        title: 'Folder pull',
+        heading: 'Folder pull',
         description:
-            'Update local folders with the remote pull folders',
+            'Update your folders with the remote pull folders',
         isListed: true,
         needsSetup: true,
         handler: 'handlePullFolders',
@@ -28,9 +28,9 @@ const tasks = [
     {
         id: 'pull-database',
         emoji: '💫',
-        title: 'Pull database',
-        heading: 'Pull database',
-        description: 'Replace your local database with remote database',
+        title: 'Database pull',
+        heading: 'Database pull',
+        description: 'Replace your database with the remote database',
         isListed: true,
         needsSetup: true,
         handler: 'handlePullDatabase',
@@ -39,8 +39,8 @@ const tasks = [
     {
         id: 'pull-composer',
         emoji: '🎩',
-        title: 'Pull composer',
-        heading: 'Pull composer',
+        title: 'Composer pull',
+        heading: 'Composer pull',
         description: 'Update your project with the remote composer files',
         isListed: true,
         needsSetup: true,
@@ -50,10 +50,10 @@ const tasks = [
     {
         id: 'push-folders',
         emoji: '🚀',
-        title: 'Push folders',
-        heading: 'Push folders',
+        title: 'Folder push',
+        heading: 'Folder push',
         description:
-            'Update remote folders with your push folders',
+            'Update the remote folders with your push folders',
         isListed: true,
         needsSetup: true,
         handler: 'handlePushFolders',
@@ -62,8 +62,8 @@ const tasks = [
     {
         id: 'push-database',
         emoji: '💫',
-        title: 'Push database',
-        heading: 'Push database',
+        title: 'Database push',
+        heading: 'Database push',
         description:
             'Replace the remote database with your local database',
         isListed: true,
@@ -75,8 +75,8 @@ const tasks = [
     {
         id: 'push-composer',
         emoji: '🎩',
-        title: 'Push composer',
-        heading: 'Push composer',
+        title: 'Composer push',
+        heading: 'Composer push',
         description: 'Update the remote with your local composer files',
         isListed: true,
         needsSetup: true,
