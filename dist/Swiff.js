@@ -708,7 +708,10 @@ class Swiff extends _ink.Component {
     _defineProperty(this, "handlePushComposer",
     /*#__PURE__*/
     _asyncToGenerator(function* () {
-      // Set some variables for later
+      // Check the local composer files exists
+      const response = yield (0, _utils.executeCommands)(`test -f ./composer.json && echo "true" || echo "false"`);
+      if (response.trim() == 'false') return _this.setError(`A local ${(0, _palette.colourHighlight)(`composer.json`)} doesn't exist\n\n`); // Set some variables for later
+
       const serverConfig = _this.state.config.server;
       const {
         DB_DATABASE,
