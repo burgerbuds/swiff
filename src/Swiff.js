@@ -932,6 +932,13 @@ class Swiff extends Component {
     }
 
     handlePushComposer = async () => {
+        // Check the local composer files exists
+        const response = await executeCommands(
+            `test -f ./composer.json && echo "true" || echo "false"`
+        )
+        if (response.trim() == 'false') return this.setError(
+            `A local ${colourHighlight(`composer.json`)} doesn't exist\n\n`
+        )
         // Set some variables for later
         const serverConfig = this.state.config.server
         const { DB_DATABASE, SWIFF_CUSTOM_KEY } = this.state.localEnv
