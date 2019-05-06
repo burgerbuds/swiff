@@ -1,4 +1,3 @@
-import { h } from 'ink'
 import fs from 'fs-extra'
 import dotenv from 'dotenv'
 import path from 'path'
@@ -73,7 +72,9 @@ const getEnvIssues = (
               isRemoteEnv
                   ? `Add the following ${
                         missingSettings.length > 1 ? 'values' : 'value'
-                    } to the remote .env:\n${colourNotice(path.join(appPath, '.env'))}`
+                    } to the remote .env:\n${colourNotice(
+                        path.join(appPath, '.env')
+                    )}`
                   : `Add the following ${
                         missingSettings.length > 1 ? 'values' : 'value'
                     } to your${

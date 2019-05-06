@@ -13,9 +13,6 @@
         "@babel/plugin-proposal-object-rest-spread",
         [
             "transform-react-jsx",
-            {
-                "pragma": "h"
-            }
         ],
         "@babel/plugin-proposal-class-properties"
     ]

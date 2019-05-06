@@ -2,6 +2,7 @@ node_modules
 tester/
 composer.json
 composer.lock
+.vscode
 
 # testing files
 /.env

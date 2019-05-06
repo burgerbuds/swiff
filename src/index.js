@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 
-import { h, render } from 'ink'
+import React from 'react'
+import { render } from 'ink'
 import meow from 'meow'
 import fs from 'fs-extra'
 import chalk from 'chalk'
 import Swiff from './Swiff'
 import { colourHighlight } from './palette'
+
+// Start with a blank slate
+console.clear()
 
 // Notify when there's an update available
 import updateNotifier from 'update-notifier'
@@ -18,12 +22,18 @@ const tasks = [
         emoji: '📥',
         title: 'Folder pull',
         heading: 'Folder pull',
-        description:
-            'Update your folders with the remote pull folders',
+        description: 'Update your folders with the remote pull folders',
         isListed: true,
         needsSetup: true,
         handler: 'handlePullFolders',
-        flags: ['pull-folders', 'pullfolders', 'pullf', 'folderpull', 'df', 'downf'],
+        flags: [
+            'pull-folders',
+            'pullfolders',
+            'pullf',
+            'folderpull',
+            'df',
+            'downf',
+        ],
     },
     {
         id: 'pull-database',
@@ -52,25 +62,38 @@ const tasks = [
         emoji: '🚀',
         title: 'Folder push',
         heading: 'Folder push',
-        description:
-            'Update the remote folders with your push folders',
+        description: 'Update the remote folders with your push folders',
         isListed: true,
         needsSetup: true,
         handler: 'handlePushFolders',
-        flags: ['push-folders', 'pushfolders', 'pushf', 'folderpush', 'uf', 'upf'],
+        flags: [
+            'push-folders',
+            'pushfolders',
+            'pushf',
+            'folderpush',
+            'uf',
+            'upf',
+        ],
     },
     {
         id: 'push-database',
         emoji: '💫',
         title: 'Database push',
         heading: 'Database push',
-        description:
-            'Replace the remote database with your local database',
+        description: 'Replace the remote database with your local database',
         isListed: true,
         needsSetup: true,
         fullscreen: true,
         handler: 'handlePushDatabase',
-        flags: ['push-database', 'pushdb', 'dbpush', 'pushd', 'udb', 'updb', 'uploaddb'],
+        flags: [
+            'push-database',
+            'pushdb',
+            'dbpush',
+            'pushd',
+            'udb',
+            'updb',
+            'uploaddb',
+        ],
     },
     {
         id: 'push-composer',
@@ -88,8 +111,7 @@ const tasks = [
         emoji: '🏬',
         title: 'View backups',
         heading: 'Open backups folder',
-        description:
-            'View your gzipped database and composer backups',
+        description: 'View your gzipped database and composer backups',
         isListed: true,
         needsSetup: false,
         handler: 'handleOpenBackups',
@@ -114,22 +136,32 @@ const taskInstructions = (tasks, isVerbose) =>
     tasks
         .map(
             task =>
-                `${task.emoji}  ${chalk.bold(task.title)}: ${colourHighlight(`swiff ${task.flags[0].length === 1 ? '-' : '--'}${task.flags[0]}`)}${isVerbose ? `\n   ${task.description}` : ''}\n   Aliases: ${
-                    task.flags.slice(1)
+                `${task.emoji}  ${chalk.bold(task.title)}: ${colourHighlight(
+                    `swiff ${task.flags[0].length === 1 ? '-' : '--'}${
+                        task.flags[0]
+                    }`
+                )}${
+                    isVerbose ? `\n   ${task.description}` : ''
+                }\n   Aliases: ${task.flags
+                    .slice(1)
                     .map(flag => `${flag.length === 1 ? '-' : '--'}${flag}`)
                     .join(', ')}`
         )
         .join('\n\n')
 
 const taskHelp = (isVerbose = false) => `
-${isVerbose ? `💁  Run ${colourHighlight(
-    'swiff'
-)} within your project root for an interactive interface.\nOtherwise use the following commands to quickly run a task:` : `Try one of the following flags:`}\n\n${taskInstructions(tasks, isVerbose)}`
+${
+    isVerbose
+        ? `💁  Run ${colourHighlight(
+              'swiff'
+          )} within your project root for an interactive interface.\nOtherwise use the following commands to quickly run a task:`
+        : `Try one of the following flags:`
+}\n\n${taskInstructions(tasks, isVerbose)}`
 
 const taskFlags = tasks.map(task => ({
     [task.flags.slice().shift()]: {
         type: 'boolean',
-        alias: task.flags.toString(),
+        alias: task.flags,
     },
 }))
 
@@ -154,12 +186,14 @@ process.on('uncaughtException', error => {
 
 // End process on ctrl+c or ESC
 process.stdin.on('data', key => {
-    if (['\u0003', '\u001B'].includes(key)) {
-        console.log(colourHighlight('\n👌  Your SSH connection has ended'))
-        process.exit()
-    }
+    if (['\u0003', '\u001B'].includes(key)) process.exit()
 })
 
 render(
-    <Swiff flags={cli.flags} pkg={cli.pkg} tasks={tasks} taskHelp={taskHelp()} />
+    <Swiff
+        flags={cli.flags}
+        pkg={cli.pkg}
+        tasks={tasks}
+        taskHelp={taskHelp()}
+    />
 )

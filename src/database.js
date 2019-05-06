@@ -1,4 +1,3 @@
-import { h } from 'ink'
 import mysql from 'promise-mysql'
 import { cmdPromise } from './utils'
 import { isEmpty } from './utils'

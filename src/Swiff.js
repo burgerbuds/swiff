@@ -1,4 +1,5 @@
-import { h, Component, Text } from 'ink'
+import React, { Component } from 'react'
+import { Color, Text, Box } from 'ink'
 import { exec } from 'child_process'
 import ua from 'universal-analytics'
 import resolveUsername from 'username'
@@ -76,15 +77,15 @@ const getValidatedTaskFromFlags = (flags, tasks) => {
     const allowedFlags = providedFlags.filter(([k, v]) =>
         taskIdList.includes(k)
     )
+    // ISSUE IS HERE
+    console.log(flags)
     // Get the first allowed flag
     const validatedTask = !isEmpty(allowedFlags.slice().shift())
         ? allowedFlags.shift()[0]
         : null
     return !isEmpty(validatedTask)
         ? validatedTask
-        : new Error(
-              `Oops, I don't understand those flags`
-          )
+        : new Error(`Oops, I don't understand those flags`)
 }
 
 class Swiff extends Component {
@@ -95,10 +96,7 @@ class Swiff extends Component {
             Object.values(this.props.flags).filter(v => v).length > 0
 
         const tasks = this.getTasksListed()
-        const {
-            newTasks,
-            newPages,
-        } = this.getTasksPaginated(tasks, 1)
+        const { newTasks, newPages } = this.getTasksPaginated(tasks, 1)
 
         this.state = {
             messages: [],
@@ -115,8 +113,6 @@ class Swiff extends Component {
     }
 
     componentDidMount = async () => {
-        // Start with a blank slate
-        console.clear()
         const { flags, tasks, taskHelp } = this.props
         // Exit early and start interface if there's no flags set
         if (Object.values(flags).every(v => !v)) {
@@ -144,10 +140,14 @@ class Swiff extends Component {
         return
     }
 
-    render(
-        props,
-        { messages, currentTask, tasks, isFlaggedStart, removeOptions, currentPage }
-    ) {
+    render() {
+        const {
+            messages,
+            currentTask,
+            tasks,
+            isFlaggedStart,
+            removeOptions,
+        } = this.state
         const OptionsSelectProps = {
             items: tasks,
             onSelect: task =>
@@ -161,34 +161,43 @@ class Swiff extends Component {
                     isTaskRunning(messages)
                 return (
                     <Text>
-                        <Text
-                            hex={
-                                isSelected
-                                    ? hexHighlight
-                                    : emoji
-                                    ? hexDefault
-                                    : '#777'
-                            }
-                            bold={emoji}
-                        >{`${
-                            isActive ? '⌛  ' : emoji ? `${emoji}  ` : ''
-                        }${title}`}</Text>
-                        <Text hex={hexMuted}>
-                            {description && `: ${description}`}
+                        <Text bold={!!emoji}>
+                            <Color
+                                hex={
+                                    isSelected
+                                        ? hexHighlight
+                                        : emoji
+                                        ? hexDefault
+                                        : '#777'
+                                }
+                            >
+                                {`${
+                                    isActive
+                                        ? '⌛  '
+                                        : emoji
+                                        ? `${emoji}  `
+                                        : ''
+                                }${title}`}
+                            </Color>
                         </Text>
+                        <Color hex={hexMuted}>
+                            {description ? `: ${description}` : ''}
+                        </Color>
                     </Text>
                 )
             },
-            indicatorComponent: () => {},
+            // Remove the indicator
+            indicatorComponent: _ => '',
         }
         const showOptions = !isFlaggedStart && !removeOptions
         return (
-            <Text>
+            <Box flexDirection="column">
                 {showOptions ? (
-                    <Text dim={isTaskRunning(messages)}>
-                        <OptionsTemplate selectProps={OptionsSelectProps} />
-                        <br />
-                    </Text>
+                    <Box marginBottom={1}>
+                        <Color dim={isTaskRunning(messages)}>
+                            <OptionsTemplate selectProps={OptionsSelectProps} />
+                        </Color>
+                    </Box>
                 ) : null}
                 {!isEmpty(messages) && (
                     <MessageTemplate
@@ -196,7 +205,7 @@ class Swiff extends Component {
                         isFlaggedStart={isFlaggedStart}
                     />
                 )}
-            </Text>
+            </Box>
         )
     }
 
@@ -251,7 +260,8 @@ class Swiff extends Component {
         )
     }
 
-    getTasksListed = () => this.props.tasks.slice().filter(task => task.isListed)
+    getTasksListed = () =>
+        this.props.tasks.slice().filter(task => task.isListed)
 
     getTasksPaginated = (allTasks, currentPage) => {
         const { startIndex, endIndex, pages } = paginate({
@@ -260,38 +270,59 @@ class Swiff extends Component {
             pageSize: 3,
         })
         // Get the tasks for the next/prev page
-        const tasks = allTasks.slice(startIndex, endIndex+1)
+        const tasks = allTasks.slice(startIndex, endIndex + 1)
         // Add the pagination dots
-        const paginationDots = pages.map(
-            (page, index) => page === currentPage
-                ? chalk.hex('#777')('●')
-                : index+1 === currentPage+1 || (index+1 === 1 && currentPage === pages.length)  ? '○' : chalk.hex('#777')('○')
-        ).join(' ')
+        const paginationDots = pages
+            .map((page, index) =>
+                page === currentPage
+                    ? chalk.hex('#777')('●')
+                    : index + 1 === currentPage + 1 ||
+                      (index + 1 === 1 && currentPage === pages.length)
+                    ? '○'
+                    : chalk.hex('#777')('○')
+            )
+            .join(' ')
         // Add the dots to the task list
-        const tasksWithPagination = pages.length > 1
-            ? tasks.slice().concat([{
-                id: 'toggle',
-                title: `   ${paginationDots}`
-            }])
-            : tasks
+        const tasksWithPagination =
+            pages.length > 1
+                ? tasks.slice().concat([
+                      {
+                          id: 'toggle',
+                          title: `   ${paginationDots}`,
+                      },
+                  ])
+                : tasks
+        // Add a key to the tasks
+        const tasksWithKey = tasksWithPagination.map(item => ({
+            ...item,
+            ...{ key: item.id },
+        }))
         return {
-            newTasks: tasksWithPagination,
+            newTasks: tasksWithKey,
             newPages: pages,
         }
     }
 
     getNewTaskPage = (currentPage, pageLength, isForwards) =>
         isForwards
-            ? (currentPage >= pageLength ? 1 : currentPage + 1)
-            : (currentPage === 1 ? pageLength : currentPage - 1)
+            ? currentPage >= pageLength
+                ? 1
+                : currentPage + 1
+            : currentPage === 1
+            ? pageLength
+            : currentPage - 1
 
     changeTaskPage = (isForwards = true) => {
         const { currentPage, pages } = this.state
-        const newCurrentPage = this.getNewTaskPage(currentPage, pages.length, isForwards)
-        const {
-            newTasks,
-            newPages,
-        } = this.getTasksPaginated(this.getTasksListed(), newCurrentPage)
+        const newCurrentPage = this.getNewTaskPage(
+            currentPage,
+            pages.length,
+            isForwards
+        )
+        const { newTasks, newPages } = this.getTasksPaginated(
+            this.getTasksListed(),
+            newCurrentPage
+        )
         this.setState({
             tasks: newTasks,
             pages: newPages,
@@ -307,7 +338,7 @@ class Swiff extends Component {
         // Add the message to the end of the current list
         this.setState({
             messages: this.state.messages.concat([
-                { text: errorFiltered, type: 'error' },
+                { text: `${errorFiltered}\n`, type: 'error' },
             ]),
         })
         // Send error to GA
@@ -862,7 +893,9 @@ class Swiff extends Component {
         this.setSuccess(
             `The remote ${colourHighlight(
                 remoteEnv.DB_DATABASE
-            )} database was updated with your ${colourHighlight(DB_DATABASE)} database`
+            )} database was updated with your ${colourHighlight(
+                DB_DATABASE
+            )} database`
         )
     }
 
@@ -871,9 +904,7 @@ class Swiff extends Component {
         const serverConfig = this.state.config.server
         const { DB_DATABASE, SWIFF_CUSTOM_KEY } = this.state.localEnv
         // Share what's happening with the user
-        this.setWorking(
-            `Backing up your local composer files`
-        )
+        this.setWorking(`Backing up your local composer files`)
         // Backup the local composer files
         // I'm letting this command fail silently if the user doesn’t have composer files locally just yet
         await executeCommands(
@@ -927,7 +958,9 @@ class Swiff extends Component {
         ssh.dispose()
         // Show a success message
         return this.setSuccess(
-            `Your composer files were updated from ${colourHighlight(serverConfig.host)}`
+            `Your composer files were updated from ${colourHighlight(
+                serverConfig.host
+            )}`
         )
     }
 
@@ -936,9 +969,10 @@ class Swiff extends Component {
         const response = await executeCommands(
             `test -f ./composer.json && echo "true" || echo "false"`
         )
-        if (response.trim() == 'false') return this.setError(
-            `A local ${colourHighlight(`composer.json`)} doesn't exist\n\n`
-        )
+        if (response.trim() == 'false')
+            return this.setError(
+                `A local ${colourHighlight(`composer.json`)} doesn't exist\n\n`
+            )
         // Set some variables for later
         const serverConfig = this.state.config.server
         const { DB_DATABASE, SWIFF_CUSTOM_KEY } = this.state.localEnv
@@ -970,9 +1004,7 @@ class Swiff extends Component {
         // Close the connection
         ssh.dispose()
         // Share what's happening with the user
-        this.setWorking(
-            `Pushing your composer files to the remote server`
-        )
+        this.setWorking(`Pushing your composer files to the remote server`)
         //
         // https://download.samba.org/pub/rsync/rsync.html
         const flags = [
@@ -988,13 +1020,19 @@ class Swiff extends Component {
             }"`,
         ].join(' ')
         await executeCommands(
-            `(rsync ${flags} ${path.join(pathApp,`composer.json`) } ${serverConfig.user}@${serverConfig.host}:${serverConfig.appPath})
-            (rsync ${flags} ${path.join(pathApp,`composer.lock`) } ${serverConfig.user}@${serverConfig.host}:${serverConfig.appPath})
+            `(rsync ${flags} ${path.join(pathApp, `composer.json`)} ${
+                serverConfig.user
+            }@${serverConfig.host}:${serverConfig.appPath})
+            (rsync ${flags} ${path.join(pathApp, `composer.lock`)} ${
+                serverConfig.user
+            }@${serverConfig.host}:${serverConfig.appPath})
             `
         )
         // Show a success message
         return this.setSuccess(
-            `Your composer files were pushed to ${colourHighlight(serverConfig.host)}`
+            `Your composer files were pushed to ${colourHighlight(
+                serverConfig.host
+            )}`
         )
     }
 
