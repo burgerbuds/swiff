@@ -51,7 +51,7 @@
         "meow": "^5.0.0",
         "node-cmd": "^3.0.0",
         "node-ssh": "^5.1.2",
-        "promise-mysql": "^3.3.1",
+        "promise-mysql": "^4.0.3",
         "ssh2": "^0.7.1",
         "universal-analytics": "^0.4.20",
         "update-notifier": "^2.5.0",
