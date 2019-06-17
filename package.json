@@ -54,7 +54,7 @@
         "promise-mysql": "^3.3.1",
         "ssh2": "^0.7.1",
         "universal-analytics": "^0.4.20",
-        "update-notifier": "^2.5.0",
+        "update-notifier": "^3.0.0",
         "username": "^4.0.0"
     },
     "devDependencies": {
