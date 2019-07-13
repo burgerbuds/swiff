@@ -1,4 +1,3 @@
-import { h } from 'ink'
 import fs from 'fs-extra'
 import get from 'lodash/get'
 import { pathConfig, pathConfigTemplate } from './paths'

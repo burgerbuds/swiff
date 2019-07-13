@@ -5,8 +5,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.getEnvIssues = exports.getParsedEnv = exports.setupLocalEnv = exports.getRemoteEnv = void 0;
 
-var _ink = require("ink");
-
 var _fsExtra = _interopRequireDefault(require("fs-extra"));
 
 var _dotenv = _interopRequireDefault(require("dotenv"));

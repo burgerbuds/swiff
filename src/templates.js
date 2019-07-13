@@ -1,4 +1,5 @@
-import { h, Text } from 'ink'
+import React from 'react'
+import { Color, Text, Box } from 'ink'
 import SelectInput from 'ink-select-input'
 import Spinner from 'ink-spinner'
 import { isEmpty } from './utils'
@@ -6,17 +7,19 @@ import { isEmpty } from './utils'
 const OptionsTemplate = ({ selectProps }) => <SelectInput {...selectProps} />
 
 const MessageTemplate = ({ messages, isFlaggedStart }) => (
-    <Text>
+    <Box flexDirection="column">
         {!isEmpty(messages) &&
             messages.map(({ text, type }, i) => (
-                <Text>
+                <Box key={`msg${i}`}>
                     {type === 'heading' && !isFlaggedStart && (
-                        <Text bold>{`—— ${text} ——\n`}</Text>
+                        <Box marginBottom={1}>
+                            <Text bold>{`—— ${text} ——`}</Text>
+                        </Box>
                     )}
                     {type === 'heading' && isFlaggedStart && (
                         <Text bold>{`${text}\n`}</Text>
                     )}
-                    <Text dim={messages.length - 1 !== i}>
+                    <Color dim={messages.length - 1 !== i}>
                         {type === 'error' && `💩  ${text}`}
                         {type === 'success' && `👌  ${text}`}
                         {type === 'message' && `💁‍  ${text}`}
@@ -27,11 +30,10 @@ const MessageTemplate = ({ messages, isFlaggedStart }) => (
                                 `🏃 `
                             ))}
                         {type === 'working' && ` ${text}`}
-                        <br />
-                    </Text>
-                </Text>
+                    </Color>
+                </Box>
             ))}
-    </Text>
+    </Box>
 )
 
 export { OptionsTemplate, MessageTemplate }

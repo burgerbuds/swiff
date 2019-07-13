@@ -5,6 +5,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.MessageTemplate = exports.OptionsTemplate = void 0;
 
+var _react = _interopRequireDefault(require("react"));
+
 var _ink = require("ink");
 
 var _inkSelectInput = _interopRequireDefault(require("ink-select-input"));
@@ -17,24 +19,30 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 const OptionsTemplate = ({
   selectProps
-}) => (0, _ink.h)(_inkSelectInput.default, selectProps);
+}) => _react.default.createElement(_inkSelectInput.default, selectProps);
 
 exports.OptionsTemplate = OptionsTemplate;
 
 const MessageTemplate = ({
   messages,
   isFlaggedStart
-}) => (0, _ink.h)(_ink.Text, null, !(0, _utils.isEmpty)(messages) && messages.map(({
+}) => _react.default.createElement(_ink.Box, {
+  flexDirection: "column"
+}, !(0, _utils.isEmpty)(messages) && messages.map(({
   text,
   type
-}, i) => (0, _ink.h)(_ink.Text, null, type === 'heading' && !isFlaggedStart && (0, _ink.h)(_ink.Text, {
+}, i) => _react.default.createElement(_ink.Box, {
+  key: `msg${i}`
+}, type === 'heading' && !isFlaggedStart && _react.default.createElement(_ink.Box, {
+  marginBottom: 1
+}, _react.default.createElement(_ink.Text, {
   bold: true
-}, `—— ${text} ——\n`), type === 'heading' && isFlaggedStart && (0, _ink.h)(_ink.Text, {
+}, `—— ${text} ——`)), type === 'heading' && isFlaggedStart && _react.default.createElement(_ink.Text, {
   bold: true
-}, `${text}\n`), (0, _ink.h)(_ink.Text, {
+}, `${text}\n`), _react.default.createElement(_ink.Color, {
   dim: messages.length - 1 !== i
-}, type === 'error' && `💩  ${text}`, type === 'success' && `👌  ${text}`, type === 'message' && `💁‍  ${text}`, type === 'working' && (messages.length - 1 === i ? (0, _ink.h)(_inkSpinner.default, {
+}, type === 'error' && `💩  ${text}`, type === 'success' && `👌  ${text}`, type === 'message' && `💁‍  ${text}`, type === 'working' && (messages.length - 1 === i ? _react.default.createElement(_inkSpinner.default, {
   type: "runner"
-}) : `🏃 `), type === 'working' && ` ${text}`, (0, _ink.h)("br", null)))));
+}) : `🏃 `), type === 'working' && ` ${text}`))));
 
 exports.MessageTemplate = MessageTemplate;

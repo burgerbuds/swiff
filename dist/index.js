@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 "use strict";
 
+var _react = _interopRequireDefault(require("react"));
+
 var _ink = require("ink");
 
 var _meow = _interopRequireDefault(require("meow"));
@@ -19,12 +21,14 @@ var _package = _interopRequireDefault(require("./../package.json"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// Notify when there's an update available
+// Start with a blank slate
+console.clear(); // Notify when there's an update available
+
 (0, _updateNotifier.default)({
   pkg: _package.default
 }).notify();
 const tasks = [{
-  id: 'pull-folders',
+  id: 'pullFolders',
   emoji: '📥',
   title: 'Folder pull',
   heading: 'Folder pull',
@@ -32,9 +36,9 @@ const tasks = [{
   isListed: true,
   needsSetup: true,
   handler: 'handlePullFolders',
-  flags: ['pull-folders', 'pullfolders', 'pullf', 'folderpull', 'df', 'downf']
+  flags: ['pullFolders', 'pullfolders', 'pullf', 'folderpull', 'df', 'downf']
 }, {
-  id: 'pull-database',
+  id: 'pullDatabase',
   emoji: '💫',
   title: 'Database pull',
   heading: 'Database pull',
@@ -42,9 +46,9 @@ const tasks = [{
   isListed: true,
   needsSetup: true,
   handler: 'handlePullDatabase',
-  flags: ['pull-database', 'pulldb', 'dbpull', 'pulld', 'ddb']
+  flags: ['pullDatabase', 'pulldatabase', 'pulldb', 'dbpull', 'pulld', 'ddb']
 }, {
-  id: 'pull-composer',
+  id: 'pullComposer',
   emoji: '🎩',
   title: 'Composer pull',
   heading: 'Composer pull',
@@ -52,9 +56,9 @@ const tasks = [{
   isListed: true,
   needsSetup: true,
   handler: 'handlePullComposer',
-  flags: ['pull-composer', 'pullcomposer', 'pullcomp', 'pullc']
+  flags: ['pullComposer', 'pullcomposer', 'pullcomp', 'pullc']
 }, {
-  id: 'push-folders',
+  id: 'pushFolders',
   emoji: '🚀',
   title: 'Folder push',
   heading: 'Folder push',
@@ -62,9 +66,9 @@ const tasks = [{
   isListed: true,
   needsSetup: true,
   handler: 'handlePushFolders',
-  flags: ['push-folders', 'pushfolders', 'pushf', 'folderpush', 'uf', 'upf']
+  flags: ['pushFolders', 'pushfolders', 'pushf', 'folderpush', 'uf', 'upf']
 }, {
-  id: 'push-database',
+  id: 'pushDatabase',
   emoji: '💫',
   title: 'Database push',
   heading: 'Database push',
@@ -73,9 +77,9 @@ const tasks = [{
   needsSetup: true,
   fullscreen: true,
   handler: 'handlePushDatabase',
-  flags: ['push-database', 'pushdb', 'dbpush', 'pushd', 'udb', 'updb', 'uploaddb']
+  flags: ['pushDatabase', 'pushdatabase', 'pushdb', 'dbpush', 'pushd', 'udb', 'updb', 'uploaddb']
 }, {
-  id: 'push-composer',
+  id: 'pushComposer',
   emoji: '🎩',
   title: 'Composer push',
   heading: 'Composer push',
@@ -83,7 +87,7 @@ const tasks = [{
   isListed: true,
   needsSetup: true,
   handler: 'handlePushComposer',
-  flags: ['push-composer', 'pushcomposer', 'pushcomp', 'pushc']
+  flags: ['pushComposer', 'pushcomposer', 'pushcomp', 'pushc']
 }, {
   id: 'backups',
   emoji: '🏬',
@@ -115,7 +119,7 @@ ${isVerbose ? `💁  Run ${(0, _palette.colourHighlight)('swiff')} within your p
 const taskFlags = tasks.map(task => ({
   [task.flags.slice().shift()]: {
     type: 'boolean',
-    alias: task.flags.toString()
+    alias: task.flags
   }
 }));
 const cli = (0, _meow.default)( // Set the help message shown when the user runs swiff --help
@@ -133,12 +137,9 @@ process.on('uncaughtException', error => {
 }); // End process on ctrl+c or ESC
 
 process.stdin.on('data', key => {
-  if (['\u0003', '\u001B'].includes(key)) {
-    console.log((0, _palette.colourHighlight)('\n👌  Your SSH connection has ended'));
-    process.exit();
-  }
+  if (['\u0003', '\u001B'].includes(key)) process.exit();
 });
-(0, _ink.render)((0, _ink.h)(_Swiff.default, {
+(0, _ink.render)(_react.default.createElement(_Swiff.default, {
   flags: cli.flags,
   pkg: cli.pkg,
   tasks: tasks,

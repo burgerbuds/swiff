@@ -1,4 +1,3 @@
-import { h } from 'ink'
 import nodeSsh from 'node-ssh'
 import resolveUsername from 'username'
 import path from 'path'
@@ -42,7 +41,9 @@ const sshConnect = async ({ host, username, port, sshKeyPath }) => {
     let errorMessage
     // Get the local username so we can get the default key below (macOS path)
     const user = await resolveUsername()
-    const sshKeyResolvedPath = !isEmpty(sshKeyPath) ? sshKeyPath : `/Users/${user}/.ssh/id_rsa`
+    const sshKeyResolvedPath = !isEmpty(sshKeyPath)
+        ? sshKeyPath
+        : `/Users/${user}/.ssh/id_rsa`
     // Create a SSH connection
     const ssh = new nodeSsh()
     await ssh
@@ -55,22 +56,27 @@ const sshConnect = async ({ host, username, port, sshKeyPath }) => {
         .catch(error => (errorMessage = error))
     if (errorMessage)
         return new Error(
-            String(errorMessage).includes('Error: Cannot parse privateKey: Unsupported key format')
+            String(errorMessage).includes(
+                'Error: Cannot parse privateKey: Unsupported key format'
+            )
                 ? `Your SSH key isn't in a format Swiff can work with\n  (${sshKeyResolvedPath})\n\n1. Generate a new one with:\n  ${colourNotice(
-                    `ssh-keygen -m PEM -b 4096 -f /Users/${user}/.ssh/swiff`
-                )}\n\n2. Then add the key to the server:\n  ${colourNotice(
-                    `ssh-copy-id -i /Users/${user}/.ssh/swiff ${
-                        port !== 22 ? `-p ${port} ` : ''
-                    }${username}@${host}`)}`
-                : (String(errorMessage).includes('config.privateKey does not exist at')
-                    ? `Your SSH key isn’t found at ${colourAttention(
-                        sshKeyResolvedPath
-                    )}\n\nCheck the ${colourAttention(
-                        `SWIFF_CUSTOM_KEY`
-                    )} value is correct in your local .env\n\nmacOS path example:\n${colourAttention(
-                        `SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/[key-filename]"`
-                    )}`
-                    : errorMessage)
+                      `ssh-keygen -m PEM -b 4096 -f /Users/${user}/.ssh/swiff`
+                  )}\n\n2. Then add the key to the server:\n  ${colourNotice(
+                      `ssh-copy-id -i /Users/${user}/.ssh/swiff ${
+                          port !== 22 ? `-p ${port} ` : ''
+                      }${username}@${host}`
+                  )}`
+                : String(errorMessage).includes(
+                      'config.privateKey does not exist at'
+                  )
+                ? `Your SSH key isn’t found at ${colourAttention(
+                      sshKeyResolvedPath
+                  )}\n\nCheck the ${colourAttention(
+                      `SWIFF_CUSTOM_KEY`
+                  )} value is correct in your local .env\n\nmacOS path example:\n${colourAttention(
+                      `SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/[key-filename]"`
+                  )}`
+                : errorMessage
         )
     return ssh
 }
@@ -258,13 +264,15 @@ const getSshTestCommand = (user, host, port, sshKeyPath) => {
 }
 
 // Upload a database over SSH to a remote folder
-const pushSshDatabase = async (config) => {
+const pushSshDatabase = async config => {
     const pushDatabaseStatus = await executeCommands(
         getPushDatabaseCommands(config)
     )
     if (pushDatabaseStatus instanceof Error)
         return new Error(
-            `There was an issue uploading your local ${colourAttention(config.dbName)} database\n\n${pushDatabaseStatus}`
+            `There was an issue uploading your local ${colourAttention(
+                config.dbName
+            )} database\n\n${pushDatabaseStatus}`
         )
     return
 }
@@ -310,20 +318,20 @@ const getSshDatabase = async ({
                 ssh.dispose()
                 // Format the remote env settings for display
                 const remoteSettings = `${colourAttention(
-                    `DB_SERVER="${remoteEnv.DB_SERVER}"\nDB_PORT="${remoteEnv.DB_PORT}"\nDB_USER="${zipCommandConfig.user}"\nDB_PASSWORD="${zipCommandConfig.password}"\nDB_DATABASE="${zipCommandConfig.database}"`)}\n\n${path.join(sshAppPath, '.env')}`
+                    `DB_SERVER="${remoteEnv.DB_SERVER}"\nDB_PORT="${
+                        remoteEnv.DB_PORT
+                    }"\nDB_USER="${zipCommandConfig.user}"\nDB_PASSWORD="${
+                        zipCommandConfig.password
+                    }"\nDB_DATABASE="${zipCommandConfig.database}"`
+                )}\n\n${path.join(sshAppPath, '.env')}`
                 // Set the error message
-                errorMessage =
-                    errorOutput.includes('Unknown MySQL server host')
-                        ? (
-                            `There were issues connecting to the remote database server ${colourAttention(remoteEnv.DB_SERVER)}\nVerify the settings in the remote env are correct:\n\n${remoteSettings}`
-                        )
-                        : (
-                            errorOutput.includes('Access denied')
-                                ? (
-                                    `Couldn’t connect with the remote .env database settings:\n\n${remoteSettings}`
-                                )
-                                : errorOutput
-                        )
+                errorMessage = errorOutput.includes('Unknown MySQL server host')
+                    ? `There were issues connecting to the remote database server ${colourAttention(
+                          remoteEnv.DB_SERVER
+                      )}\nVerify the settings in the remote env are correct:\n\n${remoteSettings}`
+                    : errorOutput.includes('Access denied')
+                    ? `Couldn’t connect with the remote .env database settings:\n\n${remoteSettings}`
+                    : errorOutput
             }
         })
         .catch(e => (errorMessage = e))
@@ -363,7 +371,7 @@ const getSshDatabase = async ({
     ssh.dispose()
     // Unzip the database
     // -d : decompress / -f : force overwrite any existing file
-    unzip && await executeCommands(`gzip -df '${downloadTo}'`)
+    unzip && (await executeCommands(`gzip -df '${downloadTo}'`))
     return
 }
 
