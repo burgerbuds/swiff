@@ -46,7 +46,7 @@ import {
     pushSshDatabase,
     sshConnect,
 } from './ssh'
-import { setupConfig, createConfig } from './config'
+import { setupConfig, createConfig, getConfig } from './config'
 import {
     hexHighlight,
     hexMuted,
@@ -114,6 +114,12 @@ class Swiff extends Component {
         const { flags, tasks, taskHelp } = this.props
         // Exit early and start interface if there's no flags set
         if (Object.values(flags).every(v => !v)) {
+            // Set the disabled tasks
+            const doesConfigExist = await doesFileExist(pathConfig)
+            if (doesConfigExist) {
+                const { disabled } = await getConfig()
+                if (disabled) this.setState({ config: { disabled: disabled } })
+            }
             // Listen for keypress
             process.stdin.on('keypress', this.handleKeyPress)
             return
@@ -145,43 +151,50 @@ class Swiff extends Component {
             tasks,
             isFlaggedStart,
             removeOptions,
+            config,
         } = this.state
+        const isDisabled = (config, taskId) =>
+            config && config.disabled && config.disabled.includes(taskId)
         const OptionsSelectProps = {
             items: tasks,
             onSelect: task =>
                 task.id === 'toggle'
                     ? this.changeTaskPage()
-                    : !isTaskRunning(messages) && this.startTask(task),
-            itemComponent: ({ emoji, title, description, isSelected }) => {
+                    : !isTaskRunning(messages) &&
+                      !isDisabled(config, task.id) &&
+                      this.startTask(task),
+            itemComponent: ({ emoji, id, title, description, isSelected }) => {
                 const isActive =
                     currentTask &&
                     currentTask.title === title &&
                     isTaskRunning(messages)
+                const highlightNormal = isSelected && !isDisabled(config, id)
+                const highlightDim = isSelected && isDisabled(config, id)
                 return (
-                    <Text>
-                        <Text bold={!!emoji}>
-                            <Color
-                                hex={
-                                    isSelected
-                                        ? hexHighlight
-                                        : emoji
-                                        ? hexDefault
-                                        : '#777'
-                                }
-                            >
-                                {`${
-                                    isActive
-                                        ? '⌛  '
-                                        : emoji
-                                        ? `${emoji}  `
-                                        : ''
-                                }${title}`}
-                            </Color>
-                        </Text>
-                        <Color hex={hexMuted}>
+                    <React.Fragment>
+                        <Color
+                            bold={!isDisabled(config, id)}
+                            dim={isDisabled(config, id)}
+                            hex={
+                                highlightNormal
+                                    ? hexHighlight
+                                    : highlightDim
+                                    ? hexDefault
+                                    : hexMuted
+                            }
+                        >
+                            {`${
+                                isActive ? '⌛  ' : emoji ? `${emoji}  ` : ''
+                            }${title}`}
+                        </Color>
+                        <Color
+                            bold={false}
+                            hex={hexMuted}
+                            dim={isDisabled(config, id)}
+                        >
                             {description ? `: ${description}` : ''}
                         </Color>
-                    </Text>
+                    </React.Fragment>
                 )
             },
             // Remove the indicator

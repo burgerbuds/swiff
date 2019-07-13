@@ -31,6 +31,7 @@ Run `swiff --help` for a list of flags to run a specific task
 You can specify a custom SSH key path in your .env file with:<br>
 `SWIFF_CUSTOM_KEY="/Users/[your-user]/.ssh/[key-filename]"`
 - Gzipped backups: Your files and database get backed up and gzipped whenever they change
+- Disable specific tasks: Specify the tasks to disable with a config setting
 
 ## Requirements
 
@@ -46,7 +47,7 @@ Running Windows or Linux? Swiff has been tested on macOS so issues are likely on
 ## Technology
 
 - [Node.js](https://nodejs.org/en/) - A JavaScript runtime built on Chrome's V8 JavaScript engine
-- [Ink](https://github.com/vadimdemedes/ink) - React for interactive command-line apps
+- [Ink 2](https://github.com/vadimdemedes/ink) - React for interactive command-line apps
 - [Babel](https://babeljs.io/) - JavaScript transpiling
 - [Prettier](https://github.com/prettier/prettier) - Code cleaning
 

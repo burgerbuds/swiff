@@ -22,4 +22,5 @@ module.exports = {
     // Folders to pull new or changed files from
     // eg: pullFolders: ['public/assets/volumes'],
     pullFolders: [],
+    // disabled: ['folderPull', 'databasePush'],
 }
