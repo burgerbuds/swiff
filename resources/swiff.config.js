@@ -8,19 +8,24 @@ module.exports = {
     server: {
         // The SSH login username
         user: '',
-        // The IP/hostname of the remote server (eg: 100.100.100.100)
+        // The IP/hostname of the remote server
+        // host: '100.100.100.100',
         host: '',
         // The working directory of the remote app folder
-        // eg: /srv/users/[user]/apps/[app]
+        // appPath: '/srv/users/[user]/apps/[app]',
         appPath: '',
         // The SSH port to connect on (22 is the SSH default)
         port: 22,
     },
     // Folders to upload and sync with the server
-    // eg: pushFolders: ['templates', 'config', 'public/assets/build'],
-    pushFolders: [],
+    pushFolders: [
+        // 'templates',
+        // 'config',
+        // 'public/assets/build'
+    ],
     // Folders to pull new or changed files from
-    // eg: pullFolders: ['public/assets/volumes'],
-    pullFolders: [],
+    pullFolders: [
+        // 'public/assets/volumes'
+    ],
     // disabled: ['folderPull', 'databasePush'],
 }
