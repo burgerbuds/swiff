@@ -66,7 +66,7 @@ const getValidatedTaskFromFlags = (flags, tasks) => {
 
   const taskIdList = Object.entries(tasks).map(([k, v]) => v.id); // Get a list of validated flags
 
-  const allowedFlags = providedFlags.filter(([k, v]) => console.log(k) || taskIdList.includes(k)); // Get the first allowed flag
+  const allowedFlags = providedFlags.filter(([k, v]) => taskIdList.includes(k)); // Get the first allowed flag
 
   const validatedTask = !(0, _utils.isEmpty)(allowedFlags.slice().shift()) ? allowedFlags.shift()[0] : null;
   return !(0, _utils.isEmpty)(validatedTask) ? validatedTask : new Error(`Oops, I don't understand those flags`);
@@ -89,7 +89,21 @@ class Swiff extends _react.Component {
       } = _this.props; // Exit early and start interface if there's no flags set
 
       if (Object.values(flags).every(v => !v)) {
-        // Listen for keypress
+        // Set the disabled tasks
+        const doesConfigExist = yield (0, _utils.doesFileExist)(_paths.pathConfig);
+
+        if (doesConfigExist) {
+          const {
+            disabled
+          } = yield (0, _config.getConfig)();
+          if (disabled) _this.setState({
+            config: {
+              disabled: disabled
+            }
+          });
+        } // Listen for keypress
+
+
         process.stdin.on('keypress', _this.handleKeyPress);
         return;
       }
@@ -292,7 +306,6 @@ class Swiff extends _react.Component {
 
       if (!doesConfigExist) yield (0, _config.createConfig)();
       const isInteractive = !_this.state.isFlaggedStart; // Get the config
-      // TODO: Convert to named parameters
 
       const config = yield (0, _config.setupConfig)(!doesConfigExist, isInteractive); // If there's any missing config options then open the config file and show the error
 
@@ -878,24 +891,33 @@ class Swiff extends _react.Component {
       currentTask,
       tasks,
       isFlaggedStart,
-      removeOptions
+      removeOptions,
+      config
     } = this.state;
+
+    const isDisabled = (config, taskId) => config && config.disabled && config.disabled.includes(taskId);
+
     const OptionsSelectProps = {
       items: tasks,
-      onSelect: task => task.id === 'toggle' ? this.changeTaskPage() : !isTaskRunning(messages) && this.startTask(task),
+      onSelect: task => task.id === 'toggle' ? this.changeTaskPage() : !isTaskRunning(messages) && !isDisabled(config, task.id) && this.startTask(task),
       itemComponent: ({
         emoji,
+        id,
         title,
         description,
         isSelected
       }) => {
         const isActive = currentTask && currentTask.title === title && isTaskRunning(messages);
-        return _react.default.createElement(_ink.Text, null, _react.default.createElement(_ink.Text, {
-          bold: !!emoji
-        }, _react.default.createElement(_ink.Color, {
-          hex: isSelected ? _palette.hexHighlight : emoji ? _palette.hexDefault : '#777'
-        }, `${isActive ? '⌛  ' : emoji ? `${emoji}  ` : ''}${title}`)), _react.default.createElement(_ink.Color, {
-          hex: _palette.hexMuted
+        const highlightNormal = isSelected && !isDisabled(config, id);
+        const highlightDim = isSelected && isDisabled(config, id);
+        return _react.default.createElement(_react.default.Fragment, null, _react.default.createElement(_ink.Color, {
+          bold: !isDisabled(config, id),
+          dim: isDisabled(config, id),
+          hex: highlightNormal ? _palette.hexHighlight : highlightDim ? _palette.hexDefault : _palette.hexMuted
+        }, `${isActive ? '⌛  ' : emoji ? `${emoji}  ` : ''}${title}`), _react.default.createElement(_ink.Color, {
+          bold: false,
+          hex: _palette.hexMuted,
+          dim: isDisabled(config, id)
         }, description ? `: ${description}` : ''));
       },
       // Remove the indicator

@@ -59,7 +59,6 @@ function () {
     return _ref2.apply(this, arguments);
   };
 }(); // Check that the required config settings exist
-// TODO: Convert to named parameters
 
 
 exports.getConfig = getConfig;

@@ -28,7 +28,7 @@ console.clear(); // Notify when there's an update available
   pkg: _package.default
 }).notify();
 const tasks = [{
-  id: 'pullFolders',
+  id: 'folderPull',
   emoji: '📥',
   title: 'Folder pull',
   heading: 'Folder pull',
@@ -36,9 +36,9 @@ const tasks = [{
   isListed: true,
   needsSetup: true,
   handler: 'handlePullFolders',
-  flags: ['pullFolders', 'pullfolders', 'pullf', 'folderpull', 'df', 'downf']
+  flags: ['folderPull', 'folderpull']
 }, {
-  id: 'pullDatabase',
+  id: 'databasePull',
   emoji: '💫',
   title: 'Database pull',
   heading: 'Database pull',
@@ -46,9 +46,9 @@ const tasks = [{
   isListed: true,
   needsSetup: true,
   handler: 'handlePullDatabase',
-  flags: ['pullDatabase', 'pulldatabase', 'pulldb', 'dbpull', 'pulld', 'ddb']
+  flags: ['databasePull', 'databasepull']
 }, {
-  id: 'pullComposer',
+  id: 'composerPull',
   emoji: '🎩',
   title: 'Composer pull',
   heading: 'Composer pull',
@@ -56,9 +56,9 @@ const tasks = [{
   isListed: true,
   needsSetup: true,
   handler: 'handlePullComposer',
-  flags: ['pullComposer', 'pullcomposer', 'pullcomp', 'pullc']
+  flags: ['composerPull', 'composerpull']
 }, {
-  id: 'pushFolders',
+  id: 'folderPush',
   emoji: '🚀',
   title: 'Folder push',
   heading: 'Folder push',
@@ -66,9 +66,9 @@ const tasks = [{
   isListed: true,
   needsSetup: true,
   handler: 'handlePushFolders',
-  flags: ['pushFolders', 'pushfolders', 'pushf', 'folderpush', 'uf', 'upf']
+  flags: ['folderPush', 'folderpush']
 }, {
-  id: 'pushDatabase',
+  id: 'databasePush',
   emoji: '💫',
   title: 'Database push',
   heading: 'Database push',
@@ -77,9 +77,9 @@ const tasks = [{
   needsSetup: true,
   fullscreen: true,
   handler: 'handlePushDatabase',
-  flags: ['pushDatabase', 'pushdatabase', 'pushdb', 'dbpush', 'pushd', 'udb', 'updb', 'uploaddb']
+  flags: ['databasePush', 'databasepush']
 }, {
-  id: 'pushComposer',
+  id: 'composerPush',
   emoji: '🎩',
   title: 'Composer push',
   heading: 'Composer push',
@@ -87,7 +87,7 @@ const tasks = [{
   isListed: true,
   needsSetup: true,
   handler: 'handlePushComposer',
-  flags: ['pushComposer', 'pushcomposer', 'pushcomp', 'pushc']
+  flags: ['composerPush', 'composerpush']
 }, {
   id: 'backups',
   emoji: '🏬',
@@ -99,7 +99,7 @@ const tasks = [{
   handler: 'handleOpenBackups',
   flags: ['backups', 'b']
 }, {
-  id: 'ssh',
+  id: 'terminal',
   emoji: '💻',
   title: 'Terminal',
   heading: 'Remote terminal connection',
@@ -108,7 +108,7 @@ const tasks = [{
   needsSetup: true,
   fullscreen: true,
   handler: 'handleSsh',
-  flags: ['ssh', 's']
+  flags: ['terminal', 'ssh', 's']
 }];
 
 const taskInstructions = (tasks, isVerbose) => tasks.map(task => `${task.emoji}  ${_chalk.default.bold(task.title)}: ${(0, _palette.colourHighlight)(`swiff ${task.flags[0].length === 1 ? '-' : '--'}${task.flags[0]}`)}${isVerbose ? `\n   ${task.description}` : ''}\n   Aliases: ${task.flags.slice(1).map(flag => `${flag.length === 1 ? '-' : '--'}${flag}`).join(', ')}`).join('\n\n');
