@@ -5,8 +5,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.createConfig = exports.getConfig = exports.setupConfig = void 0;
 
-var _ink = require("ink");
-
 var _fsExtra = _interopRequireDefault(require("fs-extra"));
 
 var _get = _interopRequireDefault(require("lodash/get"));

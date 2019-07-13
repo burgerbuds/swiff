@@ -5,6 +5,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+var _react = _interopRequireWildcard(require("react"));
+
 var _ink = require("ink");
 
 var _child_process = require("child_process");
@@ -37,6 +39,12 @@ var _palette = require("./palette");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { keys.push.apply(keys, Object.getOwnPropertySymbols(object)); } if (enumerableOnly) keys = keys.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
@@ -53,18 +61,18 @@ const isTaskRunning = messages => {
 
 
 const getValidatedTaskFromFlags = (flags, tasks) => {
-  // Get a list of all provided flags
+  // Get a list of triggered flags
   const providedFlags = Object.entries(flags).filter(([k, v]) => v); // Get a list of all possible flags
 
   const taskIdList = Object.entries(tasks).map(([k, v]) => v.id); // Get a list of validated flags
 
-  const allowedFlags = providedFlags.filter(([k, v]) => taskIdList.includes(k)); // Get the first allowed flag
+  const allowedFlags = providedFlags.filter(([k, v]) => console.log(k) || taskIdList.includes(k)); // Get the first allowed flag
 
   const validatedTask = !(0, _utils.isEmpty)(allowedFlags.slice().shift()) ? allowedFlags.shift()[0] : null;
   return !(0, _utils.isEmpty)(validatedTask) ? validatedTask : new Error(`Oops, I don't understand those flags`);
 };
 
-class Swiff extends _ink.Component {
+class Swiff extends _react.Component {
   constructor(props) {
     var _this;
 
@@ -74,8 +82,6 @@ class Swiff extends _ink.Component {
     _defineProperty(this, "componentDidMount",
     /*#__PURE__*/
     _asyncToGenerator(function* () {
-      // Start with a blank slate
-      console.clear();
       const {
         flags,
         tasks,
@@ -193,9 +199,13 @@ class Swiff extends _ink.Component {
       const tasksWithPagination = pages.length > 1 ? tasks.slice().concat([{
         id: 'toggle',
         title: `   ${paginationDots}`
-      }]) : tasks;
+      }]) : tasks; // Add a key to the tasks
+
+      const tasksWithKey = tasksWithPagination.map(item => _objectSpread({}, item, {}, {
+        key: item.id
+      }));
       return {
-        newTasks: tasksWithPagination,
+        newTasks: tasksWithKey,
         newPages: pages
       };
     });
@@ -227,7 +237,7 @@ class Swiff extends _ink.Component {
 
       this.setState({
         messages: this.state.messages.concat([{
-          text: errorFiltered,
+          text: `${errorFiltered}\n`,
           type: 'error'
         }])
       }); // Send error to GA
@@ -862,14 +872,14 @@ class Swiff extends _ink.Component {
     };
   }
 
-  render(props, {
-    messages,
-    currentTask,
-    tasks,
-    isFlaggedStart,
-    removeOptions,
-    currentPage
-  }) {
+  render() {
+    const {
+      messages,
+      currentTask,
+      tasks,
+      isFlaggedStart,
+      removeOptions
+    } = this.state;
     const OptionsSelectProps = {
       items: tasks,
       onSelect: task => task.id === 'toggle' ? this.changeTaskPage() : !isTaskRunning(messages) && this.startTask(task),
@@ -880,21 +890,27 @@ class Swiff extends _ink.Component {
         isSelected
       }) => {
         const isActive = currentTask && currentTask.title === title && isTaskRunning(messages);
-        return (0, _ink.h)(_ink.Text, null, (0, _ink.h)(_ink.Text, {
-          hex: isSelected ? _palette.hexHighlight : emoji ? _palette.hexDefault : '#777',
-          bold: emoji
-        }, `${isActive ? '⌛  ' : emoji ? `${emoji}  ` : ''}${title}`), (0, _ink.h)(_ink.Text, {
+        return _react.default.createElement(_ink.Text, null, _react.default.createElement(_ink.Text, {
+          bold: !!emoji
+        }, _react.default.createElement(_ink.Color, {
+          hex: isSelected ? _palette.hexHighlight : emoji ? _palette.hexDefault : '#777'
+        }, `${isActive ? '⌛  ' : emoji ? `${emoji}  ` : ''}${title}`)), _react.default.createElement(_ink.Color, {
           hex: _palette.hexMuted
-        }, description && `: ${description}`));
+        }, description ? `: ${description}` : ''));
       },
-      indicatorComponent: () => {}
+      // Remove the indicator
+      indicatorComponent: _ => ''
     };
     const showOptions = !isFlaggedStart && !removeOptions;
-    return (0, _ink.h)(_ink.Text, null, showOptions ? (0, _ink.h)(_ink.Text, {
+    return _react.default.createElement(_ink.Box, {
+      flexDirection: "column"
+    }, showOptions ? _react.default.createElement(_ink.Box, {
+      marginBottom: 1
+    }, _react.default.createElement(_ink.Color, {
       dim: isTaskRunning(messages)
-    }, (0, _ink.h)(_templates.OptionsTemplate, {
+    }, _react.default.createElement(_templates.OptionsTemplate, {
       selectProps: OptionsSelectProps
-    }), (0, _ink.h)("br", null)) : null, !(0, _utils.isEmpty)(messages) && (0, _ink.h)(_templates.MessageTemplate, {
+    }))) : null, !(0, _utils.isEmpty)(messages) && _react.default.createElement(_templates.MessageTemplate, {
       messages: messages,
       isFlaggedStart: isFlaggedStart
     }));
