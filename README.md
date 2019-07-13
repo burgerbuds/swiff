@@ -8,10 +8,10 @@ Swiff saves you time with common SSH tasks during the development of websites/ap
 Keep folders in sync between servers
 
 💫 **Database push and pull**<br>
-Manage the database between servers
+Manage the database between servers (auto backup)
 
 🎩 **Composer file push and pull**<br>
-Move composer files between servers
+Move composer files between servers (auto backup)
 
 💻 **Remote terminal connection**<br>
 Launch a SSH session directly into the remote site/app folder
@@ -23,7 +23,7 @@ Launch a SSH session directly into the remote site/app folder
 
 2. Run `swiff` within a project folder to start the task interface
 
-Run `swiff --help` for a list of flags that run a specific task
+Run `swiff --help` for a list of flags to run a specific task
 
 ## Additional features
 
