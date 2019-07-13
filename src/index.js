@@ -18,7 +18,7 @@ updateNotifier({ pkg }).notify()
 
 const tasks = [
     {
-        id: 'pull-folders',
+        id: 'pullFolders',
         emoji: '📥',
         title: 'Folder pull',
         heading: 'Folder pull',
@@ -27,7 +27,7 @@ const tasks = [
         needsSetup: true,
         handler: 'handlePullFolders',
         flags: [
-            'pull-folders',
+            'pullFolders',
             'pullfolders',
             'pullf',
             'folderpull',
@@ -36,7 +36,7 @@ const tasks = [
         ],
     },
     {
-        id: 'pull-database',
+        id: 'pullDatabase',
         emoji: '💫',
         title: 'Database pull',
         heading: 'Database pull',
@@ -44,10 +44,17 @@ const tasks = [
         isListed: true,
         needsSetup: true,
         handler: 'handlePullDatabase',
-        flags: ['pull-database', 'pulldb', 'dbpull', 'pulld', 'ddb'],
+        flags: [
+            'pullDatabase',
+            'pulldatabase',
+            'pulldb',
+            'dbpull',
+            'pulld',
+            'ddb',
+        ],
     },
     {
-        id: 'pull-composer',
+        id: 'pullComposer',
         emoji: '🎩',
         title: 'Composer pull',
         heading: 'Composer pull',
@@ -55,10 +62,10 @@ const tasks = [
         isListed: true,
         needsSetup: true,
         handler: 'handlePullComposer',
-        flags: ['pull-composer', 'pullcomposer', 'pullcomp', 'pullc'],
+        flags: ['pullComposer', 'pullcomposer', 'pullcomp', 'pullc'],
     },
     {
-        id: 'push-folders',
+        id: 'pushFolders',
         emoji: '🚀',
         title: 'Folder push',
         heading: 'Folder push',
@@ -67,7 +74,7 @@ const tasks = [
         needsSetup: true,
         handler: 'handlePushFolders',
         flags: [
-            'push-folders',
+            'pushFolders',
             'pushfolders',
             'pushf',
             'folderpush',
@@ -76,7 +83,7 @@ const tasks = [
         ],
     },
     {
-        id: 'push-database',
+        id: 'pushDatabase',
         emoji: '💫',
         title: 'Database push',
         heading: 'Database push',
@@ -86,7 +93,8 @@ const tasks = [
         fullscreen: true,
         handler: 'handlePushDatabase',
         flags: [
-            'push-database',
+            'pushDatabase',
+            'pushdatabase',
             'pushdb',
             'dbpush',
             'pushd',
@@ -96,7 +104,7 @@ const tasks = [
         ],
     },
     {
-        id: 'push-composer',
+        id: 'pushComposer',
         emoji: '🎩',
         title: 'Composer push',
         heading: 'Composer push',
@@ -104,7 +112,7 @@ const tasks = [
         isListed: true,
         needsSetup: true,
         handler: 'handlePushComposer',
-        flags: ['push-composer', 'pushcomposer', 'pushcomp', 'pushc'],
+        flags: ['pushComposer', 'pushcomposer', 'pushcomp', 'pushc'],
     },
     {
         id: 'backups',

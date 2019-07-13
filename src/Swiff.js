@@ -69,7 +69,7 @@ const isTaskRunning = messages => {
 
 // Check if the task can be run
 const getValidatedTaskFromFlags = (flags, tasks) => {
-    // Get a list of all provided flags
+    // Get a list of triggered flags
     const providedFlags = Object.entries(flags).filter(([k, v]) => v)
     // Get a list of all possible flags
     const taskIdList = Object.entries(tasks).map(([k, v]) => v.id)
@@ -77,8 +77,6 @@ const getValidatedTaskFromFlags = (flags, tasks) => {
     const allowedFlags = providedFlags.filter(([k, v]) =>
         taskIdList.includes(k)
     )
-    // ISSUE IS HERE
-    console.log(flags)
     // Get the first allowed flag
     const validatedTask = !isEmpty(allowedFlags.slice().shift())
         ? allowedFlags.shift()[0]
@@ -1076,11 +1074,7 @@ class Swiff extends Component {
                     `cd ${serverConfig.appPath}`,
                     'clear',
                     'll',
-                    `echo "\n💁  You're now connected with: ${
-                        serverConfig.user
-                    }@${serverConfig.host}\nWorking directory: ${
-                        serverConfig.appPath
-                    }\n"`,
+                    `echo "\n💁  You're now connected with: ${serverConfig.user}@${serverConfig.host}\nWorking directory: ${serverConfig.appPath}\n"`,
                 ].join(' && ')
                 // Run the commands
                 stream.write(`${initialCommands}\n`)
