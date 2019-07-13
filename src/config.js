@@ -30,7 +30,6 @@ const getConfig = async () => {
 }
 
 // Check that the required config settings exist
-// TODO: Convert to named parameters
 const getConfigIssues = (config, hasNewConfig, isInteractive = false) => {
     const requiredSettings = [
         'server.user',

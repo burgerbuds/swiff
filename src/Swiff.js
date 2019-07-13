@@ -386,7 +386,6 @@ class Swiff extends Component {
         if (!doesConfigExist) await createConfig()
         const isInteractive = !this.state.isFlaggedStart
         // Get the config
-        // TODO: Convert to named parameters
         const config = await setupConfig(!doesConfigExist, isInteractive)
         // If there's any missing config options then open the config file and show the error
         if (config instanceof Error) return this.setMessage(config)
