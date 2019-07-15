@@ -908,12 +908,12 @@ class Swiff extends _react.Component {
         isSelected
       }) => {
         const isActive = currentTask && currentTask.title === title && isTaskRunning(messages);
-        const highlightNormal = isSelected && !isDisabled(config, id);
-        const highlightDim = isSelected && isDisabled(config, id);
+        const disabledColor = isDisabled(config, id) && (isSelected ? '#CCC' : _palette.hexMuted);
+        const normalColor = !isDisabled(config, id) && (isSelected ? _palette.hexHighlight : _palette.hexDefault);
         return _react.default.createElement(_react.default.Fragment, null, _react.default.createElement(_ink.Color, {
-          bold: !isDisabled(config, id),
+          bold: true,
           dim: isDisabled(config, id),
-          hex: highlightNormal ? _palette.hexHighlight : highlightDim ? _palette.hexDefault : _palette.hexMuted
+          hex: disabledColor || normalColor
         }, `${isActive ? '⌛  ' : emoji ? `${emoji}  ` : ''}${title}`), _react.default.createElement(_ink.Color, {
           bold: false,
           hex: _palette.hexMuted,

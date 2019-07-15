@@ -168,20 +168,17 @@ class Swiff extends Component {
                     currentTask &&
                     currentTask.title === title &&
                     isTaskRunning(messages)
-                const highlightNormal = isSelected && !isDisabled(config, id)
-                const highlightDim = isSelected && isDisabled(config, id)
+                const disabledColor =
+                    isDisabled(config, id) && (isSelected ? '#CCC' : hexMuted)
+                const normalColor =
+                    !isDisabled(config, id) &&
+                    (isSelected ? hexHighlight : hexDefault)
                 return (
                     <React.Fragment>
                         <Color
-                            bold={!isDisabled(config, id)}
+                            bold
                             dim={isDisabled(config, id)}
-                            hex={
-                                highlightNormal
-                                    ? hexHighlight
-                                    : highlightDim
-                                    ? hexDefault
-                                    : hexMuted
-                            }
+                            hex={disabledColor || normalColor}
                         >
                             {`${
                                 isActive ? '⌛  ' : emoji ? `${emoji}  ` : ''
