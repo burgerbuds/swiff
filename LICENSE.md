@@ -1,4 +1,4 @@
-Copyright 2019 Simple Integrated Marketing
+Copyright 2019 Burger Buds
 
 Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
 

@@ -13,7 +13,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/simple-integrated-marketing/swiff.git"
+        "url": "git+https://github.com/burgerbuds/swiff.git"
     },
     "keywords": [
         "developer-tools",
@@ -24,9 +24,9 @@
         "staging-tool"
     ],
     "bugs": {
-        "url": "https://github.com/simple-integrated-marketing/swiff/issues"
+        "url": "https://github.com/burgerbuds/swiff/issues"
     },
-    "homepage": "https://github.com/simple-integrated-marketing/swiff#readme",
+    "homepage": "https://github.com/burgerbuds/swiff#readme",
     "prettier": {
         "trailingComma": "es5",
         "useTabs": false,
