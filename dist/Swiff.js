@@ -17,8 +17,6 @@ var _username = _interopRequireDefault(require("username"));
 
 var _path = _interopRequireDefault(require("path"));
 
-var _ssh = _interopRequireDefault(require("ssh2"));
-
 var _chalk = _interopRequireDefault(require("chalk"));
 
 var _utils = require("./utils");
@@ -31,7 +29,7 @@ var _database = require("./database");
 
 var _templates = require("./templates");
 
-var _ssh2 = require("./ssh");
+var _ssh = require("./ssh");
 
 var _config = require("./config");
 
@@ -332,10 +330,10 @@ class Swiff extends _react.Component {
 
       if (!doesSshKeyExist) return _this.setMessage(`Your${!(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? ' custom' : ''} SSH key file wasn’t found at:\n  ${(0, _palette.colourNotice)(sshKey)}\n\nYou can either:\n\na) Create a SSH key with this command (leave passphrase empty):\n  ${(0, _palette.colourNotice)(`ssh-keygen -m PEM -b 4096 -f ${sshKey}`)}\n\nb) Or add an existing key path in your .env with:\n  ${(0, _palette.colourNotice)(`SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/[your-key-name]"`)}${isInteractive ? `\n\nThen hit [ enter ↵ ] to rerun this task` : ''}`); // Check the users SSH key has been added to the server
 
-      const checkSshSetup = yield (0, _utils.executeCommands)((0, _ssh2.getSshTestCommand)(config.server.user, config.server.host, config.server.port, !(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? localEnv.SWIFF_CUSTOM_KEY : null)); // If there's an issue with the connection then give some assistance
+      const checkSshSetup = yield (0, _utils.executeCommands)((0, _ssh.getSshTestCommand)(config.server.user, config.server.host, config.server.port, !(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? localEnv.SWIFF_CUSTOM_KEY : null)); // If there's an issue with the connection then give some assistance
 
       if (checkSshSetup instanceof Error) {
-        return _this.setMessage(`A SSH connection couldn’t be made with these details:\n\nServer host: ${config.server.host}\nServer user: ${config.server.user}\nPort: ${config.server.port}\nSSH key: ${sshKey}\n\n${(0, _ssh2.getSshCopyInstructions)(config, sshKey)}\n\n${(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? `${_chalk.default.bold(`Is the 'SSH key' path above wrong?`)}\nAdd the correct path to your project .env like this:\nSWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"` : ''}`);
+        return _this.setMessage(`A SSH connection couldn’t be made with these details:\n\nServer host: ${config.server.host}\nServer user: ${config.server.user}\nPort: ${config.server.port}\nSSH key: ${sshKey}\n\n${(0, _ssh.getSshCopyInstructions)(config, sshKey)}\n\n${(0, _utils.isEmpty)(localEnv.SWIFF_CUSTOM_KEY) ? `${_chalk.default.bold(`Is the 'SSH key' path above wrong?`)}\nAdd the correct path to your project .env like this:\nSWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"` : ''}`);
       }
 
       return true;
@@ -366,7 +364,7 @@ class Swiff extends _react.Component {
       _this.setWorking(`Pulling files from ${(0, _utils.commaAmpersander)(filteredPullFolders)}`); // Create the rsync commands required to pull the files
 
 
-      const pullCommands = (0, _ssh2.getSshPullCommands)({
+      const pullCommands = (0, _ssh.getSshPullCommands)({
         pullFolders: filteredPullFolders,
         user: user,
         host: host,
@@ -445,7 +443,7 @@ class Swiff extends _react.Component {
       _this.setWorking(`Pushing files in ${(0, _utils.commaAmpersander)(filteredPushFolders)}`); // Get the rsync push commands
 
 
-      const pushCommands = (0, _ssh2.getSshPushCommands)({
+      const pushCommands = (0, _ssh.getSshPushCommands)({
         pushFolders: filteredPushFolders,
         user: user,
         host: host,
@@ -495,7 +493,7 @@ class Swiff extends _react.Component {
       const remoteDbNameZipped = `${remoteDbName}.gz`;
       const importFile = `${_paths.pathBackups}/${remoteDbName}`; // Download and store the remote DB via SSH
 
-      const dbSsh = yield (0, _ssh2.getSshDatabase)({
+      const dbSsh = yield (0, _ssh.getSshDatabase)({
         remoteEnv: remoteEnv,
         host: serverConfig.host,
         user: serverConfig.user,
@@ -581,7 +579,7 @@ class Swiff extends _react.Component {
       const remoteDbName = `${remoteEnv.DB_DATABASE}-remote.sql`;
       const remoteDbNameZipped = `${remoteDbName}.gz`; // Download and store the remote DB via SSH
 
-      const dbSsh = yield (0, _ssh2.getSshDatabase)({
+      const dbSsh = yield (0, _ssh.getSshDatabase)({
         remoteEnv: remoteEnv,
         host: serverConfig.host,
         user: serverConfig.user,
@@ -611,7 +609,7 @@ class Swiff extends _react.Component {
       if (localDbDump instanceof Error) return _this.setError(localDbDump);
       const remoteDbDumpPath = serverConfig.appPath; // Upload local db to remote
 
-      const pushDatabase = yield (0, _ssh2.pushSshDatabase)({
+      const pushDatabase = yield (0, _ssh.pushSshDatabase)({
         host: serverConfig.host,
         user: serverConfig.user,
         port: serverConfig.port,
@@ -624,7 +622,7 @@ class Swiff extends _react.Component {
       if (pushDatabase instanceof Error) return _this.setError(pushDatabase); // Create a SSH connection
       // TODO: Test swiff custom key
 
-      const ssh = yield (0, _ssh2.sshConnect)({
+      const ssh = yield (0, _ssh.sshConnect)({
         host: serverConfig.host,
         username: serverConfig.user,
         port: serverConfig.port,
@@ -690,7 +688,7 @@ class Swiff extends _react.Component {
 
       yield (0, _utils.executeCommands)(`cp composer.json ${_paths.pathBackups}/${DB_DATABASE}-local-composer.json && cp composer.lock ${_paths.pathBackups}/${DB_DATABASE}-local-composer.lock`); // Connect to the remote server
 
-      const ssh = yield (0, _ssh2.getSshInit)({
+      const ssh = yield (0, _ssh.getSshInit)({
         host: serverConfig.host,
         user: serverConfig.user,
         sshKeyPath: SWIFF_CUSTOM_KEY
@@ -701,7 +699,7 @@ class Swiff extends _react.Component {
       _this.setWorking(`Fetching the composer files from the remote server at ${(0, _palette.colourHighlight)(serverConfig.host)}`); // Download composer.json from the remote server
 
 
-      const sshDownload1 = yield (0, _ssh2.getSshFile)({
+      const sshDownload1 = yield (0, _ssh.getSshFile)({
         connection: ssh,
         from: _path.default.join(serverConfig.appPath, 'composer.json'),
         to: _path.default.join(_paths.pathApp, 'composer.json')
@@ -713,7 +711,7 @@ class Swiff extends _react.Component {
       } // Download composer.lock from the remote server
 
 
-      const sshDownload2 = yield (0, _ssh2.getSshFile)({
+      const sshDownload2 = yield (0, _ssh.getSshFile)({
         connection: ssh,
         from: _path.default.join(serverConfig.appPath, 'composer.lock'),
         to: _path.default.join(_paths.pathApp, 'composer.lock')
@@ -746,19 +744,19 @@ class Swiff extends _react.Component {
       _this.setWorking(`Backing up the remote composer files on ${(0, _palette.colourHighlight)(serverConfig.host)}`); // Connect to the remote server
 
 
-      const ssh = yield (0, _ssh2.getSshInit)({
+      const ssh = yield (0, _ssh.getSshInit)({
         host: serverConfig.host,
         user: serverConfig.user,
         sshKeyPath: SWIFF_CUSTOM_KEY
       }); // Download composer.json from the remote server
 
-      const sshDownload1 = yield (0, _ssh2.getSshFile)({
+      const sshDownload1 = yield (0, _ssh.getSshFile)({
         connection: ssh,
         from: _path.default.join(serverConfig.appPath, 'composer.json'),
         to: _path.default.join(_paths.pathBackups, `${DB_DATABASE}-remote-composer.json`)
       }); // Download composer.lock from the remote server
 
-      const sshDownload2 = yield (0, _ssh2.getSshFile)({
+      const sshDownload2 = yield (0, _ssh.getSshFile)({
         connection: ssh,
         from: _path.default.join(serverConfig.appPath, 'composer.lock'),
         to: _path.default.join(_paths.pathBackups, `${DB_DATABASE}-remote-composer.lock`)
@@ -818,8 +816,13 @@ class Swiff extends _react.Component {
       // https://github.com/mscdex/ssh2#start-an-interactive-shell-session
 
       let gs = null;
-      const conn = new _ssh.default();
-      conn.on('ready', () => {
+      const ssh = yield (0, _ssh.sshConnect)({
+        host: serverConfig.host,
+        username: serverConfig.user,
+        port: serverConfig.port,
+        sshKeyPath: privateKey
+      }).then(ssh => {
+        const conn = ssh.connection;
         conn.shell((err, stream) => {
           if (err) throw err; // Build the commands to run once we're logged in
 
@@ -839,11 +842,6 @@ class Swiff extends _react.Component {
             process.exit(1);
           });
         });
-      }).connect({
-        host: serverConfig.host,
-        privateKey: require('fs').readFileSync(privateKey),
-        username: serverConfig.user,
-        port: serverConfig.port
       }); // Push our input to the server input
       // http://stackoverflow.com/questions/5006821/nodejs-how-to-read-keystrokes-from-stdin
 

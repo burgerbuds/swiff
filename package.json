@@ -53,7 +53,7 @@
         "node-ssh": "^6.0.0",
         "promise-mysql": "^4.0.4",
         "react": "^16.8.6",
-        "ssh2": "^0.8.5",
+        "readline-sync": "^1.4.10",
         "universal-analytics": "^0.4.20",
         "update-notifier": "^3.0.1",
         "username": "^5.1.0"
