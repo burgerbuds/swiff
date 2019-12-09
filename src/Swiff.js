@@ -662,6 +662,7 @@ class Swiff extends Component {
             DB_DATABASE,
             DB_USER,
             DB_PASSWORD,
+            DB_SOCKET,
         } = localEnv
         // Get the remote env file via SSH
         const remoteEnv = await getRemoteEnv({
@@ -719,6 +720,7 @@ class Swiff extends Component {
             user: DB_USER,
             password: DB_PASSWORD,
             database: DB_DATABASE,
+            socketPath: DB_SOCKET,
         })
         // If there's any dropping issues then return the messages
         if (dropTables instanceof Error)

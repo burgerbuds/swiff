@@ -476,7 +476,8 @@ class Swiff extends _react.Component {
         DB_PORT,
         DB_DATABASE,
         DB_USER,
-        DB_PASSWORD
+        DB_PASSWORD,
+        DB_SOCKET
       } = localEnv; // Get the remote env file via SSH
 
       const remoteEnv = yield (0, _env.getRemoteEnv)({
@@ -527,7 +528,8 @@ class Swiff extends _react.Component {
         port: DB_PORT,
         user: DB_USER,
         password: DB_PASSWORD,
-        database: DB_DATABASE
+        database: DB_DATABASE,
+        socketPath: DB_SOCKET
       }); // If there's any dropping issues then return the messages
 
       if (dropTables instanceof Error) return String(dropTables).includes('ER_BAD_DB_ERROR: Unknown database ') ? _this.setMessage(`First create a database named ${(0, _palette.colourNotice)(DB_DATABASE)} on ${(0, _palette.colourNotice)(DB_SERVER)} with these login details:\n\nUsername: ${DB_USER}\nPassword: ${DB_PASSWORD}`) : _this.setError(`There were issues connecting to your local ${(0, _palette.colourAttention)(DB_DATABASE)} database\n\nCheck these settings are correct in your local .env file:\n\n${(0, _palette.colourAttention)(`DB_SERVER="${DB_SERVER}"\nDB_PORT="${DB_PORT}"\nDB_USER="${DB_USER}"\nDB_PASSWORD="${DB_PASSWORD}"\nDB_DATABASE="${DB_DATABASE}"`)}\n\n${(0, _palette.colourMuted)(String(dropTables).replace('Error: ', ''))}`); // Import the remote .sql into the local database
