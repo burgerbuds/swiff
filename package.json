@@ -1,6 +1,6 @@
 {
     "name": "swiff",
-    "version": "1.5.1",
+    "version": "1.5.2",
     "description": "Swiff saves you time with common SSH tasks during the development of websites/apps",
     "main": "index.js",
     "scripts": {
