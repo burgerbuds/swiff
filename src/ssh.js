@@ -5,7 +5,12 @@ import { executeCommands, cmdPromise, isEmpty, isFunction } from './utils'
 import { getParsedEnv } from './env'
 import { getDbDumpZipCommands } from './database'
 import { pathBackups, pathApp } from './paths'
-import { colourAttention, colourNotice } from './palette'
+import {
+    colourAttention,
+    colourHighlight,
+    hexHighlight,
+    colourNotice,
+} from './palette'
 import chalk from 'chalk'
 import readlineSync from 'readline-sync'
 
@@ -58,10 +63,31 @@ const sshConnect = async ({ host, username, port, sshKeyPath }) => {
                 passphrase: passphrase,
             })
             .catch(error => (errorMessage = error))
-        if (String(errorMessage).includes('Encrypted OpenSSH private key detected, but no passphrase given') || String(errorMessage).includes('Malformed OpenSSH private key. Bad passphrase?')) {
-            passphrase = readlineSync.question((String(errorMessage).includes('Malformed') ? 'Incorrect passphrase! ' : '') + 'Please enter the private key’s passphrase: ', {
-                hideEchoBack: true,
-            })
+        if (
+            String(errorMessage).includes(
+                'Encrypted OpenSSH private key detected, but no passphrase given'
+            ) ||
+            String(errorMessage).includes(
+                'Malformed OpenSSH private key. Bad passphrase?'
+            )
+        ) {
+            passphrase = readlineSync.question(
+                String(errorMessage).includes('Malformed')
+                    ? `${colourAttention(
+                          [
+                              'Passphrase incorrect',
+                              "That's not right",
+                              'That looks wrong',
+                          ].sort((el1, el2) => Math.random() - Math.random())[0]
+                      )}, please try again: `
+                    : `Enter the passphrase for ${colourNotice(
+                          sshKeyResolvedPath
+                      )}: `,
+                {
+                    hideEchoBack: true,
+                    mask: chalk('\u2665'),
+                }
+            )
             await tryToConnect()
         }
     }
@@ -330,11 +356,7 @@ const getSshDatabase = async ({
                 ssh.dispose()
                 // Format the remote env settings for display
                 const remoteSettings = `${colourAttention(
-                    `DB_SERVER="${remoteEnv.DB_SERVER}"\nDB_PORT="${
-                        remoteEnv.DB_PORT
-                    }"\nDB_USER="${zipCommandConfig.user}"\nDB_PASSWORD="${
-                        zipCommandConfig.password
-                    }"\nDB_DATABASE="${zipCommandConfig.database}"`
+                    `DB_SERVER="${remoteEnv.DB_SERVER}"\nDB_PORT="${remoteEnv.DB_PORT}"\nDB_USER="${zipCommandConfig.user}"\nDB_PASSWORD="${zipCommandConfig.password}"\nDB_DATABASE="${zipCommandConfig.database}"`
                 )}\n\n${path.join(sshAppPath, '.env')}`
                 // Set the error message
                 errorMessage = errorOutput.includes('Unknown MySQL server host')

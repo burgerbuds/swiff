@@ -124,8 +124,9 @@ function () {
         }).catch(error => errorMessage = error);
 
         if (String(errorMessage).includes('Encrypted OpenSSH private key detected, but no passphrase given') || String(errorMessage).includes('Malformed OpenSSH private key. Bad passphrase?')) {
-          passphrase = _readlineSync.default.question((String(errorMessage).includes('Malformed') ? 'Incorrect passphrase! ' : '') + 'Please enter the private key’s passphrase: ', {
-            hideEchoBack: true
+          passphrase = _readlineSync.default.question(String(errorMessage).includes('Malformed') ? `${(0, _palette.colourAttention)(['Passphrase incorrect', "That's not right", 'That looks wrong'].sort((el1, el2) => Math.random() - Math.random())[0])}, please try again: ` : `Enter the passphrase for ${(0, _palette.colourNotice)(sshKeyResolvedPath)}: `, {
+            hideEchoBack: true,
+            mask: (0, _chalk.default)('\u2665')
           });
           yield tryToConnect();
         }
