@@ -9,8 +9,6 @@ import { colourAttention, colourNotice } from './palette'
 import chalk from 'chalk'
 import readlineSync from 'readline-sync'
 
-let passphrase
-
 const getSshInit = async ({ host, user, port, sshKeyPath }) => {
     // Connect to the remote server via SSH
     // Get the remote env file
@@ -41,7 +39,7 @@ const getSshFile = async ({ connection, from, to }) => {
 
 // Connect to the remote server via SSH
 const sshConnect = async ({ host, username, port, sshKeyPath }) => {
-    let errorMessage
+    let errorMessage, passphrase
     // Get the local username so we can get the default key below (macOS path)
     const user = await resolveUsername()
     const sshKeyResolvedPath = !isEmpty(sshKeyPath)

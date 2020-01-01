@@ -37,8 +37,6 @@ function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
-let passphrase;
-
 const getSshInit =
 /*#__PURE__*/
 function () {
@@ -105,7 +103,7 @@ function () {
     port,
     sshKeyPath
   }) {
-    let errorMessage; // Get the local username so we can get the default key below (macOS path)
+    let errorMessage, passphrase; // Get the local username so we can get the default key below (macOS path)
 
     const user = yield (0, _username.default)();
     const sshKeyResolvedPath = !(0, _utils.isEmpty)(sshKeyPath) ? sshKeyPath : `/Users/${user}/.ssh/id_rsa`; // Create a SSH connection
