@@ -4,7 +4,6 @@ import { exec } from 'child_process'
 import ua from 'universal-analytics'
 import resolveUsername from 'username'
 import path from 'path'
-import ssh2 from 'ssh2'
 import chalk from 'chalk'
 import {
     isEmpty,
@@ -662,6 +661,7 @@ class Swiff extends Component {
             DB_DATABASE,
             DB_USER,
             DB_PASSWORD,
+            DB_SOCKET,
         } = localEnv
         // Get the remote env file via SSH
         const remoteEnv = await getRemoteEnv({
@@ -719,6 +719,7 @@ class Swiff extends Component {
             user: DB_USER,
             password: DB_PASSWORD,
             database: DB_DATABASE,
+            socketPath: DB_SOCKET,
         })
         // If there's any dropping issues then return the messages
         if (dropTables instanceof Error)
@@ -1074,8 +1075,13 @@ class Swiff extends Component {
         // Create an interactive shell session
         // https://github.com/mscdex/ssh2#start-an-interactive-shell-session
         let gs = null
-        const conn = new ssh2()
-        conn.on('ready', () => {
+        const ssh = await sshConnect({
+            host: serverConfig.host,
+            username: serverConfig.user,
+            port: serverConfig.port,
+            sshKeyPath: privateKey,
+        }).then(ssh => {
+            const conn = ssh.connection
             conn.shell((err, stream) => {
                 if (err) throw err
                 // Build the commands to run once we're logged in
@@ -1108,11 +1114,6 @@ class Swiff extends Component {
                         process.exit(1)
                     })
             })
-        }).connect({
-            host: serverConfig.host,
-            privateKey: require('fs').readFileSync(privateKey),
-            username: serverConfig.user,
-            port: serverConfig.port,
         })
         // Push our input to the server input
         // http://stackoverflow.com/questions/5006821/nodejs-how-to-read-keystrokes-from-stdin

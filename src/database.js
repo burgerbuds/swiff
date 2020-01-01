@@ -32,6 +32,7 @@ const doDropAllDbTables = async config => {
         user: null,
         password: null,
         database: null,
+        socketPath: null,
     }
     // Create the connection to the local database
     const conn = await mysql
