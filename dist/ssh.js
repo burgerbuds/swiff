@@ -304,7 +304,11 @@ exports.getSshPullCommands = getSshPullCommands;
 const getSshTestCommand = (user, host, port, sshKeyPath) => {
   // Set the custom identity if provided
   const sshKeyString = !(0, _utils.isEmpty)(sshKeyPath) ? `-i "${sshKeyPath}"` : '';
-  return `ssh -p ${port} ${sshKeyString} -o BatchMode=yes -o ConnectTimeout=5 ${user}@${host} echo 'SSH access is setup' 2>&1`;
+  return `status=$(ssh -p ${port} ${sshKeyString} -o BatchMode=yes -o ConnectTimeout=1 ${user}@${host} echo ok 2>&1)
+    if [[ $status == ok ]]; then echo 'SSH access is setup'
+    elif [[ $status == *"Permission denied"* ]]; then echo 'SSH access is setup with passphrase'
+    else echo $status
+    fi`;
 }; // Upload a database over SSH to a remote folder
 
 
