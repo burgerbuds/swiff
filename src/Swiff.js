@@ -420,7 +420,7 @@ class Swiff extends Component {
                     !isEmpty(localEnv.SWIFF_CUSTOM_KEY) ? ' custom' : ''
                 } SSH key file wasn’t found at:\n  ${colourNotice(
                     sshKey
-                )}\n\nYou can either:\n\na) Create a SSH key with this command (leave passphrase empty):\n  ${colourNotice(
+                )}\n\nYou can either:\n\na) Create a SSH key with this command:\n  ${colourNotice(
                     `ssh-keygen -m PEM -b 4096 -f ${sshKey}`
                 )}\n\nb) Or add an existing key path in your .env with:\n  ${colourNotice(
                     `SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/[your-key-name]"`
