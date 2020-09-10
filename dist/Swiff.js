@@ -37,6 +37,8 @@ var _config = require("./config");
 
 var _palette = require("./palette");
 
+var _process = require("process");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
@@ -440,9 +442,13 @@ class Swiff extends _react.Component {
 
       const hasMissingPaths = yield (0, _utils.getMissingPaths)(filteredPushFolders, 'pushFolders'); // If any local paths are missing then return the messages
 
-      if (hasMissingPaths instanceof Error) return _this.setError(hasMissingPaths); // Share what's happening with the user
+      if (hasMissingPaths instanceof Error) return _this.setError(hasMissingPaths); // Check if push folder option is valid
 
-      _this.setWorking(`Pushing files in ${(0, _utils.commaAmpersander)(filteredPushFolders)}`); // Get the rsync push commands
+      const isPushFolderOptionsValid = (0, _utils.validatePushFolderOptions)(filteredPushFolders, 'pushFolders'); // If any local paths are missing then return the messages
+
+      if (isPushFolderOptionsValid instanceof Error) return _this.setError(isPushFolderOptionsValid); // Share what's happening with the user
+
+      _this.setWorking(`Pushing files in ${(0, _utils.commaAmpersander)(filteredPushFolders.map(f => typeof f === 'string' ? f : f.path))}`); // Get the rsync push commands
 
 
       const pushCommands = (0, _ssh2.getSshPushCommands)({
