@@ -207,15 +207,28 @@ const getSshPushCommands = ({
   '--delete', // Ignore misc files
   '--exclude ".git"', '--exclude ".env"', '--exclude ".DS_Store"', // Connect via a port number
   // Set the custom identity if provided
-  `-e "ssh -p ${port}${!(0, _utils.isEmpty)(sshKeyPath) ? ` -i '${sshKeyPath}'` : ''}"`].join(' '); // Build the final command string from an array of folders
+  `-e "ssh -p ${port}${!(0, _utils.isEmpty)(sshKeyPath) ? ` -i '${sshKeyPath}'` : ''}"`]; // Build the final command string from an array of folders
 
   const rsyncCommands = pushFolders.map(item => {
-    const rSyncFrom = `${_path.default.join(_paths.pathApp, item)}/`;
-    const rSyncTo = `${_path.default.join(workingDirectory, item)}/`; // Folders aren't created by rsync natively
+    let localPath = item;
+    let excludePattern;
+
+    if (typeof item !== "string") {
+      localPath = item.path;
+      excludePattern = item.exclude || "";
+
+      if (excludePattern) {
+        flags.push(`--exclude "${excludePattern}"`);
+      }
+    }
+
+    const rSyncFrom = `${_path.default.join(_paths.pathApp, localPath)}/`;
+    const rSyncTo = `${_path.default.join(workingDirectory, localPath)}/`; // Folders aren't created by rsync natively
     // https://stackoverflow.com/questions/1636889/rsync-how-can-i-configure-it-to-create-target-directory-on-server
 
     const createFolderCmd = `--rsync-path="mkdir -p ${rSyncTo} && rsync"`;
-    return [`echo '!${item}'`, `(rsync ${createFolderCmd} ${flags} ${rSyncFrom} ${user}@${host}:${rSyncTo})`].join(' && ');
+    const flagsFlat = flags.join(" ");
+    return [`echo '!${localPath}'`, `(rsync ${createFolderCmd} ${flagsFlat} ${rSyncFrom} ${user}@${host}:${rSyncTo})`].join(' && ');
   }).join(' && '); // Use grep to filter the rsync output
 
   const greppage = `grep -E '^(!|>|<|\\*)'`;

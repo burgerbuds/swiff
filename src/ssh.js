@@ -165,18 +165,28 @@ const getSshPushCommands = ({
         `-e "ssh -p ${port}${
             !isEmpty(sshKeyPath) ? ` -i '${sshKeyPath}'` : ''
         }"`,
-    ].join(' ')
+    ];
     // Build the final command string from an array of folders
     const rsyncCommands = pushFolders
         .map(item => {
-            const rSyncFrom = `${path.join(pathApp, item)}/`
-            const rSyncTo = `${path.join(workingDirectory, item)}/`
+            let localPath = item;
+            let excludePattern;
+            if (typeof item !== "string") {
+                localPath = item.path;
+                excludePattern = item.exclude || "";
+                if (excludePattern) {
+                    flags.push(`--exclude "${excludePattern}"`);
+                }
+            }
+            const rSyncFrom = `${path.join(pathApp, localPath)}/`
+            const rSyncTo = `${path.join(workingDirectory, localPath)}/`
             // Folders aren't created by rsync natively
             // https://stackoverflow.com/questions/1636889/rsync-how-can-i-configure-it-to-create-target-directory-on-server
             const createFolderCmd = `--rsync-path="mkdir -p ${rSyncTo} && rsync"`
+            const flagsFlat = flags.join(" ");
             return [
-                `echo '!${item}'`,
-                `(rsync ${createFolderCmd} ${flags} ${rSyncFrom} ${user}@${host}:${rSyncTo})`,
+                `echo '!${localPath}'`,
+                `(rsync ${createFolderCmd} ${flagsFlat} ${rSyncFrom} ${user}@${host}:${rSyncTo})`,
             ].join(' && ')
         })
         .join(' && ')

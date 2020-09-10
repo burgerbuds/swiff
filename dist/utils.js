@@ -15,7 +15,7 @@ Object.defineProperty(exports, "isEmpty", {
     return _isEmpty.default;
   }
 });
-exports.paginate = exports.replaceRsyncOutput = exports.commaAmpersander = exports.doesFileExist = exports.cmdPromise = exports.getMissingPaths = exports.executeCommands = exports.resolveApp = void 0;
+exports.paginate = exports.replaceRsyncOutput = exports.commaAmpersander = exports.doesFileExist = exports.cmdPromise = exports.validatePushFolderOptions = exports.getMissingPaths = exports.executeCommands = exports.resolveApp = void 0;
 
 var _path = _interopRequireDefault(require("path"));
 
@@ -98,6 +98,10 @@ function () {
         /*#__PURE__*/
         function () {
           var _ref5 = _asyncToGenerator(function* (path) {
+            if (typeof path !== "string") {
+              path = path.path;
+            }
+
             const doesExist = yield doesFileExist(path);
             return doesExist ? null : path;
           });
@@ -130,6 +134,17 @@ function () {
 }();
 
 exports.getMissingPaths = getMissingPaths;
+
+const validatePushFolderOptions = (suppliedPaths, configSetting) => {
+  suppliedPaths.forEach(item => {
+    if (Object.keys(item).filter(k => ['path', 'exclude'].indexOf(k) !== -1).length) {
+      return new Error(`Only 'path' and 'exclude' key is supported in push folders setting. Adjust the ${(0, _palette.colourAttention)(configSetting)} values in your ${(0, _palette.colourAttention)('swiff.config.js')}`);
+    }
+  });
+  return true;
+};
+
+exports.validatePushFolderOptions = validatePushFolderOptions;
 
 const commaAmpersander = (array, styler = _palette.colourHighlight) => array.map((f, i) => (i > 0 ? i === array.length - 1 ? ' and ' : ', ' : '') + styler(f)).join(''); // Check https://stackoverflow.com/a/36851784/9055509 for rsync output details
 

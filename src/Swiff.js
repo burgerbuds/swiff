@@ -10,6 +10,7 @@ import {
     isEmpty,
     executeCommands,
     getMissingPaths,
+    validatePushFolderOptions,
     cmdPromise,
     doesFileExist,
     commaAmpersander,
@@ -57,6 +58,7 @@ import {
     colourMuted,
     colourDefault,
 } from './palette'
+import { exit } from 'process'
 
 // Start user analytics for error and usage information
 const visitor = ua('UA-131596357-2')
@@ -611,9 +613,17 @@ class Swiff extends Component {
         // If any local paths are missing then return the messages
         if (hasMissingPaths instanceof Error)
             return this.setError(hasMissingPaths)
+        // Check if push folder option is valid
+        const isPushFolderOptionsValid = validatePushFolderOptions(
+            filteredPushFolders,
+            'pushFolders'
+        );
+        // If any local paths are missing then return the messages
+        if (isPushFolderOptionsValid instanceof Error)
+            return this.setError(isPushFolderOptionsValid)
         // Share what's happening with the user
         this.setWorking(
-            `Pushing files in ${commaAmpersander(filteredPushFolders)}`
+            `Pushing files in ${commaAmpersander(filteredPushFolders.map(f => (typeof f === 'string')?f:f.path))}`
         )
         // Get the rsync push commands
         const pushCommands = getSshPushCommands({

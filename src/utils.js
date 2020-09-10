@@ -29,6 +29,9 @@ const getMissingPaths = async (suppliedPaths, configSetting) => {
     // Map over the list of paths and return missing ones
     const getResults = async paths => {
         const pathChecks = await paths.map(async path => {
+            if (typeof path !== "string") {
+                path = path.path
+            }
             const doesExist = await doesFileExist(path)
             return doesExist ? null : path
         })
@@ -55,6 +58,17 @@ const getMissingPaths = async (suppliedPaths, configSetting) => {
               )} values in your ${colourAttention('swiff.config.js')}`
           )
         : []
+}
+
+const validatePushFolderOptions = (suppliedPaths, configSetting) => {
+    suppliedPaths.forEach(item => {
+        if (Object.keys(item).filter(k => ['path','exclude'].indexOf(k)!==-1).length) {
+            return new Error(`Only 'path' and 'exclude' key is supported in push folders setting. Adjust the ${colourAttention(
+                configSetting
+            )} values in your ${colourAttention('swiff.config.js')}`);
+        }
+    })
+    return true;
 }
 
 const commaAmpersander = (array, styler = colourHighlight) =>
@@ -167,6 +181,7 @@ export {
     executeCommands,
     promisify,
     getMissingPaths,
+    validatePushFolderOptions,
     cmdPromise,
     doesFileExist,
     commaAmpersander,
