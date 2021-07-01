@@ -1,4 +1,5 @@
 import mysql from 'promise-mysql'
+import { version } from 'react'
 import { cmdPromise } from './utils'
 import { isEmpty } from './utils'
 
@@ -50,6 +51,11 @@ const doImportDb = async config => {
 
 const doLocalDbDump = async config => {
     let errorMessage
+    config = Object.assign(config, {
+        isMysql8: await isMysql8({
+            localCmd:cmdPromise
+        })
+    })
     await cmdPromise(getDbDumpZipCommands(config)).catch(
         e => (errorMessage = e)
     )
@@ -63,9 +69,10 @@ const getDbDumpZipCommands = ({
     password,
     database,
     gzipFilePath,
+    isMysql8 = false
 }) =>
     // Dump and zip the db - this can make it around 9 times smaller
-    `mysqldump --host='${host}' --port='${port}' --user='${user}' --password='${password}' --no-tablespaces --column-statistics=0 ${database} | gzip > '${gzipFilePath}'`
+    `mysqldump --host='${host}' --port='${port}' --user='${user}' --password='${password}' --no-tablespaces ${isMysql8?'--column-statistics=0':''} ${database} | gzip > '${gzipFilePath}'`
 
 const checkForDb = async ({ dbFilePath, sshConn }) => {
     let errorMessage
@@ -178,6 +185,41 @@ const removeDb = async ({ dbFilePath, sshConn }) => {
     return
 }
 
+// Check the version of mysqldump (mysql)
+// cmd can be either
+// - sshConn(remote)
+// or
+// - localCmd(local)
+const isMysql8 = async ({sshConn, localCmd}) => {
+    if (sshConn) {
+        let output = "", errorMessage = "";
+        await sshConn.execCommand(`mysqldump --version`).then(({ stdout, stderr }) => {
+            output = stdout;
+            // If error running command
+            if (stderr)
+                errorMessage = `There was an issue checking mysql version\n\n${stderr}`
+        })
+        if (output.indexOf("Ver 8") !== -1) {
+            return true;
+        }
+        return false;
+    } else if (localCmd) {
+        let output = "", errorMessage = "";
+        await localCmd(`mysqldump --version`).then(stdout => {
+            output = stdout;
+        }).catch(stderr => {
+            // If error running command
+            if (stderr)
+                errorMessage = `There was an issue checking mysql version\n\n${stderr}`
+        }) 
+        if (output.indexOf("Ver 8") !== -1) {
+            return true;
+        }
+        return false;
+    }
+    return false;
+}
+
 export {
     getDbDumpZipCommands,
     doDropAllDbTables,
@@ -190,4 +232,5 @@ export {
     clearDb,
     importDb,
     removeDb,
+    isMysql8,
 }

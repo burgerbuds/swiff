@@ -3,7 +3,7 @@ import resolveUsername from 'username'
 import path from 'path'
 import { executeCommands, cmdPromise, isEmpty, isFunction } from './utils'
 import { getParsedEnv } from './env'
-import { getDbDumpZipCommands } from './database'
+import { getDbDumpZipCommands, isMysql8 } from './database'
 import { pathBackups, pathApp } from './paths'
 import { colourAttention, colourNotice } from './palette'
 import chalk from 'chalk'
@@ -314,6 +314,9 @@ const getSshDatabase = async ({
         password: remoteEnv.DB_PASSWORD,
         database: remoteEnv.DB_DATABASE,
         gzipFilePath: gzipFileName,
+        isMysql8: await isMysql8({
+            sshConn:ssh
+        })
     }
     let errorMessage
     await ssh

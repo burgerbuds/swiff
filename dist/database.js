@@ -3,9 +3,11 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.removeDb = exports.importDb = exports.clearDb = exports.unzipDb = exports.checkForDb = exports.importDbQuery = exports.doLocalDbDump = exports.doImportDb = exports.dropDbQuery = exports.doDropAllDbTables = exports.getDbDumpZipCommands = void 0;
+exports.isMysql8 = exports.removeDb = exports.importDb = exports.clearDb = exports.unzipDb = exports.checkForDb = exports.importDbQuery = exports.doLocalDbDump = exports.doImportDb = exports.dropDbQuery = exports.doDropAllDbTables = exports.getDbDumpZipCommands = void 0;
 
 var _promiseMysql = _interopRequireDefault(require("promise-mysql"));
+
+var _react = require("react");
 
 var _utils = require("./utils");
 
@@ -89,6 +91,11 @@ const doLocalDbDump =
 function () {
   var _ref3 = _asyncToGenerator(function* (config) {
     let errorMessage;
+    config = Object.assign(config, {
+      isMysql8: yield isMysql8({
+        localCmd: _utils.cmdPromise
+      })
+    });
     yield (0, _utils.cmdPromise)(getDbDumpZipCommands(config)).catch(e => errorMessage = e);
     if (errorMessage) return new Error(errorMessage);
   });
@@ -106,9 +113,10 @@ const getDbDumpZipCommands = ({
   user,
   password,
   database,
-  gzipFilePath
+  gzipFilePath,
+  isMysql8 = false
 }) => // Dump and zip the db - this can make it around 9 times smaller
-`mysqldump --host='${host}' --port='${port}' --user='${user}' --password='${password}' --no-tablespaces --column-statistics=0 ${database} | gzip > '${gzipFilePath}'`;
+`mysqldump --host='${host}' --port='${port}' --user='${user}' --password='${password}' --no-tablespaces ${isMysql8 ? '--column-statistics=0' : ''} ${database} | gzip > '${gzipFilePath}'`;
 
 exports.getDbDumpZipCommands = getDbDumpZipCommands;
 
@@ -263,6 +271,62 @@ function () {
   return function removeDb(_x8) {
     return _ref8.apply(this, arguments);
   };
-}();
+}(); // Check the version of mysqldump (mysql)
+// cmd can be either
+// - sshConn(remote)
+// or
+// - localCmd(local)
+
 
 exports.removeDb = removeDb;
+
+const isMysql8 =
+/*#__PURE__*/
+function () {
+  var _ref9 = _asyncToGenerator(function* ({
+    sshConn,
+    localCmd
+  }) {
+    if (sshConn) {
+      let output = "",
+          errorMessage = "";
+      yield sshConn.execCommand(`mysqldump --version`).then(({
+        stdout,
+        stderr
+      }) => {
+        output = stdout; // If error running command
+
+        if (stderr) errorMessage = `There was an issue checking mysql version\n\n${stderr}`;
+      });
+
+      if (output.indexOf("Ver 8") !== -1) {
+        return true;
+      }
+
+      return false;
+    } else if (localCmd) {
+      let output = "",
+          errorMessage = "";
+      yield localCmd(`mysqldump --version`).then(stdout => {
+        output = stdout;
+      }).catch(stderr => {
+        // If error running command
+        if (stderr) errorMessage = `There was an issue checking mysql version\n\n${stderr}`;
+      });
+
+      if (output.indexOf("Ver 8") !== -1) {
+        return true;
+      }
+
+      return false;
+    }
+
+    return false;
+  });
+
+  return function isMysql8(_x9) {
+    return _ref9.apply(this, arguments);
+  };
+}();
+
+exports.isMysql8 = isMysql8;

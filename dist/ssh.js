@@ -343,7 +343,10 @@ function () {
       user: remoteEnv.DB_USER,
       password: remoteEnv.DB_PASSWORD,
       database: remoteEnv.DB_DATABASE,
-      gzipFilePath: gzipFileName
+      gzipFilePath: gzipFileName,
+      isMysql8: yield (0, _database.isMysql8)({
+        sshConn: ssh
+      })
     };
     let errorMessage;
     yield ssh.execCommand((0, _database.getDbDumpZipCommands)(zipCommandConfig), {
