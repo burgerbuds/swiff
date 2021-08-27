@@ -72,7 +72,7 @@ const getDbDumpZipCommands = ({
     isMysql8 = false
 }) =>
     // Dump and zip the db - this can make it around 9 times smaller
-    `mysqldump --host='${host}' --port='${port}' --user='${user}' --password='${password}' --no-tablespaces ${isMysql8?'--column-statistics=0':''} ${database} | gzip > '${gzipFilePath}'`
+    `mysqldump --host='${host}' --port='${port}' --user='${user}' --password='${password}' --single-transaction --lock-tables=false --no-tablespaces ${isMysql8?'--column-statistics=0':''} ${database} | gzip > '${gzipFilePath}'`
 
 const checkForDb = async ({ dbFilePath, sshConn }) => {
     let errorMessage
