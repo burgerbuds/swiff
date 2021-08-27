@@ -54,7 +54,8 @@ function () {
       host: null,
       user: null,
       password: null,
-      database: null // Create the connection to the local database
+      database: null,
+      socketPath: null // Create the connection to the local database
 
     };
     const conn = yield _promiseMysql.default.createConnection(_objectSpread({}, defaultConfig, {}, config)).catch(error => errorMessage = error);

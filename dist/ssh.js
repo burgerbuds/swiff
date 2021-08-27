@@ -23,6 +23,8 @@ var _palette = require("./palette");
 
 var _chalk = _interopRequireDefault(require("chalk"));
 
+var _readlineSync = _interopRequireDefault(require("readline-sync"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { keys.push.apply(keys, Object.getOwnPropertySymbols(object)); } if (enumerableOnly) keys = keys.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); return keys; }
@@ -34,6 +36,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+let passphrase;
 
 const getSshInit =
 /*#__PURE__*/
@@ -107,12 +111,34 @@ function () {
     const sshKeyResolvedPath = !(0, _utils.isEmpty)(sshKeyPath) ? sshKeyPath : `/Users/${user}/.ssh/id_rsa`; // Create a SSH connection
 
     const ssh = new _nodeSsh.default();
-    yield ssh.connect({
-      host: host,
-      username: username,
-      port: port,
-      privateKey: sshKeyResolvedPath
-    }).catch(error => errorMessage = error);
+
+    const tryToConnect =
+    /*#__PURE__*/
+    function () {
+      var _ref4 = _asyncToGenerator(function* () {
+        errorMessage = null;
+        yield ssh.connect({
+          host: host,
+          username: username,
+          port: port,
+          privateKey: sshKeyResolvedPath,
+          passphrase: passphrase
+        }).catch(error => errorMessage = error);
+
+        if (String(errorMessage).includes('Encrypted OpenSSH private key detected, but no passphrase given') || String(errorMessage).includes('Malformed OpenSSH private key. Bad passphrase?')) {
+          passphrase = _readlineSync.default.question((String(errorMessage).includes('Malformed') ? 'Incorrect passphrase! ' : '') + 'Please enter the private key’s passphrase: ', {
+            hideEchoBack: true
+          });
+          yield tryToConnect();
+        }
+      });
+
+      return function tryToConnect() {
+        return _ref4.apply(this, arguments);
+      };
+    }();
+
+    yield tryToConnect();
     if (errorMessage) return new Error(String(errorMessage).includes('Error: Cannot parse privateKey: Unsupported key format') ? `Your SSH key isn't in a format Swiff can work with\n  (${sshKeyResolvedPath})\n\n1. Generate a new one with:\n  ${(0, _palette.colourNotice)(`ssh-keygen -m PEM -b 4096 -f /Users/${user}/.ssh/swiff`)}\n\n2. Then add the key to the server:\n  ${(0, _palette.colourNotice)(`ssh-copy-id -i /Users/${user}/.ssh/swiff ${port !== 22 ? `-p ${port} ` : ''}${username}@${host}`)}` : String(errorMessage).includes('config.privateKey does not exist at') ? `Your SSH key isn’t found at ${(0, _palette.colourAttention)(sshKeyResolvedPath)}\n\nCheck the ${(0, _palette.colourAttention)(`SWIFF_CUSTOM_KEY`)} value is correct in your local .env\n\nmacOS path example:\n${(0, _palette.colourAttention)(`SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/[key-filename]"`)}` : errorMessage);
     return ssh;
   });
@@ -127,7 +153,7 @@ exports.sshConnect = sshConnect;
 const getSshEnv =
 /*#__PURE__*/
 function () {
-  var _ref4 = _asyncToGenerator(function* ({
+  var _ref5 = _asyncToGenerator(function* ({
     host,
     username,
     port,
@@ -178,7 +204,7 @@ function () {
   });
 
   return function getSshEnv(_x4) {
-    return _ref4.apply(this, arguments);
+    return _ref5.apply(this, arguments);
   };
 }();
 
@@ -301,14 +327,14 @@ exports.getSshTestCommand = getSshTestCommand;
 const pushSshDatabase =
 /*#__PURE__*/
 function () {
-  var _ref5 = _asyncToGenerator(function* (config) {
+  var _ref6 = _asyncToGenerator(function* (config) {
     const pushDatabaseStatus = yield (0, _utils.executeCommands)(getPushDatabaseCommands(config));
     if (pushDatabaseStatus instanceof Error) return new Error(`There was an issue uploading your local ${(0, _palette.colourAttention)(config.dbName)} database\n\n${pushDatabaseStatus}`);
     return;
   });
 
   return function pushSshDatabase(_x5) {
-    return _ref5.apply(this, arguments);
+    return _ref6.apply(this, arguments);
   };
 }(); // Download a database over SSH to a local folder
 
@@ -318,7 +344,7 @@ exports.pushSshDatabase = pushSshDatabase;
 const getSshDatabase =
 /*#__PURE__*/
 function () {
-  var _ref6 = _asyncToGenerator(function* ({
+  var _ref7 = _asyncToGenerator(function* ({
     remoteEnv,
     host,
     user,
@@ -388,7 +414,7 @@ function () {
   });
 
   return function getSshDatabase(_x6) {
-    return _ref6.apply(this, arguments);
+    return _ref7.apply(this, arguments);
   };
 }();
 

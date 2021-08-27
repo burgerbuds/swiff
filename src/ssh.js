@@ -7,6 +7,9 @@ import { getDbDumpZipCommands, isMysql8 } from './database'
 import { pathBackups, pathApp } from './paths'
 import { colourAttention, colourNotice } from './palette'
 import chalk from 'chalk'
+import readlineSync from 'readline-sync'
+
+let passphrase
 
 const getSshInit = async ({ host, user, port, sshKeyPath }) => {
     // Connect to the remote server via SSH
@@ -46,14 +49,25 @@ const sshConnect = async ({ host, username, port, sshKeyPath }) => {
         : `/Users/${user}/.ssh/id_rsa`
     // Create a SSH connection
     const ssh = new nodeSsh()
-    await ssh
-        .connect({
-            host: host,
-            username: username,
-            port: port,
-            privateKey: sshKeyResolvedPath,
-        })
-        .catch(error => (errorMessage = error))
+    const tryToConnect = async () => {
+        errorMessage = null
+        await ssh
+            .connect({
+                host: host,
+                username: username,
+                port: port,
+                privateKey: sshKeyResolvedPath,
+                passphrase: passphrase,
+            })
+            .catch(error => (errorMessage = error))
+        if (String(errorMessage).includes('Encrypted OpenSSH private key detected, but no passphrase given') || String(errorMessage).includes('Malformed OpenSSH private key. Bad passphrase?')) {
+            passphrase = readlineSync.question((String(errorMessage).includes('Malformed') ? 'Incorrect passphrase! ' : '') + 'Please enter the private key’s passphrase: ', {
+                hideEchoBack: true,
+            })
+            await tryToConnect()
+        }
+    }
+    await tryToConnect()
     if (errorMessage)
         return new Error(
             String(errorMessage).includes(
