@@ -163,8 +163,8 @@ class Swiff extends Component {
                 task.id === 'toggle'
                     ? this.changeTaskPage()
                     : !isTaskRunning(messages) &&
-                      !isDisabled(config, task.id) &&
-                      this.startTask(task),
+                    !isDisabled(config, task.id) &&
+                    this.startTask(task),
             itemComponent: ({ emoji, id, title, description, isSelected }) => {
                 const isActive =
                     currentTask &&
@@ -182,9 +182,8 @@ class Swiff extends Component {
                             dim={isDisabled(config, id)}
                             hex={disabledColor || normalColor}
                         >
-                            {`${
-                                isActive ? '⌛  ' : emoji ? `${emoji}  ` : ''
-                            }${title}`}
+                            {`${isActive ? '⌛  ' : emoji ? `${emoji}  ` : ''
+                                }${title}`}
                         </Color>
                         <Color
                             bold={false}
@@ -287,20 +286,20 @@ class Swiff extends Component {
                 page === currentPage
                     ? chalk.hex('#777')('●')
                     : index + 1 === currentPage + 1 ||
-                      (index + 1 === 1 && currentPage === pages.length)
-                    ? '○'
-                    : chalk.hex('#777')('○')
+                        (index + 1 === 1 && currentPage === pages.length)
+                        ? '○'
+                        : chalk.hex('#777')('○')
             )
             .join(' ')
         // Add the dots to the task list
         const tasksWithPagination =
             pages.length > 1
                 ? tasks.slice().concat([
-                      {
-                          id: 'toggle',
-                          title: `   ${paginationDots}`,
-                      },
-                  ])
+                    {
+                        id: 'toggle',
+                        title: `   ${paginationDots}`,
+                    },
+                ])
                 : tasks
         // Add a key to the tasks
         const tasksWithKey = tasksWithPagination.map(item => ({
@@ -319,8 +318,8 @@ class Swiff extends Component {
                 ? 1
                 : currentPage + 1
             : currentPage === 1
-            ? pageLength
-            : currentPage - 1
+                ? pageLength
+                : currentPage - 1
 
     changeTaskPage = (isForwards = true) => {
         const { currentPage, pages } = this.state
@@ -419,18 +418,16 @@ class Swiff extends Component {
         // If the key isn't found then show a message
         if (!doesSshKeyExist)
             return this.setMessage(
-                `Your${
-                    !isEmpty(localEnv.SWIFF_CUSTOM_KEY) ? ' custom' : ''
+                `Your${!isEmpty(localEnv.SWIFF_CUSTOM_KEY) ? ' custom' : ''
                 } SSH key file wasn’t found at:\n  ${colourNotice(
                     sshKey
                 )}\n\nYou can either:\n\na) Create a SSH key with this command (leave passphrase empty):\n  ${colourNotice(
                     `ssh-keygen -m PEM -b 4096 -f ${sshKey}`
                 )}\n\nb) Or add an existing key path in your .env with:\n  ${colourNotice(
                     `SWIFF_CUSTOM_KEY="/Users/${user}/.ssh/[your-key-name]"`
-                )}${
-                    isInteractive
-                        ? `\n\nThen hit [ enter ↵ ] to rerun this task`
-                        : ''
+                )}${isInteractive
+                    ? `\n\nThen hit [ enter ↵ ] to rerun this task`
+                    : ''
                 }`
             )
         // Check the users SSH key has been added to the server
@@ -447,19 +444,16 @@ class Swiff extends Component {
         // If there's an issue with the connection then give some assistance
         if (checkSshSetup instanceof Error) {
             return this.setMessage(
-                `A SSH connection couldn’t be made with these details:\n\nServer host: ${
-                    config.server.host
-                }\nServer user: ${config.server.user}\nPort: ${
-                    config.server.port
+                `A SSH connection couldn’t be made with these details:\n\nServer host: ${config.server.host
+                }\nServer user: ${config.server.user}\nPort: ${config.server.port
                 }\nSSH key: ${sshKey}\n\n${getSshCopyInstructions(
                     config,
                     sshKey
-                )}\n\n${
-                    isEmpty(localEnv.SWIFF_CUSTOM_KEY)
-                        ? `${chalk.bold(
-                              `Is the 'SSH key' path above wrong?`
-                          )}\nAdd the correct path to your project .env like this:\nSWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"`
-                        : ''
+                )}\n\n${isEmpty(localEnv.SWIFF_CUSTOM_KEY)
+                    ? `${chalk.bold(
+                        `Is the 'SSH key' path above wrong?`
+                    )}\nAdd the correct path to your project .env like this:\nSWIFF_CUSTOM_KEY="/Users/${user}/.ssh/id_rsa"`
+                    : ''
                 }`
             )
         }
@@ -522,10 +516,9 @@ class Swiff extends Component {
         const pullStatus = await executeCommands(pullCommands)
         if (pullStatus instanceof Error) {
             return this.setError(
-                `There was an issue downloading the files${
-                    !isEmpty(remoteEnvironment)
-                        ? ` from ${colourAttention(remoteEnvironment)}`
-                        : ''
+                `There was an issue downloading the files${!isEmpty(remoteEnvironment)
+                    ? ` from ${colourAttention(remoteEnvironment)}`
+                    : ''
                 }\n\n${colourMuted(
                     String(pullStatus).replace(
                         /No such file or directory/g,
@@ -538,13 +531,12 @@ class Swiff extends Component {
         return this.setSuccess(
             isEmpty(output)
                 ? `No pull required, ${colourHighlight(
-                      localEnv.DB_SERVER
-                  )} is already up-to-date!`
-                : `Success! These are the local files that changed:\n${output}\n\nThe file pull${
-                      !isEmpty(remoteEnvironment)
-                          ? ` from ${colourHighlight(remoteEnvironment)}`
-                          : ''
-                  } was successful`
+                    localEnv.DB_SERVER
+                )} is already up-to-date!`
+                : `Success! These are the local files that changed:\n${output}\n\nThe file pull${!isEmpty(remoteEnvironment)
+                    ? ` from ${colourHighlight(remoteEnvironment)}`
+                    : ''
+                } was successful`
         )
     }
 
@@ -623,7 +615,7 @@ class Swiff extends Component {
             return this.setError(isPushFolderOptionsValid)
         // Share what's happening with the user
         this.setWorking(
-            `Pushing files in ${commaAmpersander(filteredPushFolders.map(f => (typeof f === 'string')?f:f.path))}`
+            `Pushing files in ${commaAmpersander(filteredPushFolders.map(f => (typeof f === 'string') ? f : f.path))}`
         )
         // Get the rsync push commands
         const pushCommands = getSshPushCommands({
@@ -648,16 +640,14 @@ class Swiff extends Component {
         )
         return this.setSuccess(
             isEmpty(output)
-                ? `No push required, ${
-                      !isEmpty(remoteEnvironment)
-                          ? `${colourHighlight(remoteEnvironment)}`
-                          : 'the remote'
-                  } is already up-to-date`
-                : `Success! These are the remote files that changed:\n${output}\n\nThe file push${
-                      !isEmpty(remoteEnvironment)
-                          ? ` to ${colourHighlight(remoteEnvironment)}`
-                          : ''
-                  } was successful`
+                ? `No push required, ${!isEmpty(remoteEnvironment)
+                    ? `${colourHighlight(remoteEnvironment)}`
+                    : 'the remote'
+                } is already up-to-date`
+                : `Success! These are the remote files that changed:\n${output}\n\nThe file push${!isEmpty(remoteEnvironment)
+                    ? ` to ${colourHighlight(remoteEnvironment)}`
+                    : ''
+                } was successful`
         )
     }
 
@@ -722,53 +712,62 @@ class Swiff extends Component {
                 DB_SERVER
             )}`
         )
-        // Drop the tables from the local database
-        const dropTables = await doDropAllDbTables({
-            host: DB_SERVER,
-            port: DB_PORT,
-            user: DB_USER,
-            password: DB_PASSWORD,
-            database: DB_DATABASE,
-        })
-        // If there's any dropping issues then return the messages
-        if (dropTables instanceof Error)
-            return String(dropTables).includes(
-                'ER_BAD_DB_ERROR: Unknown database '
-            )
-                ? this.setMessage(
-                      `First create a database named ${colourNotice(
-                          DB_DATABASE
-                      )} on ${colourNotice(
-                          DB_SERVER
-                      )} with these login details:\n\nUsername: ${DB_USER}\nPassword: ${DB_PASSWORD}`
-                  )
-                : this.setError(
-                      `There were issues connecting to your local ${colourAttention(
-                          DB_DATABASE
-                      )} database\n\nCheck these settings are correct in your local .env file:\n\n${colourAttention(
-                          `DB_SERVER="${DB_SERVER}"\nDB_PORT="${DB_PORT}"\nDB_USER="${DB_USER}"\nDB_PASSWORD="${DB_PASSWORD}"\nDB_DATABASE="${DB_DATABASE}"`
-                      )}\n\n${colourMuted(
-                          String(dropTables).replace('Error: ', '')
-                      )}`
-                  )
-        // Import the remote .sql into the local database
-        const importDatabase = await doImportDb({
-            host: DB_SERVER,
-            port: DB_PORT,
-            user: DB_USER,
-            password: DB_PASSWORD,
-            database: DB_DATABASE,
-            importFile: importFile,
-        })
-        // If there's any import issues then return the messages
-        if (importDatabase instanceof Error)
-            return this.setError(
-                `There were issues refreshing your local ${colourAttention(
-                    DB_DATABASE
-                )} database\n\n${colourMuted(importDatabase)}`
-            )
-        // Remove remote .sql working file
-        await cmdPromise(`rm ${importFile}`).catch(this.setError)
+
+        // Check if the user is running ddev, otherwise assume local database
+        if (typeof localConfig !== 'undefined' && typeof localConfig.ddev !== 'undefined' && localConfig.ddev) {
+            await cmdPromise(`ddev import-db --src=${importFile}`).catch(this.setError)
+            await cmdPromise(`rm ${importFile}`).catch(this.setError)            
+        }
+        else {
+            // Drop the tables from the local database
+            const dropTables = await doDropAllDbTables({
+                host: DB_SERVER,
+                port: DB_PORT,
+                user: DB_USER,
+                password: DB_PASSWORD,
+                database: DB_DATABASE,
+            })
+            // If there's any dropping issues then return the messages
+            if (dropTables instanceof Error)
+                return String(dropTables).includes(
+                    'ER_BAD_DB_ERROR: Unknown database '
+                )
+                    ? this.setMessage(
+                        `First create a database named ${colourNotice(
+                            DB_DATABASE
+                        )} on ${colourNotice(
+                            DB_SERVER
+                        )} with these login details:\n\nUsername: ${DB_USER}\nPassword: ${DB_PASSWORD}`
+                    )
+                    : this.setError(
+                        `There were issues connecting to your local ${colourAttention(
+                            DB_DATABASE
+                        )} database\n\nCheck these settings are correct in your local .env file:\n\n${colourAttention(
+                            `DB_SERVER="${DB_SERVER}"\nDB_PORT="${DB_PORT}"\nDB_USER="${DB_USER}"\nDB_PASSWORD="${DB_PASSWORD}"\nDB_DATABASE="${DB_DATABASE}"`
+                        )}\n\n${colourMuted(
+                            String(dropTables).replace('Error: ', '')
+                        )}`
+                    )
+            // Import the remote .sql into the local database
+            const importDatabase = await doImportDb({
+                host: DB_SERVER,
+                port: DB_PORT,
+                user: DB_USER,
+                password: DB_PASSWORD,
+                database: DB_DATABASE,
+                importFile: importFile,
+            })
+            // If there's any import issues then return the messages
+            if (importDatabase instanceof Error)
+                return this.setError(
+                    `There were issues refreshing your local ${colourAttention(
+                        DB_DATABASE
+                    )} database\n\n${colourMuted(importDatabase)}`
+                )
+            // Remove remote .sql working file
+            await cmdPromise(`rm ${importFile}`).catch(this.setError)
+            
+        }
         // Show a success message
         this.setSuccess(
             `Your ${colourHighlight(
@@ -832,6 +831,8 @@ class Swiff extends Component {
         const localDbDumpFile = `swiff-${DB_DATABASE}-push.sql`
         const localDbDumpFileZipped = `${localDbDumpFile}.gz`
         const localDbDumpFilePath = `${pathBackups}/${localDbDumpFileZipped}`
+        
+        
         const localDbDump = await doLocalDbDump({
             host: DB_SERVER,
             port: DB_PORT,
@@ -840,6 +841,8 @@ class Swiff extends Component {
             database: DB_DATABASE,
             gzipFilePath: localDbDumpFilePath,
         })
+
+
         // If there's any local db backup issues then return the messages
         if (localDbDump instanceof Error) return this.setError(localDbDump)
         const remoteDbDumpPath = serverConfig.appPath
@@ -1032,16 +1035,13 @@ class Swiff extends Component {
             // '--compress',
             // Connect via a port number
             // Set the custom identity if provided
-            `-e "ssh -p ${serverConfig.port}${
-                !isEmpty(SWIFF_CUSTOM_KEY) ? ` -i '${SWIFF_CUSTOM_KEY}'` : ''
+            `-e "ssh -p ${serverConfig.port}${!isEmpty(SWIFF_CUSTOM_KEY) ? ` -i '${SWIFF_CUSTOM_KEY}'` : ''
             }"`,
         ].join(' ')
         await executeCommands(
-            `(rsync ${flags} ${path.join(pathApp, `composer.json`)} ${
-                serverConfig.user
+            `(rsync ${flags} ${path.join(pathApp, `composer.json`)} ${serverConfig.user
             }@${serverConfig.host}:${serverConfig.appPath})
-            (rsync ${flags} ${path.join(pathApp, `composer.lock`)} ${
-                serverConfig.user
+            (rsync ${flags} ${path.join(pathApp, `composer.lock`)} ${serverConfig.user
             }@${serverConfig.host}:${serverConfig.appPath})
             `
         )

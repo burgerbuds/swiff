@@ -525,31 +525,38 @@ class Swiff extends _react.Component {
 
       if (localDbDump instanceof Error) return _this.setError(localDbDump); // Share what's happening with the user
 
-      _this.setWorking(`Updating ${(0, _palette.colourHighlight)(DB_DATABASE)} on ${(0, _palette.colourHighlight)(DB_SERVER)}`); // Drop the tables from the local database
+      _this.setWorking(`Updating ${(0, _palette.colourHighlight)(DB_DATABASE)} on ${(0, _palette.colourHighlight)(DB_SERVER)}`); // Check if the user is running ddev, otherwise assume local database
 
 
-      const dropTables = yield (0, _database.doDropAllDbTables)({
-        host: DB_SERVER,
-        port: DB_PORT,
-        user: DB_USER,
-        password: DB_PASSWORD,
-        database: DB_DATABASE
-      }); // If there's any dropping issues then return the messages
+      if (typeof localConfig !== 'undefined' && typeof localConfig.ddev !== 'undefined' && localConfig.ddev) {
+        yield (0, _utils.cmdPromise)(`ddev import-db --src=${importFile}`).catch(_this.setError);
+        yield (0, _utils.cmdPromise)(`rm ${importFile}`).catch(_this.setError);
+      } else {
+        // Drop the tables from the local database
+        const dropTables = yield (0, _database.doDropAllDbTables)({
+          host: DB_SERVER,
+          port: DB_PORT,
+          user: DB_USER,
+          password: DB_PASSWORD,
+          database: DB_DATABASE
+        }); // If there's any dropping issues then return the messages
 
-      if (dropTables instanceof Error) return String(dropTables).includes('ER_BAD_DB_ERROR: Unknown database ') ? _this.setMessage(`First create a database named ${(0, _palette.colourNotice)(DB_DATABASE)} on ${(0, _palette.colourNotice)(DB_SERVER)} with these login details:\n\nUsername: ${DB_USER}\nPassword: ${DB_PASSWORD}`) : _this.setError(`There were issues connecting to your local ${(0, _palette.colourAttention)(DB_DATABASE)} database\n\nCheck these settings are correct in your local .env file:\n\n${(0, _palette.colourAttention)(`DB_SERVER="${DB_SERVER}"\nDB_PORT="${DB_PORT}"\nDB_USER="${DB_USER}"\nDB_PASSWORD="${DB_PASSWORD}"\nDB_DATABASE="${DB_DATABASE}"`)}\n\n${(0, _palette.colourMuted)(String(dropTables).replace('Error: ', ''))}`); // Import the remote .sql into the local database
+        if (dropTables instanceof Error) return String(dropTables).includes('ER_BAD_DB_ERROR: Unknown database ') ? _this.setMessage(`First create a database named ${(0, _palette.colourNotice)(DB_DATABASE)} on ${(0, _palette.colourNotice)(DB_SERVER)} with these login details:\n\nUsername: ${DB_USER}\nPassword: ${DB_PASSWORD}`) : _this.setError(`There were issues connecting to your local ${(0, _palette.colourAttention)(DB_DATABASE)} database\n\nCheck these settings are correct in your local .env file:\n\n${(0, _palette.colourAttention)(`DB_SERVER="${DB_SERVER}"\nDB_PORT="${DB_PORT}"\nDB_USER="${DB_USER}"\nDB_PASSWORD="${DB_PASSWORD}"\nDB_DATABASE="${DB_DATABASE}"`)}\n\n${(0, _palette.colourMuted)(String(dropTables).replace('Error: ', ''))}`); // Import the remote .sql into the local database
 
-      const importDatabase = yield (0, _database.doImportDb)({
-        host: DB_SERVER,
-        port: DB_PORT,
-        user: DB_USER,
-        password: DB_PASSWORD,
-        database: DB_DATABASE,
-        importFile: importFile
-      }); // If there's any import issues then return the messages
+        const importDatabase = yield (0, _database.doImportDb)({
+          host: DB_SERVER,
+          port: DB_PORT,
+          user: DB_USER,
+          password: DB_PASSWORD,
+          database: DB_DATABASE,
+          importFile: importFile
+        }); // If there's any import issues then return the messages
 
-      if (importDatabase instanceof Error) return _this.setError(`There were issues refreshing your local ${(0, _palette.colourAttention)(DB_DATABASE)} database\n\n${(0, _palette.colourMuted)(importDatabase)}`); // Remove remote .sql working file
+        if (importDatabase instanceof Error) return _this.setError(`There were issues refreshing your local ${(0, _palette.colourAttention)(DB_DATABASE)} database\n\n${(0, _palette.colourMuted)(importDatabase)}`); // Remove remote .sql working file
 
-      yield (0, _utils.cmdPromise)(`rm ${importFile}`).catch(_this.setError); // Show a success message
+        yield (0, _utils.cmdPromise)(`rm ${importFile}`).catch(_this.setError);
+      } // Show a success message
+
 
       _this.setSuccess(`Your ${(0, _palette.colourHighlight)(DB_DATABASE)} database was updated with the ${(0, _palette.colourHighlight)(remoteEnv.ENVIRONMENT)} database`);
     }));

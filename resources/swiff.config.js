@@ -17,6 +17,9 @@ module.exports = {
         // The SSH port to connect on (22 is the SSH default)
         port: 22,
     },
+    local: {
+        ddev: false,
+    },
     // Folders to upload and sync with the server
     pushFolders: [
         // 'templates',
