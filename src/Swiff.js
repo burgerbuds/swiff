@@ -655,6 +655,7 @@ class Swiff extends Component {
         // Set some variables for later
         const localEnv = this.state.localEnv
         const serverConfig = this.state.config.server
+        const localConfig = this.state.config.local
         const {
             SWIFF_CUSTOM_KEY,
             DB_SERVER,

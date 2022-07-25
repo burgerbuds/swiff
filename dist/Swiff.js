@@ -476,6 +476,7 @@ class Swiff extends _react.Component {
       // Set some variables for later
       const localEnv = _this.state.localEnv;
       const serverConfig = _this.state.config.server;
+      const localConfig = _this.state.config.local;
       const {
         SWIFF_CUSTOM_KEY,
         DB_SERVER,
